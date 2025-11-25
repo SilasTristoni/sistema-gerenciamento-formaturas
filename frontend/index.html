@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sistema de Formaturas | Painel Digital</title>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="dev-controls">
+    <span>Simular Visão:</span>
+    <div>
+      <button id="btn-admin" class="switch-btn active" onclick="alterarPerfil('ADMIN')">Comissão</button>
+      <button id="btn-student" class="switch-btn" onclick="alterarPerfil('STUDENT')">Aluno</button>
+    </div>
+  </div>
+
+  <div class="app-container">
+    <header>
+      <div class="user-info">
+        <h2 id="userName">Carregando...</h2>
+        <p id="userRole">...</p>
+      </div>
+      <div class="notification-icon">
+        <i class="fas fa-bell"></i>
+      </div>
+    </header>
+
+    <div class="dashboard-grid">
+      <div class="card finance">
+        <i class="fas fa-wallet"></i>
+        <h3>Saldo da Turma</h3>
+        <div class="value" id="saldo-turma">R$ --</div>
+        <small class="positive">+ R$ 1.200 este mês</small>
+      </div>
+
+      <div class="card warning admin-only">
+        <i class="fas fa-exclamation-circle"></i>
+        <h3>Inadimplentes</h3>
+        <div class="value">3 Alunos</div>
+        <small>Verificar relatório</small>
+      </div>
+
+      <div class="card student-only">
+        <i class="fas fa-file-invoice-dollar"></i>
+        <h3>Minha Mensalidade</h3>
+        <div class="value">Em dia</div>
+        <small>Próx: 10/Dez</small>
+      </div>
+    </div>
+
+    <section class="section">
+      <div class="section-header">
+        <strong>Votações em Aberto</strong>
+        <a href="#">Ver todas</a>
+      </div>
+      
+      <div class="list-item">
+        <div class="icon-box"><i class="fas fa-camera"></i></div>
+        <div class="content">
+          <strong>Escolha da Fotografia</strong>
+          <small>Encerra em 2 dias</small>
+          
+          <div class="vote-bar-container">
+            <div class="vote-progress" style="width: 60%"></div>
+          </div>
+          <small class="meta-info">Studio X liderando (60%)</small>
+        </div>
+        <button class="btn-action primary" onclick="votarSimulado()">Votar</button>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <strong>Próximos Eventos</strong>
+      </div>
+      <div class="list-item">
+        <div class="icon-box event"><i class="fas fa-calendar-day"></i></div>
+        <div class="content">
+          <strong>Reunião Geral</strong>
+          <small>15 Dez • 19:00h • Online</small>
+        </div>
+        <button class="btn-icon admin-only"><i class="fas fa-pen"></i></button>
+      </div>
+    </section>
+  </div>
+
+  <button class="fab admin-only" onclick="abrirMenuCriacao()">
+    <i class="fas fa-plus"></i>
+  </button>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

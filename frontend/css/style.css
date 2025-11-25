@@ -1,0 +1,179 @@
+:root {
+  --bg-color: #0f1724;
+  --card-bg: #1e293b;
+  --accent-color: #38bdf8;
+  --text-primary: #f1f5f9;
+  --text-muted: #94a3b8;
+  --success: #10b981;
+  --danger: #ef4444;
+  --glass-effect: rgba(255, 255, 255, 0.05);
+  --radius: 16px;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+}
+
+/* Container Principal */
+.app-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  padding-bottom: 100px;
+}
+
+/* Header */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.notification-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--glass-effect);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Cards do Dashboard */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.card {
+  background: var(--card-bg);
+  padding: 16px;
+  border-radius: var(--radius);
+}
+
+.card h3 {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: normal;
+  margin: 10px 0 4px 0;
+}
+
+.card .value {
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+
+.card.finance { border-left: 4px solid var(--success); }
+.card.warning { border-left: 4px solid var(--danger); }
+.positive { color: var(--success); font-size: 0.8rem; }
+
+/* Listas (Eventos e Votação) */
+.section { margin-top: 24px; }
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.section-header a { color: var(--accent-color); text-decoration: none; font-size: 0.9rem; }
+
+.list-item {
+  background: var(--glass-effect);
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--accent-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.icon-box.event { color: var(--success); background: rgba(16, 185, 129, 0.15); }
+
+.content { flex: 1; }
+.content strong { display: block; font-size: 0.95rem; }
+.content small { color: var(--text-muted); font-size: 0.8rem; }
+
+/* Barra de Votação */
+.vote-bar-container {
+  height: 6px;
+  background: #334155;
+  border-radius: 3px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+.vote-progress { height: 100%; background: var(--success); }
+
+/* Botões */
+.btn-action {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+.btn-action.primary { background: var(--accent-color); color: #0f1724; }
+
+.btn-icon {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-muted);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Botão Flutuante (FAB) */
+.fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  background: var(--accent-color);
+  border-radius: 50%;
+  border: none;
+  font-size: 24px;
+  box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+  cursor: pointer;
+  z-index: 100;
+}
+
+/* Utilitários de Controle (Simulação) */
+.dev-controls {
+  background: #334155;
+  padding: 10px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+.switch-btn {
+  background: transparent;
+  border: 1px solid var(--text-muted);
+  color: var(--text-muted);
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 8px;
+}
+.switch-btn.active { background: var(--accent-color); color: #000; border-color: var(--accent-color); font-weight: bold; }
+
+/* Lógica de Exibição */
+.admin-only, .student-only { display: none; }
