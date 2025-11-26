@@ -11,20 +11,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/dashboard")
 public class DashboardController {
 
-    // Simula os dados que viriam do Banco de Dados
+    // Simula os dados de resumo (futuramente você pode injetar os Repositories aqui para calcular reais)
     @GetMapping("/resumo")
     public Map<String, Object> getResumo() {
         Map<String, Object> dados = new HashMap<>();
         
-        // Dados Financeiros (RF01)
-        dados.put("saldoTotal", 45200.00);
+        dados.put("saldoTotal", 45200.00); // Exemplo estático
         dados.put("receitaMes", 1200.00);
         dados.put("inadimplentes", 3);
         
-        // Dados do Usuário Logado (Simulado)
         dados.put("usuarioNome", "Arthur Vieira");
-        dados.put("usuarioPerfil", "ADMIN"); // ou "STUDENT"
+        dados.put("usuarioPerfil", "ADMIN"); 
         
-        return dados; // O Spring transforma isso automaticamente em JSON
+        return dados; 
     }
 }

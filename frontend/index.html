@@ -1,98 +1,339 @@
-<!doctype html>
-<html lang="pt-BR">
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sistema de Formaturas | Painel Digital</title>
-  
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Gestão de Formaturas — Dashboard Completo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            dark: { 900: '#0f172a', 800: '#1e293b', 700: '#334155' },
+            primary: { 500: '#10b981', 600: '#059669' }
+          }
+        }
+      }
+    }
+  </script>
+
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body class="bg-dark-900 text-slate-300 font-sans antialiased">
 
-  <div class="dev-controls">
-    <span>Simular Visão:</span>
-    <div>
-      <button id="btn-admin" class="switch-btn active" onclick="alterarPerfil('ADMIN')">Comissão</button>
-      <button id="btn-student" class="switch-btn" onclick="alterarPerfil('STUDENT')">Aluno</button>
-    </div>
-  </div>
+<div class="flex h-screen">
 
-  <div class="app-container">
-    <header>
-      <div class="user-info">
-        <h2 id="userName">Carregando...</h2>
-        <p id="userRole">...</p>
+  <aside class="hidden md:flex w-72 flex-col bg-dark-800 border-r border-dark-700">
+    <div class="h-16 flex items-center px-6 border-b border-dark-700">
+      <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500 to-teal-400 flex items-center justify-center text-white font-bold mr-3">GF</div>
+      <div>
+        <div class="text-white font-semibold text-lg">GestãoForm</div>
+        <div class="text-xs text-slate-500">Painel de administração</div>
       </div>
-      <div class="notification-icon">
-        <i class="fas fa-bell"></i>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+      <button onclick="navigate('dashboard')" id="nav-dashboard" class="nav-btn w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary-500/10 text-primary-500 font-medium">
+        <i class="ph ph-squares-four text-xl"></i> Dashboard
+      </button>
+
+      <button onclick="navigate('alunos')" id="nav-alunos" class="nav-btn w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-dark-700 hover:text-white">
+        <i class="ph ph-student text-xl"></i> Alunos
+      </button>
+
+      <button onclick="navigate('turmas')" id="nav-turmas" class="nav-btn w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-dark-700 hover:text-white">
+        <i class="ph ph-graduation-cap text-xl"></i> Turmas
+      </button>
+
+      <button onclick="navigate('eventos')" id="nav-eventos" class="nav-btn w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-dark-700 hover:text-white">
+        <i class="ph ph-calendar-check text-xl"></i> Eventos
+      </button>
+
+      <button onclick="navigate('financeiro')" id="nav-financeiro" class="nav-btn w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-dark-700 hover:text-white">
+        <i class="ph ph-currency-dollar text-xl"></i> Financeiro
+      </button>
+
+      <div class="mt-6 border-t border-dark-700 pt-4 px-2">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold" id="userAvatar">A</div>
+          <div>
+            <div class="text-sm text-white font-medium" id="userNameDisplay">Carregando...</div>
+            <div class="text-xs text-slate-500" id="userRoleDisplay">...</div>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="flex-1 flex flex-col h-screen overflow-hidden">
+
+    <header class="h-16 bg-dark-800/80 border-b border-dark-700 flex items-center justify-between px-4 sm:px-6">
+      <div class="flex items-center gap-4">
+        <button id="menuToggle" class="md:hidden text-slate-400 hover:text-white"><i class="ph ph-list text-2xl"></i></button>
+        <h1 class="text-lg text-white font-semibold">Gestão de Formaturas</h1>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <div class="hidden sm:flex items-center bg-dark-900 border border-dark-700 rounded-full px-3 py-1.5">
+          <i class="ph ph-magnifying-glass text-slate-500"></i>
+          <input id="search" oninput="applySearch()" placeholder="Buscar aluno, turma ou evento..." class="bg-transparent outline-none text-sm text-white ml-2 w-56" />
+        </div>
+
+        <button class="relative p-2 text-slate-400 hover:text-white">
+          <i class="ph ph-bell text-xl"></i>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+        </button>
+
+        <button onclick="openModal('new','lancamento')" class="bg-primary-600 hover:bg-primary-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
+          <i class="ph ph-plus-bold"></i> <span class="hidden sm:inline">Novo</span>
+        </button>
       </div>
     </header>
 
-    <div class="dashboard-grid">
-      <div class="card finance">
-        <i class="fas fa-wallet"></i>
-        <h3>Saldo da Turma</h3>
-        <div class="value" id="saldo-turma">R$ --</div>
-        <small class="positive">+ R$ 1.200 este mês</small>
-      </div>
+    <div class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
 
-      <div class="card warning admin-only">
-        <i class="fas fa-exclamation-circle"></i>
-        <h3>Inadimplentes</h3>
-        <div class="value">3 Alunos</div>
-        <small>Verificar relatório</small>
-      </div>
+      <section id="screen-dashboard" class="screen active">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          <div class="bg-dark-800 p-5 rounded-2xl border border-dark-700 shadow-sm">
+            <p class="text-xs text-slate-500 uppercase">Saldo Total</p>
+            <h3 class="text-2xl text-white font-bold mt-1" id="totalReceita">R$ --</h3>
+            <p class="text-xs text-primary-500 mt-2" id="receitaVar">+ Receita este mês</p>
+          </div>
 
-      <div class="card student-only">
-        <i class="fas fa-file-invoice-dollar"></i>
-        <h3>Minha Mensalidade</h3>
-        <div class="value">Em dia</div>
-        <small>Próx: 10/Dez</small>
-      </div>
+          <div class="bg-dark-800 p-5 rounded-2xl border border-dark-700 shadow-sm">
+            <p class="text-xs text-slate-500 uppercase">Alunos Ativos</p>
+            <h3 class="text-2xl text-white font-bold mt-1" id="totalAlunos">--</h3>
+            <p class="text-xs text-slate-400 mt-2" id="turmasAtivas">--</p>
+          </div>
+
+          <div class="bg-dark-800 p-5 rounded-2xl border border-dark-700 shadow-sm">
+            <p class="text-xs text-slate-500 uppercase">Inadimplentes</p>
+            <h3 class="text-2xl text-white font-bold mt-1" id="totalInadimplencia">--</h3>
+            <p class="text-xs text-red-400 mt-2" id="inadimplenciaCount">Atenção Necessária</p>
+          </div>
+
+          <div class="bg-dark-800 p-5 rounded-2xl border border-dark-700 shadow-sm">
+            <p class="text-xs text-slate-500 uppercase">Próx. Evento</p>
+            <h3 class="text-lg text-white font-bold mt-1" id="proximoEvento">—</h3>
+            <p class="text-xs text-slate-400 mt-2" id="dataEvento">—</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div class="lg:col-span-2 bg-dark-800 p-6 rounded-2xl border border-dark-700 shadow-sm">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-white font-semibold">Fluxo de Arrecadação</h3>
+              <button class="text-xs text-primary-500">Exportar CSV</button>
+            </div>
+            <div class="h-64 w-full">
+              <canvas id="revenueChart"></canvas>
+            </div>
+          </div>
+
+          <div class="bg-dark-800 p-6 rounded-2xl border border-dark-700 shadow-sm flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-white font-semibold">Pendências Recentes</h3>
+              <button onclick="navigate('financeiro')" class="text-xs text-primary-500">Ver todas</button>
+            </div>
+            <div id="pendenciasList" class="space-y-4 overflow-y-auto pr-2 custom-scroll flex-1"></div>
+          </div>
+        </div>
+
+        <div class="bg-dark-800 rounded-2xl border border-dark-700 shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-dark-700 flex flex-col sm:flex-row justify-between items-center gap-4">
+              <h3 class="text-white font-semibold">Turmas em Andamento</h3>
+              <div class="flex gap-2">
+                <button onclick="filterTurmas('all')" class="px-3 py-1.5 text-xs font-medium text-slate-300 bg-dark-700 rounded-lg">Todas</button>
+                <button onclick="filterTurmas('emdia')" class="px-3 py-1.5 text-xs font-medium text-slate-300 bg-dark-700 rounded-lg">Em dia</button>
+                <button onclick="filterTurmas('atencao')" class="px-3 py-1.5 text-xs font-medium text-slate-300 bg-dark-700 rounded-lg">Atenção</button>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm text-slate-400">
+                <thead class="bg-dark-900/50 text-xs uppercase font-medium text-slate-500">
+                  <tr>
+                    <th class="px-6 py-4">Turma</th>
+                    <th class="px-6 py-4">Representante</th>
+                    <th class="px-6 py-4">Status</th>
+                    <th class="px-6 py-4">Arrecadado</th>
+                    <th class="px-6 py-4 text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="turmasPreview" class="divide-y divide-dark-700"></tbody>
+              </table>
+            </div>
+        </div>
+      </section>
+
+      <section id="screen-alunos" class="screen hidden">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold text-white">Alunos</h2>
+          <div class="flex gap-2">
+            <button onclick="openModal('new','aluno')" class="px-4 py-2 bg-primary-600 rounded-lg text-white">Novo Aluno</button>
+            <button onclick="exportTableCSV('alunosTable','alunos')" class="px-4 py-2 bg-dark-700 rounded-lg text-slate-300">Exportar</button>
+          </div>
+        </div>
+        <div class="bg-dark-800 rounded-2xl border border-dark-700 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table id="alunosTable" class="w-full text-left text-sm text-slate-400">
+              <thead class="bg-dark-900/50 text-xs uppercase font-medium text-slate-500">
+                <tr>
+                  <th class="px-6 py-4">Nome</th>
+                  <th class="px-6 py-4">Turma</th>
+                  <th class="px-6 py-4">Contato</th>
+                  <th class="px-6 py-4">Status</th>
+                  <th class="px-6 py-4 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="alunosBody" class="divide-y divide-dark-700"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="screen-turmas" class="screen hidden">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold text-white">Turmas</h2>
+            <button onclick="openModal('new','turma')" class="px-4 py-2 bg-primary-600 rounded-lg text-white">Nova Turma</button>
+        </div>
+        <div class="bg-dark-800 rounded-2xl border border-dark-700 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table id="turmasTable" class="w-full text-left text-sm text-slate-400">
+                    <thead class="bg-dark-900/50 text-xs uppercase font-medium text-slate-500">
+                        <tr>
+                            <th class="px-6 py-4">Turma</th>
+                            <th class="px-6 py-4">Curso</th>
+                            <th class="px-6 py-4">Alunos</th>
+                            <th class="px-6 py-4">Arrecadado</th>
+                            <th class="px-6 py-4 text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="turmasBody" class="divide-y divide-dark-700"></tbody>
+                </table>
+            </div>
+        </div>
+      </section>
+
+      <section id="screen-eventos" class="screen hidden">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold text-white">Eventos</h2>
+            <div class="flex gap-2">
+                <button onclick="openModal('new','evento')" class="px-4 py-2 bg-primary-600 rounded-lg text-white">Novo Evento</button>
+                <button onclick="exportTableCSV('eventosTable','eventos')" class="px-4 py-2 bg-dark-700 rounded-lg text-slate-300">Exportar</button>
+            </div>
+        </div>
+        <div class="bg-dark-800 rounded-2xl border border-dark-700 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table id="eventosTable" class="w-full text-left text-sm text-slate-400">
+                    <thead class="bg-dark-900/50 text-xs uppercase font-medium text-slate-500">
+                        <tr>
+                            <th class="px-6 py-4">Evento</th>
+                            <th class="px-6 py-4">Data</th>
+                            <th class="px-6 py-4">Local</th>
+                            <th class="px-6 py-4">Status</th>
+                            <th class="px-6 py-4 text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="eventosBody" class="divide-y divide-dark-700"></tbody>
+                </table>
+            </div>
+        </div>
+      </section>
+
+      <section id="screen-financeiro" class="screen hidden">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold text-white">Financeiro</h2>
+            <div class="flex gap-2">
+                <button onclick="openModal('new','lancamento')" class="px-4 py-2 bg-primary-600 rounded-lg text-white">Novo Lançamento</button>
+                <button onclick="exportTableCSV('financeiroTable','financeiro')" class="px-4 py-2 bg-dark-700 rounded-lg text-slate-300">Exportar</button>
+            </div>
+        </div>
+        <div class="bg-dark-800 rounded-2xl border border-dark-700 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table id="financeiroTable" class="w-full text-left text-sm text-slate-400">
+                    <thead class="bg-dark-900/50 text-xs uppercase font-medium text-slate-500">
+                        <tr>
+                            <th class="px-6 py-4">Descrição</th>
+                            <th class="px-6 py-4">Tipo</th>
+                            <th class="px-6 py-4">Valor</th>
+                            <th class="px-6 py-4">Data</th>
+                            <th class="px-6 py-4 text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="financeiroBody" class="divide-y divide-dark-700"></tbody>
+                </table>
+            </div>
+        </div>
+      </section>
+
+      <footer class="mt-8 text-center text-xs text-slate-600 pb-4">
+        &copy; 2025 Sistema de Gerenciamento de Formaturas
+      </footer>
+
+    </div>
+  </main>
+</div>
+
+<div id="modalBackdrop" class="fixed inset-0 bg-black/60 modal-backdrop hidden items-center justify-center z-50">
+  <div id="modalPanel" class="bg-dark-800 w-full max-w-2xl rounded-2xl shadow-2xl border border-dark-700 modal-panel transform scale-95 opacity-0 p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h3 id="modalTitle" class="text-xl font-bold text-white">Novo</h3>
+      <button onclick="closeModal()" class="text-slate-500 hover:text-white"><i class="ph ph-x text-lg"></i></button>
     </div>
 
-    <section class="section">
-      <div class="section-header">
-        <strong>Votações em Aberto</strong>
-        <a href="#">Ver todas</a>
+    <form id="modalForm" class="space-y-4">
+      <div>
+        <label class="block text-sm text-slate-400 mb-1">Categoria</label>
+        <select id="modalCategoria" onchange="toggleModalFields()" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-2.5 text-white">
+          <option value="evento">Evento</option>
+          <option value="aluno">Aluno</option>
+          <option value="turma">Turma</option>
+          <option value="lancamento">Pagamento / Lançamento</option>
+        </select>
       </div>
-      
-      <div class="list-item">
-        <div class="icon-box"><i class="fas fa-camera"></i></div>
-        <div class="content">
-          <strong>Escolha da Fotografia</strong>
-          <small>Encerra em 2 dias</small>
-          
-          <div class="vote-bar-container">
-            <div class="vote-progress" style="width: 60%"></div>
-          </div>
-          <small class="meta-info">Studio X liderando (60%)</small>
-        </div>
-        <button class="btn-action primary" onclick="votarSimulado()">Votar</button>
-      </div>
-    </section>
 
-    <section class="section">
-      <div class="section-header">
-        <strong>Próximos Eventos</strong>
+      <div>
+        <label class="block text-sm text-slate-400 mb-1">Título / Nome</label>
+        <input id="modalNome" type="text" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-2.5 text-white" placeholder="Nome...">
       </div>
-      <div class="list-item">
-        <div class="icon-box event"><i class="fas fa-calendar-day"></i></div>
-        <div class="content">
-          <strong>Reunião Geral</strong>
-          <small>15 Dez • 19:00h • Online</small>
+
+      <div class="grid grid-cols-2 gap-4" id="divDataValor">
+        <div>
+          <label class="block text-sm text-slate-400 mb-1">Data</label>
+          <input id="modalData" type="date" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-2.5 text-white">
         </div>
-        <button class="btn-icon admin-only"><i class="fas fa-pen"></i></button>
+        <div>
+          <label class="block text-sm text-slate-400 mb-1">Valor (R$)</label>
+          <input id="modalValor" type="number" step="0.01" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-2.5 text-white" placeholder="0.00">
+        </div>
       </div>
-    </section>
+
+      <div>
+        <label id="lblDescricao" class="block text-sm text-slate-400 mb-1">Descrição</label>
+        
+        <textarea id="modalDescricao" rows="3" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-2.5 text-white" placeholder="Detalhes..."></textarea>
+        
+        <select id="modalTurmaSelect" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-2.5 text-white hidden">
+            <option value="">Selecione uma turma...</option>
+        </select>
+      </div>
+
+      <div class="pt-4 flex gap-3">
+        <button type="button" onclick="closeModal()" class="flex-1 px-4 py-2.5 rounded-lg border border-dark-600 text-slate-300 hover:bg-dark-700">Cancelar</button>
+        <button type="submit" class="flex-1 px-4 py-2.5 rounded-lg bg-primary-600 text-white hover:bg-primary-500">Salvar</button>
+      </div>
+    </form>
   </div>
+</div>
 
-  <button class="fab admin-only" onclick="abrirMenuCriacao()">
-    <i class="fas fa-plus"></i>
-  </button>
-
-  <script src="js/app.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
