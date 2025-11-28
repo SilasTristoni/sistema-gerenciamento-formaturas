@@ -16,3 +16,20 @@
     scrollbar-width: thin;
     scrollbar-color: #334155 #1e293b;
 }
+
+/* Animação para os Toasts */
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+.toast-enter {
+    animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+.toast-exit {
+    animation: fadeOut 0.4s ease forwards;
+}

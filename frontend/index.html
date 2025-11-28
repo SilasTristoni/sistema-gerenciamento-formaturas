@@ -282,58 +282,81 @@
   </main>
 </div>
 
-<div id="modalBackdrop" class="fixed inset-0 bg-black/60 modal-backdrop hidden items-center justify-center z-50">
-  <div id="modalPanel" class="bg-dark-800 w-full max-w-2xl rounded-2xl shadow-2xl border border-dark-700 modal-panel transform scale-95 opacity-0 p-6">
-    <div class="flex justify-between items-center mb-4">
-      <h3 id="modalTitle" class="text-xl font-bold text-white">Novo</h3>
-      <button onclick="closeModal()" class="text-slate-500 hover:text-white"><i class="ph ph-x text-lg"></i></button>
+<div id="toastContainer" class="fixed top-5 right-5 z-[60] flex flex-col gap-2 w-full max-w-xs pointer-events-none"></div>
+
+<div id="modalBackdrop" class="fixed inset-0 bg-dark-900/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+  
+  <div id="modalPanel" class="bg-dark-800 w-full max-w-lg rounded-2xl shadow-2xl shadow-primary-500/10 border border-dark-700 transform scale-95 opacity-0 transition-all duration-300 relative overflow-hidden">
+    
+    <div class="px-6 py-4 border-b border-dark-700 flex justify-between items-center bg-dark-800/50">
+      <h3 id="modalTitle" class="text-lg font-bold text-white flex items-center gap-2">
+        <i class="ph ph-pencil-simple text-primary-500"></i>
+        <span>Novo Cadastro</span>
+      </h3>
+      <button onclick="closeModal()" class="text-slate-500 hover:text-white transition-colors p-1 rounded-md hover:bg-dark-700">
+        <i class="ph ph-x text-lg"></i>
+      </button>
     </div>
 
-    <form id="modalForm" class="space-y-4">
-      <div>
-        <label class="block text-sm text-slate-400 mb-1">Categoria</label>
-        <select id="modalCategoria" onchange="toggleModalFields()" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-2.5 text-white">
-          <option value="evento">Evento</option>
-          <option value="aluno">Aluno</option>
-          <option value="turma">Turma</option>
-          <option value="lancamento">Pagamento / Lançamento</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="block text-sm text-slate-400 mb-1">Título / Nome</label>
-        <input id="modalNome" type="text" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-2.5 text-white" placeholder="Nome...">
-      </div>
-
-      <div class="grid grid-cols-2 gap-4" id="divDataValor">
-        <div>
-          <label class="block text-sm text-slate-400 mb-1">Data</label>
-          <input id="modalData" type="date" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-2.5 text-white">
-        </div>
-        <div>
-          <label class="block text-sm text-slate-400 mb-1">Valor (R$)</label>
-          <input id="modalValor" type="number" step="0.01" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-2.5 text-white" placeholder="0.00">
-        </div>
-      </div>
-
-      <div>
-        <label id="lblDescricao" class="block text-sm text-slate-400 mb-1">Descrição</label>
+    <div class="p-6 max-h-[80vh] overflow-y-auto custom-scroll">
+      <form id="modalForm" class="space-y-5">
         
-        <textarea id="modalDescricao" rows="3" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-2.5 text-white" placeholder="Detalhes..."></textarea>
-        
-        <select id="modalTurmaSelect" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-2.5 text-white hidden">
-            <option value="">Selecione uma turma...</option>
-        </select>
-      </div>
+        <div>
+          <label class="block text-xs uppercase font-bold text-slate-500 mb-1.5 tracking-wider">Categoria</label>
+          <div class="relative">
+            <select id="modalCategoria" onchange="toggleModalFields()" class="w-full appearance-none bg-dark-900 border border-dark-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all">
+              <option value="evento">📅 Evento</option>
+              <option value="aluno">🎓 Aluno</option>
+              <option value="turma">🏫 Turma</option>
+              <option value="lancamento">💰 Financeiro</option>
+              <option value="tarefa">✅ Tarefa</option>
+              <option value="votacao">🗳️ Votação</option>
+            </select>
+            <i class="ph ph-caret-down absolute right-4 top-3.5 text-slate-400 pointer-events-none"></i>
+          </div>
+        </div>
 
-      <div class="pt-4 flex gap-3">
-        <button type="button" onclick="closeModal()" class="flex-1 px-4 py-2.5 rounded-lg border border-dark-600 text-slate-300 hover:bg-dark-700">Cancelar</button>
-        <button type="submit" class="flex-1 px-4 py-2.5 rounded-lg bg-primary-600 text-white hover:bg-primary-500">Salvar</button>
-      </div>
-    </form>
+        <div>
+          <label class="block text-xs uppercase font-bold text-slate-500 mb-1.5 tracking-wider">Título / Nome</label>
+          <input id="modalNome" type="text" required class="w-full bg-dark-900 border border-dark-600 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all" placeholder="Ex: Formatura 2025...">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 transition-all" id="divDataValor">
+          <div>
+            <label class="block text-xs uppercase font-bold text-slate-500 mb-1.5 tracking-wider">Data</label>
+            <input id="modalData" type="date" class="w-full bg-dark-900 border border-dark-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary-500 transition-all">
+          </div>
+          <div>
+            <label class="block text-xs uppercase font-bold text-slate-500 mb-1.5 tracking-wider">Valor (R$)</label>
+            <input id="modalValor" type="number" step="0.01" class="w-full bg-dark-900 border border-dark-600 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-primary-500 transition-all" placeholder="0.00">
+          </div>
+        </div>
+
+        <div>
+          <label id="lblDescricao" class="block text-xs uppercase font-bold text-slate-500 mb-1.5 tracking-wider">Descrição</label>
+          <textarea id="modalDescricao" rows="3" class="w-full bg-dark-900 border border-dark-600 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all" placeholder="Detalhes adicionais..."></textarea>
+          
+          <div class="mt-3 relative" id="divTurmaSelect">
+             <select id="modalTurmaSelect" class="w-full appearance-none bg-dark-900 border border-dark-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary-500 transition-all">
+                <option value="">Selecione a Turma...</option>
+             </select>
+             <i class="ph ph-caret-down absolute right-4 top-3.5 text-slate-400 pointer-events-none"></i>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="px-6 py-4 bg-dark-900/50 border-t border-dark-700 flex gap-3">
+      <button type="button" onclick="closeModal()" class="flex-1 px-4 py-2.5 rounded-xl border border-dark-600 text-slate-300 font-medium hover:bg-dark-700 hover:text-white transition-all">
+        Cancelar
+      </button>
+      <button onclick="salvarFormulario(event)" type="button" class="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primary-600 to-teal-500 text-white font-bold shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 hover:from-primary-500 hover:to-teal-400 transition-all transform hover:-translate-y-0.5">
+        Salvar
+      </button>
+    </div>
   </div>
 </div>
 
-<script src="js/app.js"></script>
+<script type="module" src="js/main.js"></script>
 </body>
 </html>
