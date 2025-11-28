@@ -22,18 +22,25 @@ public class Turma {
 
     private String nome;
     private String curso;
+    private String instituicao; // NOVO CAMPO
 
-    // A turma "tem" vários alunos.
-    // O 'mappedBy' indica que o campo 'turma' na classe Aluno é quem manda na relação.
     @OneToMany(mappedBy = "turma", cascade = CascadeType.ALL)
-    @JsonIgnore // Não traz a lista de alunos ao buscar a turma (evita peso desnecessário)
+    @JsonIgnore
     @ToString.Exclude
     private List<Aluno> alunos;
+
+    // NOVO: A turma agora sabe quais eventos e contas são dela
+    @OneToMany(mappedBy = "turma")
+    @JsonIgnore
+    private List<Evento> eventos;
+
+    @OneToMany(mappedBy = "turma")
+    @JsonIgnore
+    private List<LancamentoFinanceiro> lancamentos;
 
     private Double totalArrecadado = 0.0;
     private String status = "emdia";
 
-    // Campo calculado para o JSON
     public Integer getQuantidadeAlunos() {
         return alunos != null ? alunos.size() : 0;
     }

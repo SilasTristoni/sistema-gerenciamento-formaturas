@@ -1,7 +1,6 @@
 package br.com.senac.formatura.sistema_gerenciamento_formaturas.model;
 
-import java.time.LocalDate;
-
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -12,18 +11,19 @@ import lombok.Data;
 
 @Data
 @Entity
-public class Evento {
+public class OpcaoVotacao {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // RELACIONAMENTO NOVO
     @ManyToOne
-    @JoinColumn(name = "turma_id", nullable = false)
-    private Turma turma;
+    @JoinColumn(name = "votacao_id", nullable = false)
+    private Votacao votacao;
 
-    private String nome;
-    private LocalDate dataEvento; // Renomeado para bater com o SQL (era 'data')
-    private String localEvento;   // Renomeado para bater com o SQL (era 'local')
-    private String status = "agendado";
+    private String nomeFornecedor;
+    
+    @Column(columnDefinition = "TEXT")
+    private String detalhesProposta;
+    
+    private Double valorProposta;
 }
