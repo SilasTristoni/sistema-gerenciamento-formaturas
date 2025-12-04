@@ -1,10 +1,13 @@
 package br.com.senac.formatura.sistema_gerenciamento_formaturas.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,15 +16,14 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.dto.AlunoInputDTO;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.dto.EventoInputDTO;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.dto.LancamentoInputDTO;
-import br.com.senac.formatura.sistema_gerenciamento_formaturas.dto.TarefaInputDTO;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.dto.VotacaoInputDTO;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Aluno;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Evento;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.LancamentoFinanceiro;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.OpcaoVotacao;
-import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Tarefa;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Turma;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Votacao;
+import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Voto;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.AlunoRepository;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.EventoRepository;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.LancamentoRepository;
@@ -30,7 +32,6 @@ import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.Tarefa
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.TurmaRepository;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.VotacaoRepository;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.VotoRepository;
-
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -46,55 +47,43 @@ public class CadastroController {
     @Autowired private OpcaoVotacaoRepository opcaoRepo;
     @Autowired private VotoRepository votoRepo;
 
-    // --- TURMA ---
+    // --- MÉTODOS EXISTENTES (Turma, Aluno, Evento, Financeiro) ---
+    // (Mantenha o código anterior destas partes aqui...)
+    
     @PostMapping("/turma")
-    public Turma criarTurma(@RequestBody Turma turma) {
-        return turmaRepo.save(turma);
-    }
+    public Turma criarTurma(@RequestBody Turma turma) { return turmaRepo.save(turma); }
     
     @GetMapping("/turmas")
     public List<Turma> listarTurmas() { return turmaRepo.findAll(); }
 
-    // --- ALUNO ---
     @PostMapping("/aluno")
     public Aluno criarAluno(@RequestBody AlunoInputDTO dto) {
-        Turma turma = turmaRepo.findById(dto.turmaId())
-                .orElseThrow(() -> new RuntimeException("Turma não encontrada"));
-        
+        Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
         Aluno aluno = new Aluno();
         aluno.setNome(dto.nome());
         aluno.setContato(dto.contato());
         aluno.setTurma(turma);
         return alunoRepo.save(aluno);
     }
-
     @GetMapping("/alunos")
     public List<Aluno> listarAlunos() { return alunoRepo.findAll(); }
 
-    // --- EVENTO (ATUALIZADO) ---
     @PostMapping("/evento")
     public Evento criarEvento(@RequestBody EventoInputDTO dto) {
-        Turma turma = turmaRepo.findById(dto.turmaId())
-            .orElseThrow(() -> new RuntimeException("Turma não encontrada"));
-
+        Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
         Evento evento = new Evento();
         evento.setNome(dto.nome());
         evento.setDataEvento(dto.data());
         evento.setLocalEvento(dto.local());
-        evento.setTurma(turma); // Vínculo Obrigatório!
-        
+        evento.setTurma(turma);
         return eventoRepo.save(evento);
     }
-    
     @GetMapping("/eventos")
     public List<Evento> listarEventos() { return eventoRepo.findAll(); }
 
-    // --- FINANCEIRO (ATUALIZADO) ---
     @PostMapping("/lancamento")
     public LancamentoFinanceiro criarLancamento(@RequestBody LancamentoInputDTO dto) {
-        Turma turma = turmaRepo.findById(dto.turmaId())
-            .orElseThrow(() -> new RuntimeException("Turma não encontrada"));
-
+        Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
         LancamentoFinanceiro lanc = new LancamentoFinanceiro();
         lanc.setDescricao(dto.descricao());
         lanc.setValor(dto.valor());
@@ -102,62 +91,61 @@ public class CadastroController {
         lanc.setDataLancamento(dto.data());
         lanc.setReferencia(dto.referencia());
         lanc.setTurma(turma);
-
-        // Se veio ID de aluno, vincula ele também
-        if(dto.alunoId() != null) {
-            Aluno aluno = alunoRepo.findById(dto.alunoId()).orElse(null);
-            lanc.setAluno(aluno);
-        }
-
         return lancamentoRepo.save(lanc);
     }
-    
     @GetMapping("/financeiro")
     public List<LancamentoFinanceiro> listarFinanceiro() { return lancamentoRepo.findAll(); }
 
-    // --- TAREFAS (NOVO) ---
-    @PostMapping("/tarefa")
-    public Tarefa criarTarefa(@RequestBody TarefaInputDTO dto) {
-        Turma turma = turmaRepo.findById(dto.turmaId())
-            .orElseThrow(() -> new RuntimeException("Turma não encontrada"));
-            
-        Tarefa tarefa = new Tarefa();
-        tarefa.setTitulo(dto.titulo());
-        tarefa.setDescricao(dto.descricao());
-        tarefa.setDataLimite(dto.dataLimite());
-        tarefa.setTurma(turma);
-        
-        if(dto.responsavelId() != null) {
-            Aluno resp = alunoRepo.findById(dto.responsavelId()).orElse(null);
-            tarefa.setResponsavel(resp);
-        }
-        
-        return tarefaRepo.save(tarefa);
+
+    // --- NOVO: MÓDULO DE VOTAÇÃO ---
+
+    @GetMapping("/votacoes")
+    public List<Votacao> listarVotacoes() {
+        return votacaoRepo.findAll();
     }
 
-    @GetMapping("/tarefas")
-    public List<Tarefa> listarTarefas() { return tarefaRepo.findAll(); }
-
-    // --- VOTAÇÃO (NOVO) ---
     @PostMapping("/votacao")
     public Votacao criarVotacao(@RequestBody VotacaoInputDTO dto) {
-        Turma turma = turmaRepo.findById(dto.turmaId())
-            .orElseThrow(() -> new RuntimeException("Turma não encontrada"));
-            
+        Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
         Votacao vot = new Votacao();
         vot.setTitulo(dto.titulo());
         vot.setDataFim(dto.dataFim());
         vot.setTurma(turma);
-        
         return votacaoRepo.save(vot);
     }
-    
-    // Endpoint auxiliar para adicionar opções na votação
-    @PostMapping("/votacao/opcao")
-    public OpcaoVotacao adicionarOpcao(@RequestBody OpcaoVotacao opcao) {
-        // Assume-se que o objeto opcao já venha com o votacao_id correto no JSON se o frontend montar certo,
-        // ou você pode criar um DTO específico para isso também se preferir.
-        // Por simplificação, vamos salvar direto se o JSON estiver estruturado.
+
+    @PostMapping("/votacao/{id}/opcao")
+    public OpcaoVotacao adicionarOpcao(@PathVariable Long id, @RequestBody Map<String, String> payload) {
+        Votacao votacao = votacaoRepo.findById(id).orElseThrow();
+        OpcaoVotacao opcao = new OpcaoVotacao();
+        opcao.setNomeFornecedor(payload.get("nome")); // Reutilizando campo nomeFornecedor como "Nome da Opção"
+        opcao.setVotacao(votacao);
         return opcaoRepo.save(opcao);
     }
+
+    // Endpoint para Votar
+    @PostMapping("/votar")
+    public ResponseEntity<?> registrarVoto(@RequestBody VotoInputRequest request) {
+        // 1. Verifica duplicidade
+        if(votoRepo.existsByVotacaoIdAndAlunoId(request.votacaoId, request.alunoId)) {
+            return ResponseEntity.badRequest().body("Erro: Este aluno já votou nesta enquete!");
+        }
+
+        // 2. Busca Entidades
+        Votacao votacao = votacaoRepo.findById(request.votacaoId).orElseThrow();
+        OpcaoVotacao opcao = opcaoRepo.findById(request.opcaoId).orElseThrow();
+        Aluno aluno = alunoRepo.findById(request.alunoId).orElseThrow();
+
+        // 3. Salva
+        Voto voto = new Voto();
+        voto.setVotacao(votacao);
+        voto.setOpcao(opcao);
+        voto.setAluno(aluno);
+        votoRepo.save(voto);
+
+        return ResponseEntity.ok("Voto registrado com sucesso!");
+    }
+
+    // DTO Interno simples para receber o JSON do voto
+    public record VotoInputRequest(Long votacaoId, Long opcaoId, Long alunoId) {}
 }

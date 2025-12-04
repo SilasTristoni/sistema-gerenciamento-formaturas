@@ -61,6 +61,10 @@
         <i class="ph ph-currency-dollar text-xl"></i> Financeiro
       </button>
 
+      <button onclick="navigate('votacao')" id="nav-votacao" class="nav-btn w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-dark-700 hover:text-white">
+        <i class="ph ph-chart-bar text-xl"></i> Enquetes
+      </button>
+
       <div class="mt-6 border-t border-dark-700 pt-4 px-2">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold" id="userAvatar">A</div>
@@ -82,11 +86,6 @@
       </div>
 
       <div class="flex items-center gap-4">
-        <div class="hidden sm:flex items-center bg-dark-900 border border-dark-700 rounded-full px-3 py-1.5">
-          <i class="ph ph-magnifying-glass text-slate-500"></i>
-          <input id="search" oninput="applySearch()" placeholder="Buscar aluno, turma ou evento..." class="bg-transparent outline-none text-sm text-white ml-2 w-56" />
-        </div>
-
         <button class="relative p-2 text-slate-400 hover:text-white">
           <i class="ph ph-bell text-xl"></i>
           <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
@@ -101,73 +100,100 @@
     <div class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
 
       <section id="screen-dashboard" class="screen active">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <div class="bg-dark-800 p-5 rounded-2xl border border-dark-700 shadow-sm">
-            <p class="text-xs text-slate-500 uppercase">Saldo Total</p>
-            <h3 class="text-2xl text-white font-bold mt-1" id="totalReceita">R$ --</h3>
-            <p class="text-xs text-primary-500 mt-2" id="receitaVar">+ Receita este mês</p>
+        <div class="flex justify-between items-end mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-white tracking-tight">Visão Geral</h2>
+                <p class="text-xs text-slate-500">Última atualização: <span id="lastUpdate">Agora</span></p>
+            </div>
+            <button onclick="carregarDados()" class="text-slate-400 hover:text-primary-500 transition-colors">
+                <i class="ph ph-arrows-clockwise text-xl"></i>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="bg-dark-800 p-5 rounded-lg border-l-4 border-l-primary-500 border-y border-r border-dark-700 shadow-lg relative overflow-hidden group">
+            <div class="absolute right-0 top-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity"><i class="ph ph-wallet text-6xl text-primary-500"></i></div>
+            <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Saldo em Caixa</p>
+            <h3 class="text-3xl text-white font-bold mt-1 tracking-tight" id="totalReceita">R$ --</h3>
+            <p class="text-xs font-medium text-emerald-400 mt-2 flex items-center gap-1"><i class="ph-bold ph-trend-up"></i> Disponível</p>
           </div>
 
-          <div class="bg-dark-800 p-5 rounded-2xl border border-dark-700 shadow-sm">
-            <p class="text-xs text-slate-500 uppercase">Alunos Ativos</p>
-            <h3 class="text-2xl text-white font-bold mt-1" id="totalAlunos">--</h3>
-            <p class="text-xs text-slate-400 mt-2" id="turmasAtivas">--</p>
+          <div class="bg-dark-800 p-5 rounded-lg border-l-4 border-l-blue-500 border-y border-r border-dark-700 shadow-lg relative">
+            <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Fluxo Mensal</p>
+            <div class="mt-3 space-y-2">
+                <div class="flex justify-between text-xs text-slate-300"><span>Entradas</span> <span id="txtEntradas" class="text-emerald-400">R$ 0</span></div>
+                <div class="w-full bg-dark-900 h-1.5 rounded-full overflow-hidden"><div id="barEntradas" class="bg-emerald-500 h-full" style="width: 0%"></div></div>
+                <div class="flex justify-between text-xs text-slate-300"><span>Saídas</span> <span id="txtSaidas" class="text-red-400">R$ 0</span></div>
+                <div class="w-full bg-dark-900 h-1.5 rounded-full overflow-hidden"><div id="barSaidas" class="bg-red-500 h-full" style="width: 0%"></div></div>
+            </div>
           </div>
 
-          <div class="bg-dark-800 p-5 rounded-2xl border border-dark-700 shadow-sm">
-            <p class="text-xs text-slate-500 uppercase">Inadimplentes</p>
-            <h3 class="text-2xl text-white font-bold mt-1" id="totalInadimplencia">--</h3>
-            <p class="text-xs text-red-400 mt-2" id="inadimplenciaCount">Atenção Necessária</p>
+          <div class="bg-dark-800 p-5 rounded-lg border-l-4 border-l-orange-500 border-y border-r border-dark-700 shadow-lg">
+            <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Pendências</p>
+            <h3 class="text-3xl text-white font-bold mt-1" id="totalInadimplencia">--</h3>
+            <p class="text-xs text-orange-400 mt-2">Alunos com atraso</p>
           </div>
 
-          <div class="bg-dark-800 p-5 rounded-2xl border border-dark-700 shadow-sm">
-            <p class="text-xs text-slate-500 uppercase">Próx. Evento</p>
-            <h3 class="text-lg text-white font-bold mt-1" id="proximoEvento">—</h3>
-            <p class="text-xs text-slate-400 mt-2" id="dataEvento">—</p>
+          <div class="bg-dark-800 p-5 rounded-lg border-l-4 border-l-purple-500 border-y border-r border-dark-700 shadow-lg">
+            <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Próximo Evento</p>
+            <h3 class="text-lg text-white font-bold mt-1 truncate" id="proximoEvento">--</h3>
+            <p class="text-xs text-purple-400 mt-2 flex items-center gap-1"><i class="ph-bold ph-calendar"></i> <span id="dataEvento">--</span></p>
           </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <div class="lg:col-span-2 bg-dark-800 p-6 rounded-2xl border border-dark-700 shadow-sm">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-white font-semibold">Fluxo de Arrecadação</h3>
-              <button class="text-xs text-primary-500">Exportar CSV</button>
+          <div class="lg:col-span-2 bg-dark-800 p-6 rounded-lg border border-dark-700 shadow-lg">
+            <div class="flex justify-between items-center mb-6">
+              <h3 class="text-white font-bold flex items-center gap-2"><i class="ph ph-chart-line-up text-primary-500"></i> Evolução Financeira</h3>
+              <div class="flex gap-2">
+                  <span class="text-xs text-slate-500 flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-emerald-500"></div> Receita</span>
+                  <span class="text-xs text-slate-500 flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-red-500"></div> Despesa</span>
+              </div>
             </div>
-            <div class="h-64 w-full">
-              <canvas id="revenueChart"></canvas>
+            <div class="h-72 w-full relative">
+              <canvas id="mainChart"></canvas>
             </div>
           </div>
 
-          <div class="bg-dark-800 p-6 rounded-2xl border border-dark-700 shadow-sm flex flex-col">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-white font-semibold">Pendências Recentes</h3>
-              <button onclick="navigate('financeiro')" class="text-xs text-primary-500">Ver todas</button>
+          <div class="bg-dark-800 p-6 rounded-lg border border-dark-700 shadow-lg flex flex-col">
+            <h3 class="text-white font-bold mb-4 flex items-center gap-2"><i class="ph ph-chart-pie-slice text-blue-500"></i> Distribuição</h3>
+            <div class="flex-1 flex items-center justify-center relative">
+               <div class="h-48 w-48 relative">
+                  <canvas id="donutChart"></canvas>
+                  <div class="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
+                      <span class="text-xs text-slate-500">Total Mov.</span>
+                      <span class="text-white font-bold" id="donutTotal">R$ 0</span>
+                  </div>
+               </div>
             </div>
-            <div id="pendenciasList" class="space-y-4 overflow-y-auto pr-2 custom-scroll flex-1"></div>
+            <div class="mt-4 grid grid-cols-2 gap-2 text-center">
+                <div class="bg-dark-900/50 p-2 rounded border border-dark-700">
+                    <div class="text-[10px] text-slate-500 uppercase">Receitas</div>
+                    <div class="text-emerald-400 font-bold text-sm" id="percReceita">0%</div>
+                </div>
+                <div class="bg-dark-900/50 p-2 rounded border border-dark-700">
+                    <div class="text-[10px] text-slate-500 uppercase">Despesas</div>
+                    <div class="text-red-400 font-bold text-sm" id="percDespesa">0%</div>
+                </div>
+            </div>
           </div>
         </div>
 
-        <div class="bg-dark-800 rounded-2xl border border-dark-700 shadow-sm overflow-hidden">
-            <div class="p-6 border-b border-dark-700 flex flex-col sm:flex-row justify-between items-center gap-4">
-              <h3 class="text-white font-semibold">Turmas em Andamento</h3>
-              <div class="flex gap-2">
-                <button onclick="filterTurmas('all')" class="px-3 py-1.5 text-xs font-medium text-slate-300 bg-dark-700 rounded-lg">Todas</button>
-                <button onclick="filterTurmas('emdia')" class="px-3 py-1.5 text-xs font-medium text-slate-300 bg-dark-700 rounded-lg">Em dia</button>
-                <button onclick="filterTurmas('atencao')" class="px-3 py-1.5 text-xs font-medium text-slate-300 bg-dark-700 rounded-lg">Atenção</button>
-              </div>
+        <div class="bg-dark-800 rounded-lg border border-dark-700 shadow-lg overflow-hidden">
+            <div class="p-4 border-b border-dark-700 flex justify-between items-center">
+              <h3 class="text-white font-bold text-sm uppercase tracking-wide">Últimas Movimentações</h3>
+              <button onclick="navigate('financeiro')" class="text-xs text-blue-400 hover:text-blue-300 hover:underline">Ver tudo</button>
             </div>
             <div class="overflow-x-auto">
               <table class="w-full text-left text-sm text-slate-400">
-                <thead class="bg-dark-900/50 text-xs uppercase font-medium text-slate-500">
+                <thead class="bg-dark-900 text-xs uppercase font-semibold text-slate-500">
                   <tr>
-                    <th class="px-6 py-4">Turma</th>
-                    <th class="px-6 py-4">Representante</th>
-                    <th class="px-6 py-4">Status</th>
-                    <th class="px-6 py-4">Arrecadado</th>
-                    <th class="px-6 py-4 text-right">Ações</th>
+                    <th class="px-6 py-3">Descrição</th>
+                    <th class="px-6 py-3">Data</th>
+                    <th class="px-6 py-3 text-right">Valor</th>
                   </tr>
                 </thead>
-                <tbody id="turmasPreview" class="divide-y divide-dark-700"></tbody>
+                <tbody id="dashboardRecentTable" class="divide-y divide-dark-700"></tbody>
               </table>
             </div>
         </div>
@@ -274,6 +300,21 @@
         </div>
       </section>
 
+      <section id="screen-votacao" class="screen hidden">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-white">Votações & Enquetes</h2>
+                <p class="text-sm text-slate-500">Decisões democráticas da turma</p>
+            </div>
+            <button onclick="openModal('new','votacao')" class="px-4 py-2 bg-primary-600 hover:bg-primary-500 rounded-lg text-white shadow-lg shadow-primary-500/20 flex items-center gap-2">
+                <i class="ph ph-plus-bold"></i> Nova Votação
+            </button>
+        </div>
+
+        <div id="votacoesContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            </div>
+      </section>
+
       <footer class="mt-8 text-center text-xs text-slate-600 pb-4">
         &copy; 2025 Sistema de Gerenciamento de Formaturas
       </footer>
@@ -285,8 +326,7 @@
 <div id="toastContainer" class="fixed top-5 right-5 z-[60] flex flex-col gap-2 w-full max-w-xs pointer-events-none"></div>
 
 <div id="modalBackdrop" class="fixed inset-0 bg-dark-900/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-  
-  <div id="modalPanel" class="bg-dark-800 w-full max-w-lg rounded-2xl shadow-2xl shadow-primary-500/10 border border-dark-700 transform scale-95 opacity-0 transition-all duration-300 relative overflow-hidden">
+  <div id="modalPanel" class="bg-dark-800 w-full max-w-lg rounded-2xl shadow-2xl border border-dark-700 transform scale-95 opacity-0 transition-all duration-300 relative overflow-hidden">
     
     <div class="px-6 py-4 border-b border-dark-700 flex justify-between items-center bg-dark-800/50">
       <h3 id="modalTitle" class="text-lg font-bold text-white flex items-center gap-2">
@@ -300,7 +340,6 @@
 
     <div class="p-6 max-h-[80vh] overflow-y-auto custom-scroll">
       <form id="modalForm" class="space-y-5">
-        
         <div>
           <label class="block text-xs uppercase font-bold text-slate-500 mb-1.5 tracking-wider">Categoria</label>
           <div class="relative">
@@ -309,8 +348,8 @@
               <option value="aluno">🎓 Aluno</option>
               <option value="turma">🏫 Turma</option>
               <option value="lancamento">💰 Financeiro</option>
-              <option value="tarefa">✅ Tarefa</option>
               <option value="votacao">🗳️ Votação</option>
+              <option value="tarefa">✅ Tarefa</option>
             </select>
             <i class="ph ph-caret-down absolute right-4 top-3.5 text-slate-400 pointer-events-none"></i>
           </div>
@@ -318,7 +357,7 @@
 
         <div>
           <label class="block text-xs uppercase font-bold text-slate-500 mb-1.5 tracking-wider">Título / Nome</label>
-          <input id="modalNome" type="text" required class="w-full bg-dark-900 border border-dark-600 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all" placeholder="Ex: Formatura 2025...">
+          <input id="modalNome" type="text" required class="w-full bg-dark-900 border border-dark-600 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all" placeholder="Digite aqui...">
         </div>
 
         <div class="grid grid-cols-2 gap-4 transition-all" id="divDataValor">
