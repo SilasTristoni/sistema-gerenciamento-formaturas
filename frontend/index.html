@@ -26,6 +26,19 @@
   </script>
 
   <link rel="stylesheet" href="css/style.css">
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#10b981">
+  
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('SW registrado!', reg))
+          .catch(err => console.log('Erro no SW', err));
+      });
+    }
+  </script>
 </head>
 <body class="bg-dark-900 text-slate-300 font-sans antialiased">
 
@@ -203,6 +216,11 @@
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-xl font-semibold text-white">Alunos</h2>
           <div class="flex gap-2">
+            <input type="file" id="fileImportCSV" accept=".csv" class="hidden" onchange="importarAlunosCSV(event)">
+            <button onclick="document.getElementById('fileImportCSV').click()" class="px-4 py-2 bg-teal-600 hover:bg-teal-500 rounded-lg text-white shadow-lg flex items-center gap-2">
+              <i class="ph ph-upload-simple"></i> Importar CSV
+            </button>
+            
             <button onclick="openModal('new','aluno')" class="px-4 py-2 bg-primary-600 rounded-lg text-white">Novo Aluno</button>
             <button onclick="exportTableCSV('alunosTable','alunos')" class="px-4 py-2 bg-dark-700 rounded-lg text-slate-300">Exportar</button>
           </div>

@@ -13,14 +13,14 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // 1. CARREGAMENTO
-async function carregarDados() {
+export async function carregarDados() {
     try {
         const [turmas, alunos, financeiro, eventos, votacoes] = await Promise.all([
             api.buscar('turmas'),
             api.buscar('alunos'),
             api.buscar('financeiro'),
             api.buscar('eventos'),
-            api.buscar('votacoes') // Novo endpoint
+            api.buscar('votacoes')
         ]);
 
         db = { turmas, alunos, financeiro, eventos, votacoes }; 
@@ -38,6 +38,8 @@ async function carregarDados() {
         showToast("Erro ao conectar com servidor", "error");
     }
 }
+// Expõe para o escopo global (botão atualizar do html)
+window.carregarDados = carregarDados;
 
 // 2. MODAL & FORMULÁRIOS
 function setupModalEvents() {
@@ -142,9 +144,9 @@ function setupNavigation() {
 
 // 4. FUNÇÕES GLOBAIS (Exportação e Votação)
 window.exportTableCSV = (tableId, filename) => {
+    // Código original mantido
     const table = document.getElementById(tableId);
     if (!table) { showToast("Tabela vazia", "error"); return; }
-    
     let csv = [];
     const rows = table.querySelectorAll("tr");
     for (let i = 0; i < rows.length; i++) {
@@ -163,14 +165,12 @@ window.exportTableCSV = (tableId, filename) => {
     link.click();
 };
 
-// --- AÇÕES DE VOTAÇÃO ---
 window.votar = async (votacaoId, opcaoId) => {
+    // Mantido original
     if(db.alunos.length === 0) {
         showToast("Cadastre alunos antes de votar!", "error");
         return;
     }
-
-    // Simulação de login: pede o ID do aluno
     const alunoIdStr = prompt(`ID do Aluno (Disponíveis: ${db.alunos.map(a=>a.id).join(', ')})`);
     if(!alunoIdStr) return;
 
@@ -181,15 +181,13 @@ window.votar = async (votacaoId, opcaoId) => {
     };
 
     try {
-        // Usa a api.salvar mas para um endpoint específico
-        await fetch('http://localhost:8080/api/cadastro/votar', {
+        await fetch('http://172.20.132.57:8080/api/cadastro/votar', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
         }).then(async res => {
             if(!res.ok) throw new Error(await res.text());
             showToast("Voto computado!");
-            // Não recarrega tudo para não perder o flow, mas idealmente sim
         });
     } catch (err) {
         showToast(err.message, "error");
@@ -197,11 +195,12 @@ window.votar = async (votacaoId, opcaoId) => {
 };
 
 window.adicionarOpcaoUI = async (votacaoId) => {
+    // Mantido original
     const nome = prompt("Nome da opção (Ex: Banda X):");
     if(!nome) return;
 
     try {
-        const response = await fetch(`http://localhost:8080/api/cadastro/votacao/${votacaoId}/opcao`, {
+        const response = await fetch(`http://172.20.132.57:8080/api/cadastro/votacao/${votacaoId}/opcao`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ nome: nome })
@@ -214,4 +213,52 @@ window.adicionarOpcaoUI = async (votacaoId) => {
             showToast("Erro ao adicionar opção", "error");
         }
     } catch(e) { console.error(e); }
+};
+
+// --- NOVO: IMPORTAÇÃO DE ALUNOS VIA CSV ---
+window.importarAlunosCSV = async (event) => {
+    const file = event.target.files[0];
+    if(!file) return;
+
+    if(db.turmas.length === 0) {
+        showToast("Cadastre uma turma primeiro!", "error");
+        event.target.value = '';
+        return;
+    }
+
+    const turmasStr = db.turmas.map(t => `${t.id} - ${t.nome}`).join('\n');
+    const turmaIdStr = prompt(`Digite o ID da turma para importar os alunos:\n\n${turmasStr}`);
+    
+    if(!turmaIdStr) {
+        event.target.value = '';
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('arquivo', file);
+    formData.append('turmaId', parseInt(turmaIdStr));
+
+    try {
+        showToast("Lendo arquivo...", "success");
+        
+        // Requisição para o Spring Boot usando o IP que discutimos
+        const response = await fetch('http://172.20.132.57:8080/api/cadastro/alunos/importar', {
+            method: 'POST',
+            body: formData
+        });
+
+        const resultText = await response.text();
+
+        if(response.ok) {
+            showToast(resultText, "success");
+            carregarDados(); // Atualiza a tabela na mesma hora!
+        } else {
+            showToast(resultText, "error");
+        }
+    } catch (err) {
+        showToast("Erro ao comunicar com o servidor", "error");
+        console.error(err);
+    } finally {
+        event.target.value = ''; 
+    }
 };

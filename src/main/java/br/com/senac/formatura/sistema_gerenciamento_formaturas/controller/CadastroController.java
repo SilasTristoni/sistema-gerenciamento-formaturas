@@ -1,5 +1,8 @@
 package br.com.senac.formatura.sistema_gerenciamento_formaturas.controller;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -11,7 +14,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.dto.AlunoInputDTO;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.dto.EventoInputDTO;
@@ -47,15 +52,18 @@ public class CadastroController {
     @Autowired private OpcaoVotacaoRepository opcaoRepo;
     @Autowired private VotoRepository votoRepo;
 
-    // --- MÉTODOS EXISTENTES (Turma, Aluno, Evento, Financeiro) ---
-    // (Mantenha o código anterior destas partes aqui...)
-    
+    // --- MÓDULO DE TURMAS ---
     @PostMapping("/turma")
-    public Turma criarTurma(@RequestBody Turma turma) { return turmaRepo.save(turma); }
+    public Turma criarTurma(@RequestBody Turma turma) { 
+        return turmaRepo.save(turma); 
+    }
     
     @GetMapping("/turmas")
-    public List<Turma> listarTurmas() { return turmaRepo.findAll(); }
+    public List<Turma> listarTurmas() { 
+        return turmaRepo.findAll(); 
+    }
 
+    // --- MÓDULO DE ALUNOS ---
     @PostMapping("/aluno")
     public Aluno criarAluno(@RequestBody AlunoInputDTO dto) {
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
@@ -65,9 +73,46 @@ public class CadastroController {
         aluno.setTurma(turma);
         return alunoRepo.save(aluno);
     }
+    
     @GetMapping("/alunos")
-    public List<Aluno> listarAlunos() { return alunoRepo.findAll(); }
+    public List<Aluno> listarAlunos() { 
+        return alunoRepo.findAll(); 
+    }
 
+    // NOVO ENDPOINT: Importação de Alunos em Lote via CSV
+    @PostMapping("/alunos/importar")
+    public ResponseEntity<String> importarAlunosCSV(@RequestParam("arquivo") MultipartFile arquivo, @RequestParam("turmaId") Long turmaId) {
+        Turma turma = turmaRepo.findById(turmaId).orElseThrow(() -> new RuntimeException("Turma não encontrada"));
+        int cadastrados = 0;
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(arquivo.getInputStream(), StandardCharsets.UTF_8))) {
+            String linha;
+            boolean primeiraLinha = true; // Pula o cabeçalho
+
+            while ((linha = br.readLine()) != null) {
+                if (primeiraLinha) {
+                    primeiraLinha = false;
+                    continue;
+                }
+
+                String[] dados = linha.split(",");
+                if (dados.length >= 1) {
+                    Aluno aluno = new Aluno();
+                    aluno.setNome(dados[0].trim());
+                    aluno.setContato(dados.length > 1 ? dados[1].trim() : ""); 
+                    aluno.setTurma(turma);
+                    alunoRepo.save(aluno);
+                    cadastrados++;
+                }
+            }
+            return ResponseEntity.ok(cadastrados + " alunos foram importados com sucesso para a turma " + turma.getNome() + "!");
+            
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erro ao processar o arquivo: " + e.getMessage());
+        }
+    }
+
+    // --- MÓDULO DE EVENTOS ---
     @PostMapping("/evento")
     public Evento criarEvento(@RequestBody EventoInputDTO dto) {
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
@@ -78,9 +123,13 @@ public class CadastroController {
         evento.setTurma(turma);
         return eventoRepo.save(evento);
     }
+    
     @GetMapping("/eventos")
-    public List<Evento> listarEventos() { return eventoRepo.findAll(); }
+    public List<Evento> listarEventos() { 
+        return eventoRepo.findAll(); 
+    }
 
+    // --- MÓDULO FINANCEIRO ---
     @PostMapping("/lancamento")
     public LancamentoFinanceiro criarLancamento(@RequestBody LancamentoInputDTO dto) {
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
@@ -93,12 +142,13 @@ public class CadastroController {
         lanc.setTurma(turma);
         return lancamentoRepo.save(lanc);
     }
+    
     @GetMapping("/financeiro")
-    public List<LancamentoFinanceiro> listarFinanceiro() { return lancamentoRepo.findAll(); }
+    public List<LancamentoFinanceiro> listarFinanceiro() { 
+        return lancamentoRepo.findAll(); 
+    }
 
-
-    // --- NOVO: MÓDULO DE VOTAÇÃO ---
-
+    // --- MÓDULO DE VOTAÇÃO ---
     @GetMapping("/votacoes")
     public List<Votacao> listarVotacoes() {
         return votacaoRepo.findAll();
@@ -127,14 +177,14 @@ public class CadastroController {
     @PostMapping("/votar")
     public ResponseEntity<?> registrarVoto(@RequestBody VotoInputRequest request) {
         // 1. Verifica duplicidade
-        if(votoRepo.existsByVotacaoIdAndAlunoId(request.votacaoId, request.alunoId)) {
+        if(votoRepo.existsByVotacaoIdAndAlunoId(request.votacaoId(), request.alunoId())) {
             return ResponseEntity.badRequest().body("Erro: Este aluno já votou nesta enquete!");
         }
 
         // 2. Busca Entidades
-        Votacao votacao = votacaoRepo.findById(request.votacaoId).orElseThrow();
-        OpcaoVotacao opcao = opcaoRepo.findById(request.opcaoId).orElseThrow();
-        Aluno aluno = alunoRepo.findById(request.alunoId).orElseThrow();
+        Votacao votacao = votacaoRepo.findById(request.votacaoId()).orElseThrow();
+        OpcaoVotacao opcao = opcaoRepo.findById(request.opcaoId()).orElseThrow();
+        Aluno aluno = alunoRepo.findById(request.alunoId()).orElseThrow();
 
         // 3. Salva
         Voto voto = new Voto();

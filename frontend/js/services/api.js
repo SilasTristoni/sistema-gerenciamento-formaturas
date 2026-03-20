@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8080/api/cadastro';
+const API_BASE = 'http://172.20.132.57:8080/api/cadastro';
 
 export const api = {
     async buscar(endpoint) {

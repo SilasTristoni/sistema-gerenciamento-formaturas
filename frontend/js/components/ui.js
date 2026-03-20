@@ -138,6 +138,7 @@ export const ui = {
         const sortedFin = [...financeiro].sort((a,b) => new Date(a.dataLancamento) - new Date(b.dataLancamento));
 
         sortedFin.forEach(l => {
+            if (!l.dataLancamento) return; // <--- ADICIONE ESTA LINHA: Ignora lançamentos sem data
             const k = l.dataLancamento.substring(0, 7); 
             if(!meses[k]) meses[k] = {rec:0, desp:0};
             if(l.tipo === 'receita') { meses[k].rec += l.valor; totalReceitaAbs += l.valor; }
