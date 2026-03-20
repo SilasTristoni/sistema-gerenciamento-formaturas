@@ -23,10 +23,14 @@
         }
       }
     }
+
+    // PROTEÇÃO DE ROTA: Se não tiver token, manda pro Login imediatamente
+    if (!localStorage.getItem('token')) {
+        window.location.href = 'login.html';
+    }
   </script>
 
   <link rel="stylesheet" href="css/style.css">
-  
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#10b981">
   
@@ -49,7 +53,7 @@
       <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500 to-teal-400 flex items-center justify-center text-white font-bold mr-3">GF</div>
       <div>
         <div class="text-white font-semibold text-lg">GestãoForm</div>
-        <div class="text-xs text-slate-500">Painel de administração</div>
+        <div class="text-xs text-slate-500">Painel do Sistema</div>
       </div>
     </div>
 
@@ -80,12 +84,15 @@
 
       <div class="mt-6 border-t border-dark-700 pt-4 px-2">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold" id="userAvatar">A</div>
+          <div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold" id="userAvatar">U</div>
           <div>
-            <div class="text-sm text-white font-medium" id="userNameDisplay">Carregando...</div>
+            <div class="text-sm text-white font-medium truncate w-32" id="userNameDisplay">Carregando...</div>
             <div class="text-xs text-slate-500" id="userRoleDisplay">...</div>
           </div>
         </div>
+        <button onclick="logout()" class="mt-4 w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors text-sm font-medium">
+            <i class="ph ph-sign-out text-lg"></i> Sair do Sistema
+        </button>
       </div>
     </nav>
   </aside>
@@ -104,7 +111,7 @@
           <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
         </button>
 
-        <button onclick="openModal('new','lancamento')" class="bg-primary-600 hover:bg-primary-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
+        <button onclick="openModal('new','lancamento')" class="btn-admin bg-primary-600 hover:bg-primary-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
           <i class="ph ph-plus-bold"></i> <span class="hidden sm:inline">Novo</span>
         </button>
       </div>
@@ -217,11 +224,11 @@
           <h2 class="text-xl font-semibold text-white">Alunos</h2>
           <div class="flex gap-2">
             <input type="file" id="fileImportCSV" accept=".csv" class="hidden" onchange="importarAlunosCSV(event)">
-            <button onclick="document.getElementById('fileImportCSV').click()" class="px-4 py-2 bg-teal-600 hover:bg-teal-500 rounded-lg text-white shadow-lg flex items-center gap-2">
+            <button onclick="document.getElementById('fileImportCSV').click()" class="btn-admin px-4 py-2 bg-teal-600 hover:bg-teal-500 rounded-lg text-white shadow-lg flex items-center gap-2">
               <i class="ph ph-upload-simple"></i> Importar CSV
             </button>
             
-            <button onclick="openModal('new','aluno')" class="px-4 py-2 bg-primary-600 rounded-lg text-white">Novo Aluno</button>
+            <button onclick="openModal('new','aluno')" class="btn-admin px-4 py-2 bg-primary-600 rounded-lg text-white">Novo Aluno</button>
             <button onclick="exportTableCSV('alunosTable','alunos')" class="px-4 py-2 bg-dark-700 rounded-lg text-slate-300">Exportar</button>
           </div>
         </div>
@@ -246,7 +253,7 @@
       <section id="screen-turmas" class="screen hidden">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold text-white">Turmas</h2>
-            <button onclick="openModal('new','turma')" class="px-4 py-2 bg-primary-600 rounded-lg text-white">Nova Turma</button>
+            <button onclick="openModal('new','turma')" class="btn-admin px-4 py-2 bg-primary-600 rounded-lg text-white">Nova Turma</button>
         </div>
         <div class="bg-dark-800 rounded-2xl border border-dark-700 shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
@@ -270,7 +277,7 @@
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold text-white">Eventos</h2>
             <div class="flex gap-2">
-                <button onclick="openModal('new','evento')" class="px-4 py-2 bg-primary-600 rounded-lg text-white">Novo Evento</button>
+                <button onclick="openModal('new','evento')" class="btn-admin px-4 py-2 bg-primary-600 rounded-lg text-white">Novo Evento</button>
                 <button onclick="exportTableCSV('eventosTable','eventos')" class="px-4 py-2 bg-dark-700 rounded-lg text-slate-300">Exportar</button>
             </div>
         </div>
@@ -296,7 +303,7 @@
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold text-white">Financeiro</h2>
             <div class="flex gap-2">
-                <button onclick="openModal('new','lancamento')" class="px-4 py-2 bg-primary-600 rounded-lg text-white">Novo Lançamento</button>
+                <button onclick="openModal('new','lancamento')" class="btn-admin px-4 py-2 bg-primary-600 rounded-lg text-white">Novo Lançamento</button>
                 <button onclick="exportTableCSV('financeiroTable','financeiro')" class="px-4 py-2 bg-dark-700 rounded-lg text-slate-300">Exportar</button>
             </div>
         </div>
@@ -324,7 +331,7 @@
                 <h2 class="text-2xl font-bold text-white">Votações & Enquetes</h2>
                 <p class="text-sm text-slate-500">Decisões democráticas da turma</p>
             </div>
-            <button onclick="openModal('new','votacao')" class="px-4 py-2 bg-primary-600 hover:bg-primary-500 rounded-lg text-white shadow-lg shadow-primary-500/20 flex items-center gap-2">
+            <button onclick="openModal('new','votacao')" class="btn-admin px-4 py-2 bg-primary-600 hover:bg-primary-500 rounded-lg text-white shadow-lg shadow-primary-500/20 flex items-center gap-2">
                 <i class="ph ph-plus-bold"></i> Nova Votação
             </button>
         </div>

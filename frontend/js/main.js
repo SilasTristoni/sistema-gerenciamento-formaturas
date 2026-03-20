@@ -7,10 +7,44 @@ import { showToast } from './components/toast.js';
 let db = { turmas: [], alunos: [], eventos: [], financeiro: [], votacoes: [] };
 
 document.addEventListener('DOMContentLoaded', () => {
-    carregarDados();
+    verificarSessao();
     setupNavigation();
     setupModalEvents();
 });
+
+// --- LÓGICA DE SESSÃO ---
+function verificarSessao() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    const nome = localStorage.getItem('nomeUsuario') || 'Usuário';
+    const perfil = localStorage.getItem('perfil'); // ROLE_COMISSAO ou ROLE_ALUNO
+
+    if(document.getElementById('userNameDisplay')) {
+        document.getElementById('userNameDisplay').innerText = nome;
+        document.getElementById('userAvatar').innerText = nome.charAt(0).toUpperCase();
+        
+        if(perfil === 'ROLE_COMISSAO') {
+            document.getElementById('userRoleDisplay').innerText = "Comissão";
+            document.querySelectorAll('.btn-admin').forEach(btn => btn.style.display = 'inline-flex');
+        } else {
+            document.getElementById('userRoleDisplay').innerText = "Formando(a)";
+            document.querySelectorAll('.btn-admin').forEach(btn => btn.style.display = 'none');
+        }
+    }
+
+    carregarDados();
+}
+
+window.logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('perfil');
+    localStorage.removeItem('nomeUsuario');
+    window.location.href = 'login.html'; 
+};
 
 // 1. CARREGAMENTO
 export async function carregarDados() {
@@ -35,7 +69,12 @@ export async function carregarDados() {
         
     } catch (error) {
         console.error(error);
-        showToast("Erro ao conectar com servidor", "error");
+        if(error.message === 'Acesso negado') {
+            showToast("Sua sessão expirou.", "error");
+            setTimeout(window.logout, 2000);
+        } else {
+            showToast("Erro ao conectar com servidor", "error");
+        }
     }
 }
 // Expõe para o escopo global (botão atualizar do html)
@@ -144,7 +183,6 @@ function setupNavigation() {
 
 // 4. FUNÇÕES GLOBAIS (Exportação e Votação)
 window.exportTableCSV = (tableId, filename) => {
-    // Código original mantido
     const table = document.getElementById(tableId);
     if (!table) { showToast("Tabela vazia", "error"); return; }
     let csv = [];
@@ -166,7 +204,6 @@ window.exportTableCSV = (tableId, filename) => {
 };
 
 window.votar = async (votacaoId, opcaoId) => {
-    // Mantido original
     if(db.alunos.length === 0) {
         showToast("Cadastre alunos antes de votar!", "error");
         return;
@@ -181,9 +218,12 @@ window.votar = async (votacaoId, opcaoId) => {
     };
 
     try {
-        await fetch('http://172.20.132.57:8080/api/cadastro/votar', {
+        await fetch('http://localhost:8080/api/cadastro/votar', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('token') // <--- TOKEN ADICIONADO!
+            },
             body: JSON.stringify(payload)
         }).then(async res => {
             if(!res.ok) throw new Error(await res.text());
@@ -195,14 +235,16 @@ window.votar = async (votacaoId, opcaoId) => {
 };
 
 window.adicionarOpcaoUI = async (votacaoId) => {
-    // Mantido original
     const nome = prompt("Nome da opção (Ex: Banda X):");
     if(!nome) return;
 
     try {
-        const response = await fetch(`http://172.20.132.57:8080/api/cadastro/votacao/${votacaoId}/opcao`, {
+        const response = await fetch(`http://localhost:8080/api/cadastro/votacao/${votacaoId}/opcao`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('token') // <--- TOKEN ADICIONADO!
+            },
             body: JSON.stringify({ nome: nome })
         });
         
@@ -215,7 +257,6 @@ window.adicionarOpcaoUI = async (votacaoId) => {
     } catch(e) { console.error(e); }
 };
 
-// --- NOVO: IMPORTAÇÃO DE ALUNOS VIA CSV ---
 window.importarAlunosCSV = async (event) => {
     const file = event.target.files[0];
     if(!file) return;
@@ -241,9 +282,11 @@ window.importarAlunosCSV = async (event) => {
     try {
         showToast("Lendo arquivo...", "success");
         
-        // Requisição para o Spring Boot usando o IP que discutimos
-        const response = await fetch('http://172.20.132.57:8080/api/cadastro/alunos/importar', {
+        const response = await fetch('http://localhost:8080/api/cadastro/alunos/importar', {
             method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('token') // <--- TOKEN ADICIONADO!
+            },
             body: formData
         });
 
@@ -251,7 +294,7 @@ window.importarAlunosCSV = async (event) => {
 
         if(response.ok) {
             showToast(resultText, "success");
-            carregarDados(); // Atualiza a tabela na mesma hora!
+            carregarDados(); 
         } else {
             showToast(resultText, "error");
         }

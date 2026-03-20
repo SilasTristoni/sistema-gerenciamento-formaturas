@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,7 +27,9 @@ import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Aluno;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Evento;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.LancamentoFinanceiro;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.OpcaoVotacao;
+import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Perfil;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Turma;
+import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Usuario;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Votacao;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Voto;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.AlunoRepository;
@@ -35,6 +38,7 @@ import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.Lancam
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.OpcaoVotacaoRepository;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.TarefaRepository;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.TurmaRepository;
+import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.UsuarioRepository;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.VotacaoRepository;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.VotoRepository;
 
@@ -51,6 +55,10 @@ public class CadastroController {
     @Autowired private VotacaoRepository votacaoRepo;
     @Autowired private OpcaoVotacaoRepository opcaoRepo;
     @Autowired private VotoRepository votoRepo;
+    
+    // Novas injeções para criar os usuários
+    @Autowired private UsuarioRepository usuarioRepo;
+    @Autowired private PasswordEncoder passwordEncoder;
 
     // --- MÓDULO DE TURMAS ---
     @PostMapping("/turma")
@@ -67,11 +75,23 @@ public class CadastroController {
     @PostMapping("/aluno")
     public Aluno criarAluno(@RequestBody AlunoInputDTO dto) {
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
+        
+        // 1. Cria o Aluno
         Aluno aluno = new Aluno();
         aluno.setNome(dto.nome());
-        aluno.setContato(dto.contato());
+        aluno.setContato(dto.contato()); // ATENÇÃO: Agora este campo DEVE ser um e-mail válido
         aluno.setTurma(turma);
-        return alunoRepo.save(aluno);
+        Aluno alunoSalvo = alunoRepo.save(aluno);
+
+        // 2. Cria o Usuário de acesso para este Aluno automaticamente
+        Usuario usuario = new Usuario();
+        usuario.setEmail(dto.contato()); // Usa o e-mail passado no cadastro
+        usuario.setSenha(passwordEncoder.encode("mudar123")); // Senha padrão para todos os alunos novos
+        usuario.setPerfil(Perfil.ROLE_ALUNO);
+        usuario.setAluno(alunoSalvo); // Vincula o login ao aluno
+        usuarioRepo.save(usuario);
+
+        return alunoSalvo;
     }
     
     @GetMapping("/alunos")
@@ -79,7 +99,7 @@ public class CadastroController {
         return alunoRepo.findAll(); 
     }
 
-    // NOVO ENDPOINT: Importação de Alunos em Lote via CSV
+    // Importação de Alunos em Lote via CSV (Agora criando usuários também!)
     @PostMapping("/alunos/importar")
     public ResponseEntity<String> importarAlunosCSV(@RequestParam("arquivo") MultipartFile arquivo, @RequestParam("turmaId") Long turmaId) {
         Turma turma = turmaRepo.findById(turmaId).orElseThrow(() -> new RuntimeException("Turma não encontrada"));
@@ -95,17 +115,28 @@ public class CadastroController {
                     continue;
                 }
 
-                String[] dados = linha.split(",");
+                String[] dados = linha.split(";"); // Usando ponto e vírgula como separador padrão do Excel BR
                 if (dados.length >= 1) {
+                    // Salva o Aluno
                     Aluno aluno = new Aluno();
                     aluno.setNome(dados[0].trim());
-                    aluno.setContato(dados.length > 1 ? dados[1].trim() : ""); 
+                    String emailContato = dados.length > 1 ? dados[1].trim() : "aluno" + System.currentTimeMillis() + "@email.com";
+                    aluno.setContato(emailContato); 
                     aluno.setTurma(turma);
-                    alunoRepo.save(aluno);
+                    Aluno alunoSalvo = alunoRepo.save(aluno);
+                    
+                    // Salva o Usuário para esse aluno importado
+                    Usuario usuario = new Usuario();
+                    usuario.setEmail(emailContato); 
+                    usuario.setSenha(passwordEncoder.encode("mudar123")); 
+                    usuario.setPerfil(Perfil.ROLE_ALUNO);
+                    usuario.setAluno(alunoSalvo); 
+                    usuarioRepo.save(usuario);
+
                     cadastrados++;
                 }
             }
-            return ResponseEntity.ok(cadastrados + " alunos foram importados com sucesso para a turma " + turma.getNome() + "!");
+            return ResponseEntity.ok(cadastrados + " alunos foram importados com sucesso e seus usuários de acesso (senha: mudar123) foram criados para a turma " + turma.getNome() + "!");
             
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Erro ao processar o arquivo: " + e.getMessage());
