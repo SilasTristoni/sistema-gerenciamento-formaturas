@@ -1,32 +1,105 @@
-const API_BASE = 'http://172.20.132.57:8080/api/cadastro';
+const API_URL = "http://localhost:8080/api";
+const CADASTRO_URL = `${API_URL}/cadastro`;
+const AUTH_URL = `${API_URL}/auth`;
+const VOTACAO_URL = `${API_URL}/votacoes`;
+
+function authHeaders(isJson = true) {
+    const token = localStorage.getItem("token");
+    const headers = {};
+
+    if (isJson) {
+        headers["Content-Type"] = "application/json";
+    }
+
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    return headers;
+}
+
+async function parseResponse(response) {
+    if (response.status === 401) {
+        throw new Error("Sessão expirada");
+    }
+
+    if (response.status === 403) {
+        throw new Error("Acesso negado");
+    }
+
+    if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "Erro na requisição");
+    }
+
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+        return response.json();
+    }
+
+    return response.text();
+}
 
 export const api = {
+    async login(email, senha) {
+        const response = await fetch(`${AUTH_URL}/login`, {
+            method: "POST",
+            headers: authHeaders(true),
+            body: JSON.stringify({ email, senha })
+        });
+
+        return parseResponse(response);
+    },
+
+    async me() {
+        const response = await fetch(`${AUTH_URL}/me`, {
+            method: "GET",
+            headers: authHeaders(false)
+        });
+
+        return parseResponse(response);
+    },
+
     async buscar(endpoint) {
-        try {
-            const response = await fetch(`${API_BASE}/${endpoint}`);
-            return response.ok ? await response.json() : [];
-        } catch (error) {
-            console.error(`Erro ao buscar ${endpoint}:`, error);
-            throw error;
-        }
+        const response = await fetch(`${CADASTRO_URL}/${endpoint}`, {
+            method: "GET",
+            headers: authHeaders(false)
+        });
+
+        return parseResponse(response);
     },
 
     async salvar(endpoint, payload) {
-        try {
-            const response = await fetch(`${API_BASE}${endpoint}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            
-            if (!response.ok) {
-                const texto = await response.text();
-                throw new Error(texto);
-            }
-            return true;
-        } catch (error) {
-            console.error(`Erro ao salvar em ${endpoint}:`, error);
-            throw error;
-        }
+        const response = await fetch(`${CADASTRO_URL}${endpoint}`, {
+            method: "POST",
+            headers: authHeaders(true),
+            body: JSON.stringify(payload)
+        });
+
+        return parseResponse(response);
+    },
+
+    async votar(votacaoId, opcaoId) {
+        const response = await fetch(`${VOTACAO_URL}/votar`, {
+            method: "POST",
+            headers: authHeaders(true),
+            body: JSON.stringify({ votacaoId, opcaoId })
+        });
+
+        return parseResponse(response);
+    },
+
+    async importarAlunosCSV(file, turmaId) {
+        const formData = new FormData();
+        formData.append("arquivo", file);
+        formData.append("turmaId", turmaId);
+
+        const response = await fetch(`${CADASTRO_URL}/alunos/importar`, {
+            method: "POST",
+            headers: authHeaders(false),
+            body: formData
+        });
+
+        return parseResponse(response);
     }
 };

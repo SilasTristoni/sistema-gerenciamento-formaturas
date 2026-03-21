@@ -3,8 +3,8 @@ import { ui } from './components/ui.js';
 import { modal } from './components/modal.js';
 import { showToast } from './components/toast.js';
 
-// Estado global da aplicação
 let db = { turmas: [], alunos: [], eventos: [], financeiro: [], votacoes: [] };
+let usuarioLogado = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     verificarSessao();
@@ -12,41 +12,46 @@ document.addEventListener('DOMContentLoaded', () => {
     setupModalEvents();
 });
 
-// --- LÓGICA DE SESSÃO ---
-function verificarSessao() {
+async function verificarSessao() {
     const token = localStorage.getItem('token');
     if (!token) {
         window.location.href = 'login.html';
         return;
     }
 
-    const nome = localStorage.getItem('nomeUsuario') || 'Usuário';
-    const perfil = localStorage.getItem('perfil'); // ROLE_COMISSAO ou ROLE_ALUNO
+    try {
+        usuarioLogado = await api.me();
 
-    if(document.getElementById('userNameDisplay')) {
-        document.getElementById('userNameDisplay').innerText = nome;
-        document.getElementById('userAvatar').innerText = nome.charAt(0).toUpperCase();
-        
-        if(perfil === 'ROLE_COMISSAO') {
-            document.getElementById('userRoleDisplay').innerText = "Comissão";
-            document.querySelectorAll('.btn-admin').forEach(btn => btn.style.display = 'inline-flex');
-        } else {
-            document.getElementById('userRoleDisplay').innerText = "Formando(a)";
-            document.querySelectorAll('.btn-admin').forEach(btn => btn.style.display = 'none');
+        if (document.getElementById('userNameDisplay')) {
+            document.getElementById('userNameDisplay').innerText = usuarioLogado.nome || 'Usuário';
+            document.getElementById('userAvatar').innerText = (usuarioLogado.nome || 'U').charAt(0).toUpperCase();
+
+            if (usuarioLogado.perfil === 'ROLE_COMISSAO') {
+                document.getElementById('userRoleDisplay').innerText = 'Comissão';
+                document.querySelectorAll('.btn-admin').forEach(btn => btn.style.display = 'inline-flex');
+            } else {
+                document.getElementById('userRoleDisplay').innerText = 'Formando(a)';
+                document.querySelectorAll('.btn-admin').forEach(btn => btn.style.display = 'none');
+            }
         }
-    }
 
-    carregarDados();
+        await carregarDados();
+    } catch (error) {
+        console.error(error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('perfil');
+        localStorage.removeItem('nomeUsuario');
+        window.location.href = 'login.html';
+    }
 }
 
 window.logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('perfil');
     localStorage.removeItem('nomeUsuario');
-    window.location.href = 'login.html'; 
+    window.location.href = 'login.html';
 };
 
-// 1. CARREGAMENTO
 export async function carregarDados() {
     try {
         const [turmas, alunos, financeiro, eventos, votacoes] = await Promise.all([
@@ -57,102 +62,130 @@ export async function carregarDados() {
             api.buscar('votacoes')
         ]);
 
-        db = { turmas, alunos, financeiro, eventos, votacoes }; 
-        
+        db = { turmas, alunos, financeiro, eventos, votacoes };
+
         ui.renderTurmas(db.turmas);
         ui.renderAlunos(db.alunos);
-        if(document.getElementById('eventosBody')) ui.renderEventos(db.eventos);
-        if(document.getElementById('financeiroBody')) ui.renderFinanceiro(db.financeiro);
-        if(document.getElementById('votacoesContainer')) ui.renderVotacoes(db.votacoes, db.alunos);
-        
+
+        if (document.getElementById('eventosBody')) ui.renderEventos(db.eventos);
+        if (document.getElementById('financeiroBody')) ui.renderFinanceiro(db.financeiro);
+        if (document.getElementById('votacoesContainer')) ui.renderVotacoes(db.votacoes, db.alunos);
+
         ui.atualizarDashboard(db);
-        
     } catch (error) {
         console.error(error);
-        if(error.message === 'Acesso negado') {
-            showToast("Sua sessão expirou.", "error");
-            setTimeout(window.logout, 2000);
-        } else {
-            showToast("Erro ao conectar com servidor", "error");
+
+        if (error.message === 'Sessão expirada') {
+            showToast('Sua sessão expirou.', 'error');
+            setTimeout(window.logout, 1200);
+            return;
         }
+
+        showToast(error.message || 'Erro ao conectar com servidor', 'error');
     }
 }
-// Expõe para o escopo global (botão atualizar do html)
+
 window.carregarDados = carregarDados;
 
-// 2. MODAL & FORMULÁRIOS
 function setupModalEvents() {
     window.openModal = (mode, kind) => modal.open(kind, db.turmas);
     window.closeModal = () => modal.close();
     window.toggleModalFields = () => modal.toggleFields();
-    
+
     window.salvarFormulario = async (e) => {
         e.preventDefault();
+
         const btn = e.target;
         const originalText = btn.innerText;
-        btn.innerText = "Salvando...";
+        btn.innerText = 'Salvando...';
         btn.disabled = true;
 
         const data = modal.getData();
-        
-        if(!data.nome && !data.desc && data.kind !== 'tarefa') {
-            showToast("Preencha os campos obrigatórios", "error");
-            btn.innerText = originalText; btn.disabled = false;
+
+        if (!data.nome && !data.desc && data.kind !== 'tarefa') {
+            showToast('Preencha os campos obrigatórios', 'error');
+            btn.innerText = originalText;
+            btn.disabled = false;
             return;
         }
 
         let endpoint = '';
         let payload = {};
 
-        if(data.kind === 'turma') {
+        if (data.kind === 'turma') {
             endpoint = '/turma';
-            payload = { nome: data.nome, curso: data.desc, instituicao: "Senac" };
+            payload = {
+                nome: data.nome,
+                curso: data.desc,
+                instituicao: 'Senac'
+            };
         } else {
-            if(!data.turmaId) {
-                 showToast("Selecione uma turma", "error");
-                 btn.innerText = originalText; btn.disabled = false;
-                 return;
+            if (!data.turmaId) {
+                showToast('Selecione uma turma', 'error');
+                btn.innerText = originalText;
+                btn.disabled = false;
+                return;
             }
-            
-            switch(data.kind) {
+
+            switch (data.kind) {
                 case 'aluno':
                     endpoint = '/aluno';
-                    payload = { nome: data.nome, contato: data.desc, turmaId: data.turmaId };
+                    payload = {
+                        nome: data.nome,
+                        contato: data.desc,
+                        turmaId: data.turmaId
+                    };
                     break;
+
                 case 'evento':
                     endpoint = '/evento';
-                    payload = { nome: data.nome, data: data.data, local: data.desc, turmaId: data.turmaId };
+                    payload = {
+                        nome: data.nome,
+                        data: data.data,
+                        local: data.desc,
+                        turmaId: data.turmaId
+                    };
                     break;
-                case 'lancamento':
+
+                case 'lancamento': {
                     endpoint = '/lancamento';
-                    const val = parseFloat(data.valor);
-                    payload = { 
-                        descricao: data.nome, 
+                    const val = parseFloat(data.valor || 0);
+
+                    payload = {
+                        descricao: data.nome,
                         tipo: val >= 0 ? 'receita' : 'despesa',
                         valor: Math.abs(val),
                         data: data.data,
                         referencia: data.desc,
-                        turmaId: data.turmaId 
+                        turmaId: data.turmaId
                     };
                     break;
+                }
+
                 case 'votacao':
                     endpoint = '/votacao';
-                    payload = { titulo: data.nome, dataFim: data.data, turmaId: data.turmaId };
+                    payload = {
+                        titulo: data.nome,
+                        dataFim: data.data,
+                        turmaId: data.turmaId
+                    };
                     break;
+
                 default:
-                    showToast("Tipo não implementado", "error");
-                    btn.innerText = originalText; btn.disabled = false;
+                    showToast('Tipo não implementado', 'error');
+                    btn.innerText = originalText;
+                    btn.disabled = false;
                     return;
             }
         }
 
         try {
             await api.salvar(endpoint, payload);
-            showToast("Salvo com sucesso!");
+            showToast('Salvo com sucesso!');
             modal.close();
-            carregarDados();
+            await carregarDados();
         } catch (err) {
-            showToast("Erro: " + err.message, "error");
+            showToast('Erro: ' + err.message, 'error');
         } finally {
             btn.innerText = originalText;
             btn.disabled = false;
@@ -160,7 +193,6 @@ function setupModalEvents() {
     };
 }
 
-// 3. NAVEGAÇÃO
 function setupNavigation() {
     window.navigate = (screenId) => {
         document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
@@ -171,137 +203,97 @@ function setupNavigation() {
 
         const target = document.getElementById(`screen-${screenId}`);
         const btn = document.getElementById(`nav-${screenId}`);
-        
-        if(target) target.classList.remove('hidden');
-        if(btn) {
+
+        if (target) target.classList.remove('hidden');
+        if (btn) {
             btn.classList.remove('text-slate-400', 'hover:bg-dark-700');
             btn.classList.add('bg-primary-500/10', 'text-primary-500', 'font-medium');
         }
     };
+
     window.navigate('dashboard');
 }
 
-// 4. FUNÇÕES GLOBAIS (Exportação e Votação)
 window.exportTableCSV = (tableId, filename) => {
     const table = document.getElementById(tableId);
-    if (!table) { showToast("Tabela vazia", "error"); return; }
+    if (!table) {
+        showToast('Tabela vazia', 'error');
+        return;
+    }
+
     let csv = [];
-    const rows = table.querySelectorAll("tr");
+    const rows = table.querySelectorAll('tr');
+
     for (let i = 0; i < rows.length; i++) {
-        const row = [], cols = rows[i].querySelectorAll("td, th");
+        const row = [];
+        const cols = rows[i].querySelectorAll('td, th');
+
         for (let j = 0; j < cols.length; j++) {
-            let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").trim();
+            let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, '').trim();
             data = data.replace(/"/g, '""');
             row.push('"' + data + '"');
         }
-        csv.push(row.join(";"));
+
+        csv.push(row.join(';'));
     }
-    const csvFile = new Blob([csv.join("\n")], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
+
+    const csvFile = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
     link.href = window.URL.createObjectURL(csvFile);
-    link.download = filename + ".csv";
+    link.download = filename + '.csv';
     link.click();
 };
 
 window.votar = async (votacaoId, opcaoId) => {
-    if(db.alunos.length === 0) {
-        showToast("Cadastre alunos antes de votar!", "error");
-        return;
-    }
-    const alunoIdStr = prompt(`ID do Aluno (Disponíveis: ${db.alunos.map(a=>a.id).join(', ')})`);
-    if(!alunoIdStr) return;
-
-    const payload = {
-        votacaoId: parseInt(votacaoId),
-        opcaoId: parseInt(opcaoId),
-        alunoId: parseInt(alunoIdStr)
-    };
-
     try {
-        await fetch('http://localhost:8080/api/cadastro/votar', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + localStorage.getItem('token') // <--- TOKEN ADICIONADO!
-            },
-            body: JSON.stringify(payload)
-        }).then(async res => {
-            if(!res.ok) throw new Error(await res.text());
-            showToast("Voto computado!");
-        });
+        await api.votar(Number(votacaoId), Number(opcaoId));
+        showToast('Voto computado com sucesso!');
+        await carregarDados();
     } catch (err) {
-        showToast(err.message, "error");
+        showToast(err.message || 'Erro ao votar', 'error');
     }
 };
 
 window.adicionarOpcaoUI = async (votacaoId) => {
-    const nome = prompt("Nome da opção (Ex: Banda X):");
-    if(!nome) return;
+    const nome = prompt('Nome da opção (Ex: Banda X):');
+    if (!nome) return;
 
     try {
-        const response = await fetch(`http://localhost:8080/api/cadastro/votacao/${votacaoId}/opcao`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + localStorage.getItem('token') // <--- TOKEN ADICIONADO!
-            },
-            body: JSON.stringify({ nome: nome })
-        });
-        
-        if(response.ok) {
-            showToast("Opção adicionada!");
-            carregarDados();
-        } else {
-            showToast("Erro ao adicionar opção", "error");
-        }
-    } catch(e) { console.error(e); }
+        await api.salvar(`/votacao/${votacaoId}/opcao`, { nome });
+        showToast('Opção adicionada!');
+        await carregarDados();
+    } catch (err) {
+        showToast(err.message || 'Erro ao adicionar opção', 'error');
+    }
 };
 
 window.importarAlunosCSV = async (event) => {
     const file = event.target.files[0];
-    if(!file) return;
+    if (!file) return;
 
-    if(db.turmas.length === 0) {
-        showToast("Cadastre uma turma primeiro!", "error");
+    if (db.turmas.length === 0) {
+        showToast('Cadastre uma turma primeiro!', 'error');
         event.target.value = '';
         return;
     }
 
     const turmasStr = db.turmas.map(t => `${t.id} - ${t.nome}`).join('\n');
     const turmaIdStr = prompt(`Digite o ID da turma para importar os alunos:\n\n${turmasStr}`);
-    
-    if(!turmaIdStr) {
+
+    if (!turmaIdStr) {
         event.target.value = '';
         return;
     }
 
-    const formData = new FormData();
-    formData.append('arquivo', file);
-    formData.append('turmaId', parseInt(turmaIdStr));
-
     try {
-        showToast("Lendo arquivo...", "success");
-        
-        const response = await fetch('http://localhost:8080/api/cadastro/alunos/importar', {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer ' + localStorage.getItem('token') // <--- TOKEN ADICIONADO!
-            },
-            body: formData
-        });
-
-        const resultText = await response.text();
-
-        if(response.ok) {
-            showToast(resultText, "success");
-            carregarDados(); 
-        } else {
-            showToast(resultText, "error");
-        }
+        showToast('Lendo arquivo...', 'success');
+        const resposta = await api.importarAlunosCSV(file, parseInt(turmaIdStr, 10));
+        showToast(resposta || 'Importação concluída!', 'success');
+        await carregarDados();
     } catch (err) {
-        showToast("Erro ao comunicar com o servidor", "error");
+        showToast(err.message || 'Erro ao comunicar com o servidor', 'error');
         console.error(err);
     } finally {
-        event.target.value = ''; 
+        event.target.value = '';
     }
 };
