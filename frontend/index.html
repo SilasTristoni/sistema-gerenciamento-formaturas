@@ -1,426 +1,285 @@
 <!DOCTYPE html>
 <html lang="pt-BR" class="dark">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Gestão de Formaturas — Dashboard Completo</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gestão de Formaturas — Dashboard</title>
+
+  <script>
+    window.APP_CONFIG = { LOGIN_URL: "./login.html", MAIN_SCRIPT: "./js/main.js", SW_URL: "./sw.js" };
+  </script>
 
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
   <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: { sans: ['Inter', 'sans-serif'] },
-          colors: {
-            dark: { 900: '#0f172a', 800: '#1e293b', 700: '#334155' },
-            primary: { 500: '#10b981', 600: '#059669' }
-          }
-        }
-      }
-    }
-
-    // PROTEÇÃO DE ROTA: Se não tiver token, manda pro Login imediatamente
-    if (!localStorage.getItem('token')) {
-        window.location.href = 'login.html';
-    }
+    tailwind.config = { darkMode: "class", theme: { extend: { fontFamily: { sans: ["Inter", "sans-serif"] }, colors: { dark: { 900: "#0f172a", 800: "#1e293b", 700: "#334155" }, primary: { 500: "#10b981", 600: "#059669" } } } } };
   </script>
 
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#10b981">
-  
+  <link rel="stylesheet" href="./css/style.css" />
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#10b981" />
+
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('SW registrado!', reg))
-          .catch(err => console.log('Erro no SW', err));
-      });
-    }
+    (function () {
+      if (!localStorage.getItem("token")) window.location.replace("./login.html");
+    })();
+    window.addEventListener("load", async () => {
+      if ("serviceWorker" in navigator) {
+        try { await navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" }); } catch (err) { console.log("Erro no SW", err); }
+      }
+    });
   </script>
 </head>
 <body class="bg-dark-900 text-slate-300 font-sans antialiased">
+  <noscript><div class="noscript-warning">Este sistema precisa de JavaScript habilitado para funcionar.</div></noscript>
 
-<div class="flex h-screen">
+  <div id="appLoadError" class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-[9999] max-w-2xl w-full bg-red-500/10 border border-red-500/30 text-red-300 px-4 py-3 rounded-xl shadow-lg">
+    Falha ao carregar o sistema. Verifique o console.
+  </div>
 
-  <aside class="hidden md:flex w-72 flex-col bg-dark-800 border-r border-dark-700">
-    <div class="h-16 flex items-center px-6 border-b border-dark-700">
-      <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500 to-teal-400 flex items-center justify-center text-white font-bold mr-3">GF</div>
-      <div>
-        <div class="text-white font-semibold text-lg">GestãoForm</div>
-        <div class="text-xs text-slate-500">Painel do Sistema</div>
-      </div>
-    </div>
-
-    <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
-      <button onclick="navigate('dashboard')" id="nav-dashboard" class="nav-btn w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary-500/10 text-primary-500 font-medium">
-        <i class="ph ph-squares-four text-xl"></i> Dashboard
-      </button>
-
-      <button onclick="navigate('alunos')" id="nav-alunos" class="nav-btn w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-dark-700 hover:text-white">
-        <i class="ph ph-student text-xl"></i> Alunos
-      </button>
-
-      <button onclick="navigate('turmas')" id="nav-turmas" class="nav-btn w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-dark-700 hover:text-white">
-        <i class="ph ph-graduation-cap text-xl"></i> Turmas
-      </button>
-
-      <button onclick="navigate('eventos')" id="nav-eventos" class="nav-btn w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-dark-700 hover:text-white">
-        <i class="ph ph-calendar-check text-xl"></i> Eventos
-      </button>
-
-      <button onclick="navigate('financeiro')" id="nav-financeiro" class="nav-btn w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-dark-700 hover:text-white">
-        <i class="ph ph-currency-dollar text-xl"></i> Financeiro
-      </button>
-
-      <button onclick="navigate('votacao')" id="nav-votacao" class="nav-btn w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-dark-700 hover:text-white">
-        <i class="ph ph-chart-bar text-xl"></i> Enquetes
-      </button>
-
-      <div class="mt-6 border-t border-dark-700 pt-4 px-2">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold" id="userAvatar">U</div>
-          <div>
-            <div class="text-sm text-white font-medium truncate w-32" id="userNameDisplay">Carregando...</div>
-            <div class="text-xs text-slate-500" id="userRoleDisplay">...</div>
-          </div>
-        </div>
-        <button onclick="logout()" class="mt-4 w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors text-sm font-medium">
-            <i class="ph ph-sign-out text-lg"></i> Sair do Sistema
-        </button>
-      </div>
-    </nav>
-  </aside>
-
-  <main class="flex-1 flex flex-col h-screen overflow-hidden">
-
-    <header class="h-16 bg-dark-800/80 border-b border-dark-700 flex items-center justify-between px-4 sm:px-6">
-      <div class="flex items-center gap-4">
-        <button id="menuToggle" class="md:hidden text-slate-400 hover:text-white"><i class="ph ph-list text-2xl"></i></button>
-        <h1 class="text-lg text-white font-semibold">Gestão de Formaturas</h1>
+  <div class="flex h-screen">
+    <aside class="hidden md:flex w-72 flex-col bg-dark-800 border-r border-dark-700">
+      <div class="h-16 flex items-center px-6 border-b border-dark-700">
+        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500 to-teal-400 flex items-center justify-center text-white font-bold mr-3">GF</div>
+        <div><div class="text-white font-semibold text-lg">GestãoForm</div><div class="text-xs text-slate-500">Painel do Sistema</div></div>
       </div>
 
-      <div class="flex items-center gap-4">
-        <button class="relative p-2 text-slate-400 hover:text-white">
-          <i class="ph ph-bell text-xl"></i>
-          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-        </button>
+      <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+        <button onclick="navigate('dashboard')" id="nav-dashboard" class="nav-item active"><i class="ph ph-squares-four text-xl"></i> Dashboard</button>
+        <button onclick="navigate('alunos')" id="nav-alunos" class="nav-item"><i class="ph ph-student text-xl"></i> Alunos</button>
+        <button onclick="navigate('turmas')" id="nav-turmas" class="nav-item"><i class="ph ph-graduation-cap text-xl"></i> Turmas</button>
+        <button onclick="navigate('eventos')" id="nav-eventos" class="nav-item"><i class="ph ph-calendar-check text-xl"></i> Eventos</button>
+        <button onclick="navigate('financeiro')" id="nav-financeiro" class="nav-item"><i class="ph ph-currency-dollar text-xl"></i> Financeiro</button>
+        <button onclick="navigate('votacao')" id="nav-votacao" class="nav-item"><i class="ph ph-chart-bar text-xl"></i> Enquetes</button>
 
-        <button onclick="openModal('new','lancamento')" class="btn-admin bg-primary-600 hover:bg-primary-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
-          <i class="ph ph-plus-bold"></i> <span class="hidden sm:inline">Novo</span>
-        </button>
-      </div>
-    </header>
-
-    <div class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-
-      <section id="screen-dashboard" class="screen active">
-        <div class="flex justify-between items-end mb-6">
+        <div class="mt-6 border-t border-dark-700 pt-4 px-2">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold" id="userAvatar">U</div>
             <div>
-                <h2 class="text-2xl font-bold text-white tracking-tight">Visão Geral</h2>
-                <p class="text-xs text-slate-500">Última atualização: <span id="lastUpdate">Agora</span></p>
+              <div class="text-sm text-white font-medium truncate w-32" id="userNameDisplay">Carregando...</div>
+              <div class="text-xs text-slate-500" id="userRoleDisplay">...</div>
             </div>
-            <button onclick="carregarDados()" class="text-slate-400 hover:text-primary-500 transition-colors">
-                <i class="ph ph-arrows-clockwise text-xl"></i>
-            </button>
+          </div>
+          <button onclick="logout()" class="mt-4 w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors text-sm font-medium">
+            <i class="ph ph-sign-out text-lg"></i> Sair do Sistema
+          </button>
         </div>
+      </nav>
+    </aside>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div class="bg-dark-800 p-5 rounded-lg border-l-4 border-l-primary-500 border-y border-r border-dark-700 shadow-lg relative overflow-hidden group">
-            <div class="absolute right-0 top-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity"><i class="ph ph-wallet text-6xl text-primary-500"></i></div>
-            <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Saldo em Caixa</p>
-            <h3 class="text-3xl text-white font-bold mt-1 tracking-tight" id="totalReceita">R$ --</h3>
-            <p class="text-xs font-medium text-emerald-400 mt-2 flex items-center gap-1"><i class="ph-bold ph-trend-up"></i> Disponível</p>
+    <main class="flex-1 flex flex-col h-screen overflow-hidden">
+      <header class="h-16 bg-dark-800/80 border-b border-dark-700 flex items-center justify-between px-4 sm:px-6">
+        <div class="flex items-center gap-4">
+          <button id="menuToggle" class="md:hidden text-slate-400 hover:text-white"><i class="ph ph-list text-2xl"></i></button>
+          <h1 class="text-lg text-white font-semibold">Gestão de Formaturas</h1>
+        </div>
+        <div class="flex items-center gap-4">
+          <button class="relative p-2 text-slate-400 hover:text-white"><i class="ph ph-bell text-xl"></i><span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span></button>
+          <button onclick="openModal('new','lancamento')" class="btn btn-primary btn-admin shadow-lg"><i class="ph ph-plus-bold"></i> <span class="hidden sm:inline">Novo</span></button>
+        </div>
+      </header>
+
+      <div class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        
+        <section id="screen-dashboard" class="screen active">
+          <div class="flex justify-between items-end mb-6">
+            <div><h2 class="text-2xl font-bold text-white tracking-tight">Visão Geral</h2><p class="text-xs text-slate-500">Última atualização: <span id="lastUpdate">Agora</span></p></div>
+            <button onclick="carregarDados()" class="text-slate-400 hover:text-primary-500 transition-colors"><i class="ph ph-arrows-clockwise text-xl"></i></button>
           </div>
 
-          <div class="bg-dark-800 p-5 rounded-lg border-l-4 border-l-blue-500 border-y border-r border-dark-700 shadow-lg relative">
-            <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Fluxo Mensal</p>
-            <div class="mt-3 space-y-2">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="dashboard-widget border-l-primary-500 group">
+              <div class="absolute right-0 top-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity"><i class="ph ph-wallet text-6xl text-primary-500"></i></div>
+              <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Saldo em Caixa</p>
+              <h3 class="text-3xl text-white font-bold mt-1 tracking-tight" id="totalReceita">R$ --</h3>
+              <p class="text-xs font-medium text-emerald-400 mt-2 flex items-center gap-1"><i class="ph-bold ph-trend-up"></i> Disponível</p>
+            </div>
+            <div class="dashboard-widget border-l-blue-500">
+              <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Fluxo Mensal</p>
+              <div class="mt-3 space-y-2">
                 <div class="flex justify-between text-xs text-slate-300"><span>Entradas</span> <span id="txtEntradas" class="text-emerald-400">R$ 0</span></div>
-                <div class="w-full bg-dark-900 h-1.5 rounded-full overflow-hidden"><div id="barEntradas" class="bg-emerald-500 h-full" style="width: 0%"></div></div>
                 <div class="flex justify-between text-xs text-slate-300"><span>Saídas</span> <span id="txtSaidas" class="text-red-400">R$ 0</span></div>
-                <div class="w-full bg-dark-900 h-1.5 rounded-full overflow-hidden"><div id="barSaidas" class="bg-red-500 h-full" style="width: 0%"></div></div>
-            </div>
-          </div>
-
-          <div class="bg-dark-800 p-5 rounded-lg border-l-4 border-l-orange-500 border-y border-r border-dark-700 shadow-lg">
-            <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Pendências</p>
-            <h3 class="text-3xl text-white font-bold mt-1" id="totalInadimplencia">--</h3>
-            <p class="text-xs text-orange-400 mt-2">Alunos com atraso</p>
-          </div>
-
-          <div class="bg-dark-800 p-5 rounded-lg border-l-4 border-l-purple-500 border-y border-r border-dark-700 shadow-lg">
-            <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Próximo Evento</p>
-            <h3 class="text-lg text-white font-bold mt-1 truncate" id="proximoEvento">--</h3>
-            <p class="text-xs text-purple-400 mt-2 flex items-center gap-1"><i class="ph-bold ph-calendar"></i> <span id="dataEvento">--</span></p>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <div class="lg:col-span-2 bg-dark-800 p-6 rounded-lg border border-dark-700 shadow-lg">
-            <div class="flex justify-between items-center mb-6">
-              <h3 class="text-white font-bold flex items-center gap-2"><i class="ph ph-chart-line-up text-primary-500"></i> Evolução Financeira</h3>
-              <div class="flex gap-2">
-                  <span class="text-xs text-slate-500 flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-emerald-500"></div> Receita</span>
-                  <span class="text-xs text-slate-500 flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-red-500"></div> Despesa</span>
               </div>
             </div>
-            <div class="h-72 w-full relative">
-              <canvas id="mainChart"></canvas>
+            <div class="dashboard-widget border-l-orange-500">
+              <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Pendências</p>
+              <h3 class="text-3xl text-white font-bold mt-1" id="totalInadimplencia">--</h3>
+              <p class="text-xs text-orange-400 mt-2">Alunos com atraso</p>
+            </div>
+            <div class="dashboard-widget border-l-purple-500">
+              <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Próximo Evento</p>
+              <h3 class="text-lg text-white font-bold mt-1 truncate" id="proximoEvento">--</h3>
+              <p class="text-xs text-purple-400 mt-2 flex items-center gap-1"><i class="ph-bold ph-calendar"></i> <span id="dataEvento">--</span></p>
             </div>
           </div>
+        </section>
 
-          <div class="bg-dark-800 p-6 rounded-lg border border-dark-700 shadow-lg flex flex-col">
-            <h3 class="text-white font-bold mb-4 flex items-center gap-2"><i class="ph ph-chart-pie-slice text-blue-500"></i> Distribuição</h3>
-            <div class="flex-1 flex items-center justify-center relative">
-               <div class="h-48 w-48 relative">
-                  <canvas id="donutChart"></canvas>
-                  <div class="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
-                      <span class="text-xs text-slate-500">Total Mov.</span>
-                      <span class="text-white font-bold" id="donutTotal">R$ 0</span>
-                  </div>
-               </div>
-            </div>
-            <div class="mt-4 grid grid-cols-2 gap-2 text-center">
-                <div class="bg-dark-900/50 p-2 rounded border border-dark-700">
-                    <div class="text-[10px] text-slate-500 uppercase">Receitas</div>
-                    <div class="text-emerald-400 font-bold text-sm" id="percReceita">0%</div>
-                </div>
-                <div class="bg-dark-900/50 p-2 rounded border border-dark-700">
-                    <div class="text-[10px] text-slate-500 uppercase">Despesas</div>
-                    <div class="text-red-400 font-bold text-sm" id="percDespesa">0%</div>
-                </div>
+        <section id="screen-alunos" class="screen hidden">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold text-white">Alunos</h2>
+            <div class="flex gap-2">
+              <input type="file" id="fileImportCSV" accept=".csv" class="hidden" onchange="importarAlunosCSV(event)">
+              <button onclick="document.getElementById('fileImportCSV').click()" class="btn btn-primary bg-teal-600 hover:bg-teal-500 btn-admin"><i class="ph ph-upload-simple"></i> Importar CSV</button>
+              <button onclick="openModal('new','aluno')" class="btn btn-primary btn-admin">Novo Aluno</button>
             </div>
           </div>
-        </div>
-
-        <div class="bg-dark-800 rounded-lg border border-dark-700 shadow-lg overflow-hidden">
-            <div class="p-4 border-b border-dark-700 flex justify-between items-center">
-              <h3 class="text-white font-bold text-sm uppercase tracking-wide">Últimas Movimentações</h3>
-              <button onclick="navigate('financeiro')" class="text-xs text-blue-400 hover:text-blue-300 hover:underline">Ver tudo</button>
-            </div>
+          <div class="card-panel">
             <div class="overflow-x-auto">
-              <table class="w-full text-left text-sm text-slate-400">
-                <thead class="bg-dark-900 text-xs uppercase font-semibold text-slate-500">
-                  <tr>
-                    <th class="px-6 py-3">Descrição</th>
-                    <th class="px-6 py-3">Data</th>
-                    <th class="px-6 py-3 text-right">Valor</th>
-                  </tr>
+              <table id="alunosTable" class="w-full text-left text-sm text-slate-400">
+                <thead class="bg-dark-900/50 text-xs uppercase font-medium text-slate-500">
+                  <tr><th class="px-6 py-4">Nome</th><th class="px-6 py-4">Turma</th><th class="px-6 py-4">Contato</th><th class="px-6 py-4">Status</th><th class="px-6 py-4 text-right">Ações</th></tr>
                 </thead>
-                <tbody id="dashboardRecentTable" class="divide-y divide-dark-700"></tbody>
+                <tbody id="alunosBody" class="divide-y divide-dark-700"></tbody>
               </table>
             </div>
-        </div>
-      </section>
-
-      <section id="screen-alunos" class="screen hidden">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-semibold text-white">Alunos</h2>
-          <div class="flex gap-2">
-            <input type="file" id="fileImportCSV" accept=".csv" class="hidden" onchange="importarAlunosCSV(event)">
-            <button onclick="document.getElementById('fileImportCSV').click()" class="btn-admin px-4 py-2 bg-teal-600 hover:bg-teal-500 rounded-lg text-white shadow-lg flex items-center gap-2">
-              <i class="ph ph-upload-simple"></i> Importar CSV
-            </button>
-            
-            <button onclick="openModal('new','aluno')" class="btn-admin px-4 py-2 bg-primary-600 rounded-lg text-white">Novo Aluno</button>
-            <button onclick="exportTableCSV('alunosTable','alunos')" class="px-4 py-2 bg-dark-700 rounded-lg text-slate-300">Exportar</button>
           </div>
-        </div>
-        <div class="bg-dark-800 rounded-2xl border border-dark-700 shadow-sm overflow-hidden">
-          <div class="overflow-x-auto">
-            <table id="alunosTable" class="w-full text-left text-sm text-slate-400">
-              <thead class="bg-dark-900/50 text-xs uppercase font-medium text-slate-500">
-                <tr>
-                  <th class="px-6 py-4">Nome</th>
-                  <th class="px-6 py-4">Turma</th>
-                  <th class="px-6 py-4">Contato</th>
-                  <th class="px-6 py-4">Status</th>
-                  <th class="px-6 py-4 text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody id="alunosBody" class="divide-y divide-dark-700"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <section id="screen-turmas" class="screen hidden">
-        <div class="flex justify-between items-center mb-4">
+        <section id="screen-turmas" class="screen hidden">
+          <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold text-white">Turmas</h2>
-            <button onclick="openModal('new','turma')" class="btn-admin px-4 py-2 bg-primary-600 rounded-lg text-white">Nova Turma</button>
-        </div>
-        <div class="bg-dark-800 rounded-2xl border border-dark-700 shadow-sm overflow-hidden">
+            <button onclick="openModal('new','turma')" class="btn btn-primary btn-admin">Nova Turma</button>
+          </div>
+          <div class="card-panel">
             <div class="overflow-x-auto">
-                <table id="turmasTable" class="w-full text-left text-sm text-slate-400">
-                    <thead class="bg-dark-900/50 text-xs uppercase font-medium text-slate-500">
-                        <tr>
-                            <th class="px-6 py-4">Turma</th>
-                            <th class="px-6 py-4">Curso</th>
-                            <th class="px-6 py-4">Alunos</th>
-                            <th class="px-6 py-4">Arrecadado</th>
-                            <th class="px-6 py-4 text-right">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="turmasBody" class="divide-y divide-dark-700"></tbody>
-                </table>
+              <table id="turmasTable" class="w-full text-left text-sm text-slate-400">
+                <thead class="bg-dark-900/50 text-xs uppercase font-medium text-slate-500">
+                  <tr><th class="px-6 py-4">Turma</th><th class="px-6 py-4">Curso</th><th class="px-6 py-4">Alunos</th><th class="px-6 py-4">Arrecadado</th><th class="px-6 py-4 text-right">Ações</th></tr>
+                </thead>
+                <tbody id="turmasBody" class="divide-y divide-dark-700"></tbody>
+              </table>
             </div>
-        </div>
-      </section>
+          </div>
+        </section>
 
-      <section id="screen-eventos" class="screen hidden">
-        <div class="flex justify-between items-center mb-4">
+        <section id="screen-eventos" class="screen hidden">
+          <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold text-white">Eventos</h2>
-            <div class="flex gap-2">
-                <button onclick="openModal('new','evento')" class="btn-admin px-4 py-2 bg-primary-600 rounded-lg text-white">Novo Evento</button>
-                <button onclick="exportTableCSV('eventosTable','eventos')" class="px-4 py-2 bg-dark-700 rounded-lg text-slate-300">Exportar</button>
-            </div>
-        </div>
-        <div class="bg-dark-800 rounded-2xl border border-dark-700 shadow-sm overflow-hidden">
+            <button onclick="openModal('new','evento')" class="btn btn-primary btn-admin">Novo Evento</button>
+          </div>
+          <div class="card-panel">
             <div class="overflow-x-auto">
-                <table id="eventosTable" class="w-full text-left text-sm text-slate-400">
-                    <thead class="bg-dark-900/50 text-xs uppercase font-medium text-slate-500">
-                        <tr>
-                            <th class="px-6 py-4">Evento</th>
-                            <th class="px-6 py-4">Data</th>
-                            <th class="px-6 py-4">Local</th>
-                            <th class="px-6 py-4">Status</th>
-                            <th class="px-6 py-4 text-right">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="eventosBody" class="divide-y divide-dark-700"></tbody>
-                </table>
+              <table id="eventosTable" class="w-full text-left text-sm text-slate-400">
+                <thead class="bg-dark-900/50 text-xs uppercase font-medium text-slate-500">
+                  <tr><th class="px-6 py-4">Evento</th><th class="px-6 py-4">Data</th><th class="px-6 py-4">Local</th><th class="px-6 py-4">Status</th><th class="px-6 py-4 text-right">Ações</th></tr>
+                </thead>
+                <tbody id="eventosBody" class="divide-y divide-dark-700"></tbody>
+              </table>
             </div>
-        </div>
-      </section>
+          </div>
+        </section>
 
-      <section id="screen-financeiro" class="screen hidden">
-        <div class="flex justify-between items-center mb-4">
+        <section id="screen-financeiro" class="screen hidden">
+          <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold text-white">Financeiro</h2>
-            <div class="flex gap-2">
-                <button onclick="openModal('new','lancamento')" class="btn-admin px-4 py-2 bg-primary-600 rounded-lg text-white">Novo Lançamento</button>
-                <button onclick="exportTableCSV('financeiroTable','financeiro')" class="px-4 py-2 bg-dark-700 rounded-lg text-slate-300">Exportar</button>
-            </div>
-        </div>
-        <div class="bg-dark-800 rounded-2xl border border-dark-700 shadow-sm overflow-hidden">
+            <button onclick="openModal('new','lancamento')" class="btn btn-primary btn-admin">Novo Lançamento</button>
+          </div>
+          <div class="card-panel">
             <div class="overflow-x-auto">
-                <table id="financeiroTable" class="w-full text-left text-sm text-slate-400">
-                    <thead class="bg-dark-900/50 text-xs uppercase font-medium text-slate-500">
-                        <tr>
-                            <th class="px-6 py-4">Descrição</th>
-                            <th class="px-6 py-4">Tipo</th>
-                            <th class="px-6 py-4">Valor</th>
-                            <th class="px-6 py-4">Data</th>
-                            <th class="px-6 py-4 text-right">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="financeiroBody" class="divide-y divide-dark-700"></tbody>
-                </table>
+              <table id="financeiroTable" class="w-full text-left text-sm text-slate-400">
+                <thead class="bg-dark-900/50 text-xs uppercase font-medium text-slate-500">
+                  <tr><th class="px-6 py-4">Descrição</th><th class="px-6 py-4">Tipo</th><th class="px-6 py-4">Valor</th><th class="px-6 py-4">Data</th><th class="px-6 py-4 text-right">Ações</th></tr>
+                </thead>
+                <tbody id="financeiroBody" class="divide-y divide-dark-700"></tbody>
+              </table>
             </div>
-        </div>
-      </section>
-
-      <section id="screen-votacao" class="screen hidden">
-        <div class="flex justify-between items-center mb-6">
-            <div>
-                <h2 class="text-2xl font-bold text-white">Votações & Enquetes</h2>
-                <p class="text-sm text-slate-500">Decisões democráticas da turma</p>
-            </div>
-            <button onclick="openModal('new','votacao')" class="btn-admin px-4 py-2 bg-primary-600 hover:bg-primary-500 rounded-lg text-white shadow-lg shadow-primary-500/20 flex items-center gap-2">
-                <i class="ph ph-plus-bold"></i> Nova Votação
-            </button>
-        </div>
-
-        <div id="votacoesContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            </div>
-      </section>
-
-      <footer class="mt-8 text-center text-xs text-slate-600 pb-4">
-        &copy; 2025 Sistema de Gerenciamento de Formaturas
-      </footer>
-
-    </div>
-  </main>
-</div>
-
-<div id="toastContainer" class="fixed top-5 right-5 z-[60] flex flex-col gap-2 w-full max-w-xs pointer-events-none"></div>
-
-<div id="modalBackdrop" class="fixed inset-0 bg-dark-900/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-  <div id="modalPanel" class="bg-dark-800 w-full max-w-lg rounded-2xl shadow-2xl border border-dark-700 transform scale-95 opacity-0 transition-all duration-300 relative overflow-hidden">
-    
-    <div class="px-6 py-4 border-b border-dark-700 flex justify-between items-center bg-dark-800/50">
-      <h3 id="modalTitle" class="text-lg font-bold text-white flex items-center gap-2">
-        <i class="ph ph-pencil-simple text-primary-500"></i>
-        <span>Novo Cadastro</span>
-      </h3>
-      <button onclick="closeModal()" class="text-slate-500 hover:text-white transition-colors p-1 rounded-md hover:bg-dark-700">
-        <i class="ph ph-x text-lg"></i>
-      </button>
-    </div>
-
-    <div class="p-6 max-h-[80vh] overflow-y-auto custom-scroll">
-      <form id="modalForm" class="space-y-5">
-        <div>
-          <label class="block text-xs uppercase font-bold text-slate-500 mb-1.5 tracking-wider">Categoria</label>
-          <div class="relative">
-            <select id="modalCategoria" onchange="toggleModalFields()" class="w-full appearance-none bg-dark-900 border border-dark-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all">
-              <option value="evento">📅 Evento</option>
-              <option value="aluno">🎓 Aluno</option>
-              <option value="turma">🏫 Turma</option>
-              <option value="lancamento">💰 Financeiro</option>
-              <option value="votacao">🗳️ Votação</option>
-              <option value="tarefa">✅ Tarefa</option>
-            </select>
-            <i class="ph ph-caret-down absolute right-4 top-3.5 text-slate-400 pointer-events-none"></i>
           </div>
-        </div>
+        </section>
 
-        <div>
-          <label class="block text-xs uppercase font-bold text-slate-500 mb-1.5 tracking-wider">Título / Nome</label>
-          <input id="modalNome" type="text" required class="w-full bg-dark-900 border border-dark-600 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all" placeholder="Digite aqui...">
-        </div>
-
-        <div class="grid grid-cols-2 gap-4 transition-all" id="divDataValor">
-          <div>
-            <label class="block text-xs uppercase font-bold text-slate-500 mb-1.5 tracking-wider">Data</label>
-            <input id="modalData" type="date" class="w-full bg-dark-900 border border-dark-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary-500 transition-all">
+        <section id="screen-votacao" class="screen hidden">
+          <div class="flex justify-between items-center mb-6">
+            <div><h2 class="text-2xl font-bold text-white">Votações & Enquetes</h2><p class="text-sm text-slate-500">Decisões democráticas da turma</p></div>
+            <button onclick="openModal('new','votacao')" class="btn btn-primary btn-admin"><i class="ph ph-plus-bold"></i> Nova Votação</button>
           </div>
-          <div>
-            <label class="block text-xs uppercase font-bold text-slate-500 mb-1.5 tracking-wider">Valor (R$)</label>
-            <input id="modalValor" type="number" step="0.01" class="w-full bg-dark-900 border border-dark-600 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-primary-500 transition-all" placeholder="0.00">
-          </div>
-        </div>
+          <div id="votacoesContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"></div>
+        </section>
 
-        <div>
-          <label id="lblDescricao" class="block text-xs uppercase font-bold text-slate-500 mb-1.5 tracking-wider">Descrição</label>
-          <textarea id="modalDescricao" rows="3" class="w-full bg-dark-900 border border-dark-600 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all" placeholder="Detalhes adicionais..."></textarea>
+      </div>
+    </main>
+  </div>
+
+  <div id="toastContainer" class="fixed top-5 right-5 z-[60] flex flex-col gap-2 w-full max-w-xs pointer-events-none"></div>
+
+  <div id="modalBackdrop" class="fixed inset-0 bg-dark-900/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 modal-backdrop">
+    <div id="modalPanel" class="bg-dark-800 w-full max-w-lg rounded-2xl shadow-2xl border border-dark-700 transform scale-95 opacity-0 modal-panel">
+      <div class="px-6 py-4 border-b border-dark-700 flex justify-between items-center bg-dark-800/50">
+        <h3 id="modalTitle" class="text-lg font-bold text-white flex items-center gap-2"><i class="ph ph-pencil-simple text-primary-500"></i> <span>Formulário</span></h3>
+        <button onclick="closeModal()" class="text-slate-500 hover:text-white transition-colors p-1 rounded-md hover:bg-dark-700"><i class="ph ph-x text-lg"></i></button>
+      </div>
+
+      <div class="p-6 max-h-[80vh] overflow-y-auto custom-scroll">
+        <form id="modalForm" class="space-y-5">
+          <input type="hidden" id="modalItemId" value="">
           
-          <div class="mt-3 relative" id="divTurmaSelect">
-             <select id="modalTurmaSelect" class="w-full appearance-none bg-dark-900 border border-dark-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary-500 transition-all">
-                <option value="">Selecione a Turma...</option>
-             </select>
-             <i class="ph ph-caret-down absolute right-4 top-3.5 text-slate-400 pointer-events-none"></i>
+          <div>
+            <label class="form-label">Categoria</label>
+            <div class="relative">
+              <select id="modalCategoria" onchange="toggleModalFields()" class="form-input form-select">
+                <option value="evento">📅 Evento</option>
+                <option value="aluno">🎓 Aluno</option>
+                <option value="turma">🏫 Turma</option>
+                <option value="lancamento">💰 Financeiro</option>
+                <option value="votacao">🗳️ Votação</option>
+              </select>
+              <i class="ph ph-caret-down absolute right-4 top-3.5 text-slate-400 pointer-events-none"></i>
+            </div>
           </div>
-        </div>
-      </form>
-    </div>
 
-    <div class="px-6 py-4 bg-dark-900/50 border-t border-dark-700 flex gap-3">
-      <button type="button" onclick="closeModal()" class="flex-1 px-4 py-2.5 rounded-xl border border-dark-600 text-slate-300 font-medium hover:bg-dark-700 hover:text-white transition-all">
-        Cancelar
-      </button>
-      <button onclick="salvarFormulario(event)" type="button" class="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primary-600 to-teal-500 text-white font-bold shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 hover:from-primary-500 hover:to-teal-400 transition-all transform hover:-translate-y-0.5">
-        Salvar
-      </button>
+          <div>
+            <label class="form-label">Título / Nome</label>
+            <input id="modalNome" type="text" required class="form-input" placeholder="Digite aqui..." />
+          </div>
+
+          <div class="grid grid-cols-2 gap-4" id="divDataValor">
+            <div><label class="form-label">Data</label><input id="modalData" type="date" class="form-input" /></div>
+            <div><label class="form-label">Valor (R$)</label><input id="modalValor" type="number" step="0.01" class="form-input" placeholder="0.00" /></div>
+          </div>
+
+          <div>
+            <label id="lblDescricao" class="form-label">Descrição</label>
+            <textarea id="modalDescricao" rows="3" class="form-input" placeholder="Detalhes adicionais..."></textarea>
+
+            <div class="mt-3 relative" id="divTurmaSelect">
+              <select id="modalTurmaSelect" class="form-input form-select"><option value="">Selecione a Turma...</option></select>
+              <i class="ph ph-caret-down absolute right-4 top-3.5 text-slate-400 pointer-events-none"></i>
+            </div>
+
+            <div id="divPerfil" class="mt-3 hidden">
+              <label class="form-label">Cargo / Perfil</label>
+              <div class="relative">
+                <select id="modalPerfil" class="form-input form-select">
+                  <option value="ALUNO">🎓 Aluno Simples</option>
+                  <option value="COMISSAO">⭐ Membro da Comissão</option>
+                </select>
+                <i class="ph ph-caret-down absolute right-4 top-3.5 text-slate-400 pointer-events-none"></i>
+              </div>
+            </div>
+
+          </div>
+        </form>
+      </div>
+
+      <div class="px-6 py-4 bg-dark-900/50 border-t border-dark-700 flex gap-3">
+        <button type="button" onclick="closeModal()" class="flex-1 btn-outline w-full text-center text-sm font-medium">Cancelar</button>
+        <button onclick="salvarFormulario(event)" type="button" class="flex-1 btn-gradient w-full text-center text-sm">Salvar</button>
+      </div>
     </div>
   </div>
-</div>
 
-<script type="module" src="js/main.js"></script>
+  <div id="confirmModal" class="fixed inset-0 bg-dark-900/80 backdrop-blur-sm hidden items-center justify-center z-[70] p-4 modal-backdrop">
+    <div class="bg-dark-800 w-full max-w-sm rounded-2xl shadow-2xl border border-dark-700 p-6 text-center transform scale-95 transition-all duration-300">
+        <i class="ph-fill ph-warning-circle text-5xl text-red-500 mb-4 inline-block"></i>
+        <h3 class="text-xl font-bold text-white mb-2">Excluir Registro?</h3>
+        <p class="text-sm text-slate-400 mb-6">Esta ação não pode ser desfeita. Os dados serão apagados permanentemente.</p>
+        <div class="flex gap-3">
+            <button onclick="fecharConfirmacao()" class="flex-1 px-4 py-2 rounded-xl border border-dark-600 text-slate-300 font-medium hover:bg-dark-700 transition-all">Cancelar</button>
+            <button onclick="confirmarExclusaoAcao()" class="flex-1 px-4 py-2 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all">Sim, Excluir</button>
+        </div>
+    </div>
+  </div>
+  <script type="module" src="./js/main.js"></script>
 </body>
 </html>

@@ -1,35 +1,90 @@
-/* Custom scrollbar */
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: #071427; }
-::-webkit-scrollbar-thumb { background: #334155; border-radius: 6px; }
-::-webkit-scrollbar-thumb:hover { background: #475569; }
+/* Variáveis baseadas no seu tema Tailwind */
+:root {
+    --dark-900: #0f172a;
+    --dark-800: #1e293b;
+    --dark-700: #334155;
+    --dark-600: #475569;
+    --primary-500: #10b981;
+    --primary-600: #059669;
+    --teal-400: #2dd4bf;
+    --teal-500: #14b8a6;
+    --slate-300: #cbd5e1;
+    --slate-400: #94a3b8;
+    --slate-500: #64748b;
+    --slate-600: #475569;
+    --red-500: #ef4444;
+}
 
-/* Modal transitions (scale + fade) */
+/* Base & Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--dark-900); }
+::-webkit-scrollbar-thumb { background: var(--dark-700); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: var(--dark-600); }
+
+.custom-scroll { scrollbar-width: thin; scrollbar-color: var(--dark-700) var(--dark-800); }
+.noscript-warning { padding: 16px; background: #7f1d1d; color: #fff; text-align: center; }
+
+/* COMPONENTES DE NAVEGAÇÃO */
+.nav-item {
+    width: 100%; text-align: left; display: flex; align-items: center; gap: 0.75rem; 
+    padding: 0.625rem 0.75rem; border-radius: 0.5rem; color: var(--slate-400); 
+    transition: all 0.2s; font-size: 0.95rem;
+}
+.nav-item:hover { background-color: var(--dark-700); color: white; }
+.nav-item.active { background-color: rgba(16, 185, 129, 0.1); color: var(--primary-500); font-weight: 500; }
+
+/* COMPONENTES DE BOTÃO */
+.btn {
+    display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; 
+    border-radius: 0.5rem; font-weight: 500; transition: all 0.2s; cursor: pointer;
+}
+.btn-primary { background-color: var(--primary-600); color: white; }
+.btn-primary:hover { background-color: var(--primary-500); }
+.btn-gradient {
+    background: linear-gradient(to right, var(--primary-600), var(--teal-500));
+    color: white; font-weight: 700; padding: 0.625rem 1rem; border-radius: 0.75rem;
+    box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.2); transform: translateY(0);
+}
+.btn-gradient:hover {
+    box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.4); 
+    background: linear-gradient(to right, var(--primary-500), var(--teal-400));
+    transform: translateY(-2px);
+}
+.btn-outline {
+    border: 1px solid var(--dark-600); color: var(--slate-300); 
+    padding: 0.625rem 1rem; border-radius: 0.75rem;
+}
+.btn-outline:hover { background-color: var(--dark-700); color: white; }
+
+/* COMPONENTES DE FORMULÁRIO */
+.form-label {
+    display: block; font-size: 0.75rem; text-transform: uppercase; 
+    font-weight: 700; color: var(--slate-500); margin-bottom: 0.375rem; letter-spacing: 0.05em;
+}
+.form-input {
+    width: 100%; background-color: var(--dark-900); border: 1px solid var(--dark-600); 
+    border-radius: 0.75rem; padding: 0.75rem 1rem; color: white; transition: all 0.2s; outline: none;
+}
+.form-input:focus { border-color: var(--primary-500); box-shadow: 0 0 0 1px var(--primary-500); }
+.form-input::placeholder { color: var(--slate-600); }
+.form-select { appearance: none; }
+
+/* COMPONENTES DE CARDS E PAINEIS */
+.card-panel {
+    background-color: var(--dark-800); border-radius: 1rem; 
+    border: 1px solid var(--dark-700); box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); overflow: hidden;
+}
+.dashboard-widget {
+    background-color: var(--dark-800); padding: 1.25rem; border-radius: 0.5rem;
+    border-top: 1px solid var(--dark-700); border-right: 1px solid var(--dark-700); border-bottom: 1px solid var(--dark-700);
+    border-left: 4px solid var(--primary-500); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); position: relative; overflow: hidden;
+}
+
+/* Modais e Toasts */
 .modal-backdrop { transition: opacity 220ms ease; }
 .modal-panel { transition: transform 220ms ease, opacity 220ms ease; transform-origin: center; }
 
-/* Helper classes */
-.truncate-2 { display: -webkit-box; -webkit-line-clamp:2; -webkit-box-orient: vertical; overflow: hidden; }
-
-/* Utilitário para área com scroll */
-.custom-scroll {
-    scrollbar-width: thin;
-    scrollbar-color: #334155 #1e293b;
-}
-
-/* Animação para os Toasts */
-@keyframes slideInRight {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
-@keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
-}
-
-.toast-enter {
-    animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-.toast-exit {
-    animation: fadeOut 0.4s ease forwards;
-}
+@keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+.toast-enter { animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+.toast-exit { animation: fadeOut 0.4s ease forwards; }

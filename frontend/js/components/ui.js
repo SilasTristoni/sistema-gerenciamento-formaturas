@@ -1,299 +1,145 @@
-import { api } from './services/api.js';
-import { ui } from './components/ui.js';
-import { modal } from './components/modal.js';
-import { showToast } from './components/toast.js';
+export const ui = {
+    renderTurmas(turmas) {
+        const tbody = document.getElementById('turmasBody');
+        if (!tbody) return;
+        tbody.innerHTML = turmas.map(t => `
+            <tr>
+                <td class="px-6 py-4 font-medium text-white">${t.nome}</td>
+                <td class="px-6 py-4">${t.curso}</td>
+                <td class="px-6 py-4">${t.quantidadeAlunos || 0}</td>
+                <td class="px-6 py-4 text-emerald-500 font-medium">R$ ${(t.totalArrecadado || 0).toFixed(2)}</td>
+                <td class="px-6 py-4 text-right flex justify-end gap-3">
+                    <button onclick="editarRegistro('turma', ${t.id})" class="btn-admin text-primary-500 hover:text-primary-400" style="display: none;"><i class="ph ph-pencil-simple text-lg"></i></button>
+                    <button onclick="excluirRegistro('turma', ${t.id})" class="btn-admin text-red-500 hover:text-red-400" style="display: none;"><i class="ph ph-trash text-lg"></i></button>
+                </td>
+            </tr>
+        `).join('');
+    },
 
-let db = { turmas: [], alunos: [], eventos: [], financeiro: [], votacoes: [] };
-let usuarioLogado = null;
+    renderAlunos(alunos) {
+        const tbody = document.getElementById('alunosBody');
+        if (!tbody) return;
+        tbody.innerHTML = alunos.map(a => `
+            <tr>
+                <td class="px-6 py-4 font-medium text-white">${a.nome}</td>
+                <td class="px-6 py-4">${a.nomeTurma || '---'}</td>
+                <td class="px-6 py-4">${a.contato}</td>
+                <td class="px-6 py-4">
+                    <span class="px-2 py-1 rounded-full text-xs font-medium ${a.status === 'emdia' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-orange-500/20 text-orange-500'}">
+                        ${a.status}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-right flex justify-end gap-3">
+                    <button onclick="editarRegistro('aluno', ${a.id})" class="btn-admin text-primary-500 hover:text-primary-400" style="display: none;"><i class="ph ph-pencil-simple text-lg"></i></button>
+                    <button onclick="excluirRegistro('aluno', ${a.id})" class="btn-admin text-red-500 hover:text-red-400" style="display: none;"><i class="ph ph-trash text-lg"></i></button>
+                </td>
+            </tr>
+        `).join('');
+    },
 
-document.addEventListener('DOMContentLoaded', () => {
-    verificarSessao();
-    setupNavigation();
-    setupModalEvents();
-});
+    renderEventos(eventos) {
+        const tbody = document.getElementById('eventosBody');
+        if (!tbody) return;
+        tbody.innerHTML = eventos.map(e => `
+            <tr>
+                <td class="px-6 py-4 font-medium text-white">${e.nome}</td>
+                <td class="px-6 py-4">${e.dataEvento || '---'}</td>
+                <td class="px-6 py-4">${e.localEvento || '---'}</td>
+                <td class="px-6 py-4">
+                    <span class="px-2 py-1 bg-primary-500/20 text-primary-500 rounded text-xs">${e.status}</span>
+                </td>
+                <td class="px-6 py-4 text-right flex justify-end gap-3">
+                    <button onclick="editarRegistro('evento', ${e.id})" class="btn-admin text-primary-500 hover:text-primary-400" style="display: none;"><i class="ph ph-pencil-simple text-lg"></i></button>
+                    <button onclick="excluirRegistro('evento', ${e.id})" class="btn-admin text-red-500 hover:text-red-400" style="display: none;"><i class="ph ph-trash text-lg"></i></button>
+                </td>
+            </tr>
+        `).join('');
+    },
 
-async function verificarSessao() {
-    const token = localStorage.getItem('token');
-    if (!token) {
-        window.location.href = 'login.html';
-        return;
-    }
+    renderFinanceiro(financeiro) {
+        const tbody = document.getElementById('financeiroBody');
+        if (!tbody) return;
+        tbody.innerHTML = financeiro.map(f => `
+            <tr>
+                <td class="px-6 py-4 text-white">${f.descricao}</td>
+                <td class="px-6 py-4 uppercase text-xs tracking-wider">${f.tipo}</td>
+                <td class="px-6 py-4 font-bold ${f.tipo === 'receita' ? 'text-emerald-500' : 'text-red-500'}">
+                    R$ ${f.valor.toFixed(2)}
+                </td>
+                <td class="px-6 py-4">${f.dataLancamento || '---'}</td>
+                <td class="px-6 py-4 text-right flex justify-end gap-3">
+                    <button onclick="editarRegistro('lancamento', ${f.id})" class="btn-admin text-primary-500 hover:text-primary-400" style="display: none;"><i class="ph ph-pencil-simple text-lg"></i></button>
+                    <button onclick="excluirRegistro('lancamento', ${f.id})" class="btn-admin text-red-500 hover:text-red-400" style="display: none;"><i class="ph ph-trash text-lg"></i></button>
+                </td>
+            </tr>
+        `).join('');
+    },
 
-    try {
-        usuarioLogado = await api.me();
+    renderVotacoes(votacoes, alunos) {
+        const container = document.getElementById('votacoesContainer');
+        if (!container) return;
+        container.innerHTML = votacoes.map(v => `
+            <div class="bg-dark-800 p-5 rounded-xl border border-dark-700 shadow-lg relative group">
+                <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onclick="editarRegistro('votacao', ${v.id})" class="btn-admin text-primary-500 hover:text-primary-400" style="display: none;"><i class="ph ph-pencil-simple text-lg"></i></button>
+                    <button onclick="excluirRegistro('votacao', ${v.id})" class="btn-admin text-red-500 hover:text-red-400" style="display: none;"><i class="ph ph-trash text-lg"></i></button>
+                </div>
+                <div class="flex justify-between items-center mb-4 pr-16">
+                    <h3 class="font-bold text-white text-lg">${v.titulo}</h3>
+                    <span class="text-xs bg-dark-700 px-2 py-1 rounded text-slate-300">Até ${v.dataFim || '---'}</span>
+                </div>
+                <div class="space-y-2 mt-4">
+                    ${(v.opcoes || []).map(o => `
+                        <button onclick="votar(${v.id}, ${o.id})" class="w-full text-left p-3 rounded-lg border border-dark-600 bg-dark-900 hover:border-primary-500 transition-colors flex justify-between items-center group/btn">
+                            <span class="text-slate-300 group-hover/btn:text-white font-medium">${o.nomeFornecedor}</span>
+                            <i class="ph-fill ph-check-circle text-primary-500 opacity-0 group-hover/btn:opacity-100 transition-opacity"></i>
+                        </button>
+                    `).join('')}
+                </div>
+                <button onclick="adicionarOpcaoUI(${v.id})" class="btn-admin mt-4 text-sm font-medium text-primary-500 hover:text-primary-400 flex items-center gap-1 transition-colors" style="display: none;">
+                    <i class="ph ph-plus-bold"></i> Adicionar Opção
+                </button>
+            </div>
+        `).join('');
+    },
 
-        if (document.getElementById('userNameDisplay')) {
-            document.getElementById('userNameDisplay').innerText = usuarioLogado.nome || 'Usuário';
-            document.getElementById('userAvatar').innerText = (usuarioLogado.nome || 'U').charAt(0).toUpperCase();
+    atualizarDashboard(db) {
+        const financeiro = db.financeiro || [];
+        const receitas = financeiro.filter(f => f.tipo === 'receita').reduce((acc, curr) => acc + curr.valor, 0);
+        const despesas = financeiro.filter(f => f.tipo === 'despesa').reduce((acc, curr) => acc + curr.valor, 0);
+        
+        const txtSaldo = document.getElementById('totalReceita');
+        if (txtSaldo) txtSaldo.innerText = `R$ ${(receitas - despesas).toFixed(2)}`;
+        
+        const txtEntradas = document.getElementById('txtEntradas');
+        if (txtEntradas) txtEntradas.innerText = `R$ ${receitas.toFixed(2)}`;
+        
+        const txtSaidas = document.getElementById('txtSaidas');
+        if (txtSaidas) txtSaidas.innerText = `R$ ${despesas.toFixed(2)}`;
 
-            if (usuarioLogado.perfil === 'ROLE_COMISSAO') {
-                document.getElementById('userRoleDisplay').innerText = 'Comissão';
-                document.querySelectorAll('.btn-admin').forEach(btn => btn.style.display = 'inline-flex');
-            } else {
-                document.getElementById('userRoleDisplay').innerText = 'Formando(a)';
-                document.querySelectorAll('.btn-admin').forEach(btn => btn.style.display = 'none');
-            }
+        const inadimplentes = (db.alunos || []).filter(a => a.status === 'pendente' || a.status === 'atrasado').length;
+        const txtInadimplencia = document.getElementById('totalInadimplencia');
+        if (txtInadimplencia) txtInadimplencia.innerText = inadimplentes;
+
+        if (db.eventos && db.eventos.length > 0) {
+            const prox = db.eventos[0];
+            const elProx = document.getElementById('proximoEvento');
+            const elData = document.getElementById('dataEvento');
+            if(elProx) elProx.innerText = prox.nome;
+            if(elData) elData.innerText = prox.dataEvento || 'A definir';
         }
 
-        await carregarDados();
-    } catch (error) {
-        console.error(error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('perfil');
-        localStorage.removeItem('nomeUsuario');
-        window.location.href = 'login.html';
-    }
-}
-
-window.logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('perfil');
-    localStorage.removeItem('nomeUsuario');
-    window.location.href = 'login.html';
-};
-
-export async function carregarDados() {
-    try {
-        const [turmas, alunos, financeiro, eventos, votacoes] = await Promise.all([
-            api.buscar('turmas'),
-            api.buscar('alunos'),
-            api.buscar('financeiro'),
-            api.buscar('eventos'),
-            api.buscar('votacoes')
-        ]);
-
-        db = { turmas, alunos, financeiro, eventos, votacoes };
-
-        ui.renderTurmas(db.turmas);
-        ui.renderAlunos(db.alunos);
-
-        if (document.getElementById('eventosBody')) ui.renderEventos(db.eventos);
-        if (document.getElementById('financeiroBody')) ui.renderFinanceiro(db.financeiro);
-        if (document.getElementById('votacoesContainer')) ui.renderVotacoes(db.votacoes, db.alunos);
-
-        ui.atualizarDashboard(db);
-    } catch (error) {
-        console.error(error);
-
-        if (error.message === 'Sessão expirada') {
-            showToast('Sua sessão expirou.', 'error');
-            setTimeout(window.logout, 1200);
-            return;
+        const recentTbody = document.getElementById('dashboardRecentTable');
+        if (recentTbody) {
+            recentTbody.innerHTML = financeiro.slice(-5).reverse().map(f => `
+                <tr>
+                    <td class="px-6 py-3 font-medium text-slate-300">${f.descricao}</td>
+                    <td class="px-6 py-3">${f.dataLancamento || '---'}</td>
+                    <td class="px-6 py-3 text-right font-bold ${f.tipo === 'receita' ? 'text-emerald-500' : 'text-red-500'}">
+                        ${f.tipo === 'receita' ? '+' : '-'} R$ ${f.valor.toFixed(2)}
+                    </td>
+                </tr>
+            `).join('');
         }
-
-        showToast(error.message || 'Erro ao conectar com servidor', 'error');
-    }
-}
-
-window.carregarDados = carregarDados;
-
-function setupModalEvents() {
-    window.openModal = (mode, kind) => modal.open(kind, db.turmas);
-    window.closeModal = () => modal.close();
-    window.toggleModalFields = () => modal.toggleFields();
-
-    window.salvarFormulario = async (e) => {
-        e.preventDefault();
-
-        const btn = e.target;
-        const originalText = btn.innerText;
-        btn.innerText = 'Salvando...';
-        btn.disabled = true;
-
-        const data = modal.getData();
-
-        if (!data.nome && !data.desc && data.kind !== 'tarefa') {
-            showToast('Preencha os campos obrigatórios', 'error');
-            btn.innerText = originalText;
-            btn.disabled = false;
-            return;
-        }
-
-        let endpoint = '';
-        let payload = {};
-
-        if (data.kind === 'turma') {
-            endpoint = '/turma';
-            payload = {
-                nome: data.nome,
-                curso: data.desc,
-                instituicao: 'Senac'
-            };
-        } else {
-            if (!data.turmaId) {
-                showToast('Selecione uma turma', 'error');
-                btn.innerText = originalText;
-                btn.disabled = false;
-                return;
-            }
-
-            switch (data.kind) {
-                case 'aluno':
-                    endpoint = '/aluno';
-                    payload = {
-                        nome: data.nome,
-                        contato: data.desc,
-                        turmaId: data.turmaId
-                    };
-                    break;
-
-                case 'evento':
-                    endpoint = '/evento';
-                    payload = {
-                        nome: data.nome,
-                        data: data.data,
-                        local: data.desc,
-                        turmaId: data.turmaId
-                    };
-                    break;
-
-                case 'lancamento': {
-                    endpoint = '/lancamento';
-                    const val = parseFloat(data.valor || 0);
-
-                    payload = {
-                        descricao: data.nome,
-                        tipo: val >= 0 ? 'receita' : 'despesa',
-                        valor: Math.abs(val),
-                        data: data.data,
-                        referencia: data.desc,
-                        turmaId: data.turmaId
-                    };
-                    break;
-                }
-
-                case 'votacao':
-                    endpoint = '/votacao';
-                    payload = {
-                        titulo: data.nome,
-                        dataFim: data.data,
-                        turmaId: data.turmaId
-                    };
-                    break;
-
-                default:
-                    showToast('Tipo não implementado', 'error');
-                    btn.innerText = originalText;
-                    btn.disabled = false;
-                    return;
-            }
-        }
-
-        try {
-            await api.salvar(endpoint, payload);
-            showToast('Salvo com sucesso!');
-            modal.close();
-            await carregarDados();
-        } catch (err) {
-            showToast('Erro: ' + err.message, 'error');
-        } finally {
-            btn.innerText = originalText;
-            btn.disabled = false;
-        }
-    };
-}
-
-function setupNavigation() {
-    window.navigate = (screenId) => {
-        document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
-        document.querySelectorAll('.nav-btn').forEach(el => {
-            el.classList.remove('bg-primary-500/10', 'text-primary-500', 'font-medium');
-            el.classList.add('text-slate-400', 'hover:bg-dark-700');
-        });
-
-        const target = document.getElementById(`screen-${screenId}`);
-        const btn = document.getElementById(`nav-${screenId}`);
-
-        if (target) target.classList.remove('hidden');
-        if (btn) {
-            btn.classList.remove('text-slate-400', 'hover:bg-dark-700');
-            btn.classList.add('bg-primary-500/10', 'text-primary-500', 'font-medium');
-        }
-    };
-
-    window.navigate('dashboard');
-}
-
-window.exportTableCSV = (tableId, filename) => {
-    const table = document.getElementById(tableId);
-    if (!table) {
-        showToast('Tabela vazia', 'error');
-        return;
-    }
-
-    let csv = [];
-    const rows = table.querySelectorAll('tr');
-
-    for (let i = 0; i < rows.length; i++) {
-        const row = [];
-        const cols = rows[i].querySelectorAll('td, th');
-
-        for (let j = 0; j < cols.length; j++) {
-            let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, '').trim();
-            data = data.replace(/"/g, '""');
-            row.push('"' + data + '"');
-        }
-
-        csv.push(row.join(';'));
-    }
-
-    const csvFile = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = window.URL.createObjectURL(csvFile);
-    link.download = filename + '.csv';
-    link.click();
-};
-
-window.votar = async (votacaoId, opcaoId) => {
-    try {
-        await api.votar(Number(votacaoId), Number(opcaoId));
-        showToast('Voto computado com sucesso!');
-        await carregarDados();
-    } catch (err) {
-        showToast(err.message || 'Erro ao votar', 'error');
-    }
-};
-
-window.adicionarOpcaoUI = async (votacaoId) => {
-    const nome = prompt('Nome da opção (Ex: Banda X):');
-    if (!nome) return;
-
-    try {
-        await api.salvar(`/votacao/${votacaoId}/opcao`, { nome });
-        showToast('Opção adicionada!');
-        await carregarDados();
-    } catch (err) {
-        showToast(err.message || 'Erro ao adicionar opção', 'error');
-    }
-};
-
-window.importarAlunosCSV = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    if (db.turmas.length === 0) {
-        showToast('Cadastre uma turma primeiro!', 'error');
-        event.target.value = '';
-        return;
-    }
-
-    const turmasStr = db.turmas.map(t => `${t.id} - ${t.nome}`).join('\n');
-    const turmaIdStr = prompt(`Digite o ID da turma para importar os alunos:\n\n${turmasStr}`);
-
-    if (!turmaIdStr) {
-        event.target.value = '';
-        return;
-    }
-
-    try {
-        showToast('Lendo arquivo...', 'success');
-        const resposta = await api.importarAlunosCSV(file, parseInt(turmaIdStr, 10));
-        showToast(resposta || 'Importação concluída!', 'success');
-        await carregarDados();
-    } catch (err) {
-        showToast(err.message || 'Erro ao comunicar com o servidor', 'error');
-        console.error(err);
-    } finally {
-        event.target.value = '';
     }
 };

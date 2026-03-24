@@ -47,7 +47,6 @@ export const api = {
             headers: authHeaders(true),
             body: JSON.stringify({ email, senha })
         });
-
         return parseResponse(response);
     },
 
@@ -56,7 +55,6 @@ export const api = {
             method: "GET",
             headers: authHeaders(false)
         });
-
         return parseResponse(response);
     },
 
@@ -65,17 +63,25 @@ export const api = {
             method: "GET",
             headers: authHeaders(false)
         });
-
         return parseResponse(response);
     },
 
-    async salvar(endpoint, payload) {
+    // Atualizado para aceitar PUT quando houver ID
+    async salvar(endpoint, payload, method = "POST") {
         const response = await fetch(`${CADASTRO_URL}${endpoint}`, {
-            method: "POST",
+            method: method,
             headers: authHeaders(true),
             body: JSON.stringify(payload)
         });
+        return parseResponse(response);
+    },
 
+    // Nova função para excluir
+    async deletar(endpoint) {
+        const response = await fetch(`${CADASTRO_URL}${endpoint}`, {
+            method: "DELETE",
+            headers: authHeaders(false)
+        });
         return parseResponse(response);
     },
 
@@ -85,7 +91,6 @@ export const api = {
             headers: authHeaders(true),
             body: JSON.stringify({ votacaoId, opcaoId })
         });
-
         return parseResponse(response);
     },
 
@@ -99,7 +104,6 @@ export const api = {
             headers: authHeaders(false),
             body: formData
         });
-
         return parseResponse(response);
     }
 };

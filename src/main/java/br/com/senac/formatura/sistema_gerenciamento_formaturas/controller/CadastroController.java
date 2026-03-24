@@ -10,9 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -55,69 +57,87 @@ public class CadastroController {
     @Autowired private VotacaoRepository votacaoRepo;
     @Autowired private OpcaoVotacaoRepository opcaoRepo;
     @Autowired private VotoRepository votoRepo;
-    
-    // Novas injeções para criar os usuários
     @Autowired private UsuarioRepository usuarioRepo;
     @Autowired private PasswordEncoder passwordEncoder;
 
     // --- MÓDULO DE TURMAS ---
-    @PostMapping("/turma")
-    public Turma criarTurma(@RequestBody Turma turma) { 
-        return turmaRepo.save(turma); 
-    }
-    
     @GetMapping("/turmas")
-    public List<Turma> listarTurmas() { 
-        return turmaRepo.findAll(); 
+    public List<Turma> listarTurmas() { return turmaRepo.findAll(); }
+
+    @PostMapping("/turma")
+    public Turma criarTurma(@RequestBody Turma turma) { return turmaRepo.save(turma); }
+
+    @PutMapping("/turma/{id}")
+    public Turma atualizarTurma(@PathVariable Long id, @RequestBody Turma dto) {
+        Turma turma = turmaRepo.findById(id).orElseThrow();
+        turma.setNome(dto.getNome());
+        turma.setCurso(dto.getCurso());
+        return turmaRepo.save(turma);
+    }
+
+    @DeleteMapping("/turma/{id}")
+    public ResponseEntity<?> deletarTurma(@PathVariable Long id) {
+        if(!turmaRepo.existsById(id)) return ResponseEntity.notFound().build();
+        turmaRepo.deleteById(id);
+        return ResponseEntity.ok("Excluído com sucesso");
     }
 
     // --- MÓDULO DE ALUNOS ---
+    @GetMapping("/alunos")
+    public List<Aluno> listarAlunos() { return alunoRepo.findAll(); }
+
     @PostMapping("/aluno")
     public Aluno criarAluno(@RequestBody AlunoInputDTO dto) {
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
         
-        // 1. Cria o Aluno
         Aluno aluno = new Aluno();
         aluno.setNome(dto.nome());
-        aluno.setContato(dto.contato()); // ATENÇÃO: Agora este campo DEVE ser um e-mail válido
+        aluno.setContato(dto.contato()); 
         aluno.setTurma(turma);
         Aluno alunoSalvo = alunoRepo.save(aluno);
 
-        // 2. Cria o Usuário de acesso para este Aluno automaticamente
         Usuario usuario = new Usuario();
-        usuario.setEmail(dto.contato()); // Usa o e-mail passado no cadastro
-        usuario.setSenha(passwordEncoder.encode("mudar123")); // Senha padrão para todos os alunos novos
-        usuario.setPerfil(Perfil.ROLE_ALUNO);
-        usuario.setAluno(alunoSalvo); // Vincula o login ao aluno
+        usuario.setEmail(dto.contato());
+        usuario.setSenha(passwordEncoder.encode("mudar123"));
+        if ("COMISSAO".equalsIgnoreCase(dto.perfil())) {
+            usuario.setPerfil(Perfil.ROLE_COMISSAO);
+        } else {
+            usuario.setPerfil(Perfil.ROLE_ALUNO);
+        }
+        usuario.setAluno(alunoSalvo);
         usuarioRepo.save(usuario);
 
         return alunoSalvo;
     }
-    
-    @GetMapping("/alunos")
-    public List<Aluno> listarAlunos() { 
-        return alunoRepo.findAll(); 
+
+    @PutMapping("/aluno/{id}")
+    public Aluno atualizarAluno(@PathVariable Long id, @RequestBody AlunoInputDTO dto) {
+        Aluno aluno = alunoRepo.findById(id).orElseThrow();
+        Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
+        aluno.setNome(dto.nome());
+        aluno.setContato(dto.contato());
+        aluno.setTurma(turma);
+        return alunoRepo.save(aluno);
     }
 
-    // Importação de Alunos em Lote via CSV (Agora criando usuários também!)
+    @DeleteMapping("/aluno/{id}")
+    public ResponseEntity<?> deletarAluno(@PathVariable Long id) {
+        if(!alunoRepo.existsById(id)) return ResponseEntity.notFound().build();
+        alunoRepo.deleteById(id);
+        return ResponseEntity.ok("Excluído com sucesso");
+    }
+
     @PostMapping("/alunos/importar")
     public ResponseEntity<String> importarAlunosCSV(@RequestParam("arquivo") MultipartFile arquivo, @RequestParam("turmaId") Long turmaId) {
         Turma turma = turmaRepo.findById(turmaId).orElseThrow(() -> new RuntimeException("Turma não encontrada"));
         int cadastrados = 0;
-
         try (BufferedReader br = new BufferedReader(new InputStreamReader(arquivo.getInputStream(), StandardCharsets.UTF_8))) {
             String linha;
-            boolean primeiraLinha = true; // Pula o cabeçalho
-
+            boolean primeiraLinha = true;
             while ((linha = br.readLine()) != null) {
-                if (primeiraLinha) {
-                    primeiraLinha = false;
-                    continue;
-                }
-
-                String[] dados = linha.split(";"); // Usando ponto e vírgula como separador padrão do Excel BR
+                if (primeiraLinha) { primeiraLinha = false; continue; }
+                String[] dados = linha.split(";");
                 if (dados.length >= 1) {
-                    // Salva o Aluno
                     Aluno aluno = new Aluno();
                     aluno.setNome(dados[0].trim());
                     String emailContato = dados.length > 1 ? dados[1].trim() : "aluno" + System.currentTimeMillis() + "@email.com";
@@ -125,25 +145,25 @@ public class CadastroController {
                     aluno.setTurma(turma);
                     Aluno alunoSalvo = alunoRepo.save(aluno);
                     
-                    // Salva o Usuário para esse aluno importado
                     Usuario usuario = new Usuario();
                     usuario.setEmail(emailContato); 
                     usuario.setSenha(passwordEncoder.encode("mudar123")); 
                     usuario.setPerfil(Perfil.ROLE_ALUNO);
                     usuario.setAluno(alunoSalvo); 
                     usuarioRepo.save(usuario);
-
                     cadastrados++;
                 }
             }
-            return ResponseEntity.ok(cadastrados + " alunos foram importados com sucesso e seus usuários de acesso (senha: mudar123) foram criados para a turma " + turma.getNome() + "!");
-            
+            return ResponseEntity.ok(cadastrados + " alunos foram importados com sucesso.");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Erro ao processar o arquivo: " + e.getMessage());
         }
     }
 
     // --- MÓDULO DE EVENTOS ---
+    @GetMapping("/eventos")
+    public List<Evento> listarEventos() { return eventoRepo.findAll(); }
+
     @PostMapping("/evento")
     public Evento criarEvento(@RequestBody EventoInputDTO dto) {
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
@@ -154,13 +174,29 @@ public class CadastroController {
         evento.setTurma(turma);
         return eventoRepo.save(evento);
     }
-    
-    @GetMapping("/eventos")
-    public List<Evento> listarEventos() { 
-        return eventoRepo.findAll(); 
+
+    @PutMapping("/evento/{id}")
+    public Evento atualizarEvento(@PathVariable Long id, @RequestBody EventoInputDTO dto) {
+        Evento evento = eventoRepo.findById(id).orElseThrow();
+        Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
+        evento.setNome(dto.nome());
+        evento.setDataEvento(dto.data());
+        evento.setLocalEvento(dto.local());
+        evento.setTurma(turma);
+        return eventoRepo.save(evento);
+    }
+
+    @DeleteMapping("/evento/{id}")
+    public ResponseEntity<?> deletarEvento(@PathVariable Long id) {
+        if(!eventoRepo.existsById(id)) return ResponseEntity.notFound().build();
+        eventoRepo.deleteById(id);
+        return ResponseEntity.ok("Excluído com sucesso");
     }
 
     // --- MÓDULO FINANCEIRO ---
+    @GetMapping("/financeiro")
+    public List<LancamentoFinanceiro> listarFinanceiro() { return lancamentoRepo.findAll(); }
+
     @PostMapping("/lancamento")
     public LancamentoFinanceiro criarLancamento(@RequestBody LancamentoInputDTO dto) {
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
@@ -173,17 +209,30 @@ public class CadastroController {
         lanc.setTurma(turma);
         return lancamentoRepo.save(lanc);
     }
-    
-    @GetMapping("/financeiro")
-    public List<LancamentoFinanceiro> listarFinanceiro() { 
-        return lancamentoRepo.findAll(); 
+
+    @PutMapping("/lancamento/{id}")
+    public LancamentoFinanceiro atualizarLancamento(@PathVariable Long id, @RequestBody LancamentoInputDTO dto) {
+        LancamentoFinanceiro lanc = lancamentoRepo.findById(id).orElseThrow();
+        Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
+        lanc.setDescricao(dto.descricao());
+        lanc.setValor(dto.valor());
+        lanc.setTipo(dto.tipo());
+        lanc.setDataLancamento(dto.data());
+        lanc.setReferencia(dto.referencia());
+        lanc.setTurma(turma);
+        return lancamentoRepo.save(lanc);
+    }
+
+    @DeleteMapping("/lancamento/{id}")
+    public ResponseEntity<?> deletarLancamento(@PathVariable Long id) {
+        if(!lancamentoRepo.existsById(id)) return ResponseEntity.notFound().build();
+        lancamentoRepo.deleteById(id);
+        return ResponseEntity.ok("Excluído com sucesso");
     }
 
     // --- MÓDULO DE VOTAÇÃO ---
     @GetMapping("/votacoes")
-    public List<Votacao> listarVotacoes() {
-        return votacaoRepo.findAll();
-    }
+    public List<Votacao> listarVotacoes() { return votacaoRepo.findAll(); }
 
     @PostMapping("/votacao")
     public Votacao criarVotacao(@RequestBody VotacaoInputDTO dto) {
@@ -195,38 +244,49 @@ public class CadastroController {
         return votacaoRepo.save(vot);
     }
 
+    @PutMapping("/votacao/{id}")
+    public Votacao atualizarVotacao(@PathVariable Long id, @RequestBody VotacaoInputDTO dto) {
+        Votacao vot = votacaoRepo.findById(id).orElseThrow();
+        Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
+        vot.setTitulo(dto.titulo());
+        vot.setDataFim(dto.dataFim());
+        vot.setTurma(turma);
+        return votacaoRepo.save(vot);
+    }
+
+    @DeleteMapping("/votacao/{id}")
+    public ResponseEntity<?> deletarVotacao(@PathVariable Long id) {
+        if(!votacaoRepo.existsById(id)) return ResponseEntity.notFound().build();
+        votacaoRepo.deleteById(id);
+        return ResponseEntity.ok("Excluído com sucesso");
+    }
+
     @PostMapping("/votacao/{id}/opcao")
     public OpcaoVotacao adicionarOpcao(@PathVariable Long id, @RequestBody Map<String, String> payload) {
         Votacao votacao = votacaoRepo.findById(id).orElseThrow();
         OpcaoVotacao opcao = new OpcaoVotacao();
-        opcao.setNomeFornecedor(payload.get("nome")); // Reutilizando campo nomeFornecedor como "Nome da Opção"
+        opcao.setNomeFornecedor(payload.get("nome")); 
         opcao.setVotacao(votacao);
         return opcaoRepo.save(opcao);
     }
 
-    // Endpoint para Votar
     @PostMapping("/votar")
     public ResponseEntity<?> registrarVoto(@RequestBody VotoInputRequest request) {
-        // 1. Verifica duplicidade
         if(votoRepo.existsByVotacaoIdAndAlunoId(request.votacaoId(), request.alunoId())) {
             return ResponseEntity.badRequest().body("Erro: Este aluno já votou nesta enquete!");
         }
-
-        // 2. Busca Entidades
         Votacao votacao = votacaoRepo.findById(request.votacaoId()).orElseThrow();
         OpcaoVotacao opcao = opcaoRepo.findById(request.opcaoId()).orElseThrow();
         Aluno aluno = alunoRepo.findById(request.alunoId()).orElseThrow();
 
-        // 3. Salva
         Voto voto = new Voto();
         voto.setVotacao(votacao);
         voto.setOpcao(opcao);
         voto.setAluno(aluno);
         votoRepo.save(voto);
 
-        return ResponseEntity.ok("Voto registrado com sucesso!");
+        return ResponseEntity.ok("Voto registado com sucesso!");
     }
 
-    // DTO Interno simples para receber o JSON do voto
     public record VotoInputRequest(Long votacaoId, Long opcaoId, Long alunoId) {}
 }
