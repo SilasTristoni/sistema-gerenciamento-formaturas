@@ -22,18 +22,34 @@
   <link rel="manifest" href="./manifest.json" />
   <meta name="theme-color" content="#10b981" />
 
+  <style>
+    body.auth-pending {
+      visibility: hidden;
+    }
+  </style>
+
   <script>
     (function () {
-      if (!localStorage.getItem("token")) window.location.replace("./login.html");
+      const token = sessionStorage.getItem("gestaoform.token");
+
+      if (!token) {
+        ["token", "perfil", "nomeUsuario"].forEach((key) => localStorage.removeItem(key));
+        window.location.replace("./login.html");
+      }
     })();
+
     window.addEventListener("load", async () => {
       if ("serviceWorker" in navigator) {
-        try { await navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" }); } catch (err) { console.log("Erro no SW", err); }
+        try {
+          await navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" });
+        } catch (err) {
+          console.log("Erro no SW", err);
+        }
       }
     });
   </script>
 </head>
-<body class="bg-dark-900 text-slate-300 font-sans antialiased">
+<body class="auth-pending bg-dark-900 text-slate-300 font-sans antialiased">
   <noscript><div class="noscript-warning">Este sistema precisa de JavaScript habilitado para funcionar.</div></noscript>
 
   <div id="appLoadError" class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-[9999] max-w-2xl w-full bg-red-500/10 border border-red-500/30 text-red-300 px-4 py-3 rounded-xl shadow-lg">

@@ -1,4 +1,5 @@
 import { api } from './services/api.js';
+import { auth } from './services/auth.js';
 import { ui } from './components/ui.js';
 import { modal } from './components/modal.js';
 import { showToast } from './components/toast.js';
@@ -12,15 +13,26 @@ document.addEventListener('DOMContentLoaded', () => {
     setupModalEvents();
 });
 
+function redirectToLogin() {
+    window.location.href = window.APP_CONFIG?.LOGIN_URL || 'login.html';
+}
+
 async function verificarSessao() {
-    const token = localStorage.getItem('token');
+    const token = auth.getToken();
+
     if (!token) {
-        window.location.href = window.APP_CONFIG?.LOGIN_URL || 'login.html';
+        auth.clearSession();
+        redirectToLogin();
         return;
     }
 
     try {
         usuarioLogado = await api.me();
+        auth.saveSession({
+            token,
+            perfil: usuarioLogado.perfil,
+            nome: usuarioLogado.nome
+        });
 
         if (document.getElementById('userNameDisplay')) {
             document.getElementById('userNameDisplay').innerText = usuarioLogado.nome || 'Usuário';
@@ -34,17 +46,17 @@ async function verificarSessao() {
         }
 
         await carregarDados();
+        document.body.classList.remove('auth-pending');
     } catch (error) {
         console.error(error);
-        window.logout();
+        auth.clearSession();
+        redirectToLogin();
     }
 }
 
 window.logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('perfil');
-    localStorage.removeItem('nomeUsuario');
-    window.location.href = window.APP_CONFIG?.LOGIN_URL || 'login.html';
+    auth.clearSession();
+    redirectToLogin();
 };
 
 export async function carregarDados() {
@@ -73,8 +85,8 @@ export async function carregarDados() {
             document.querySelectorAll('.btn-admin').forEach(btn => btn.style.display = 'none');
         }
 
-        if(document.getElementById('lastUpdate')) {
-            document.getElementById('lastUpdate').innerText = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+        if (document.getElementById('lastUpdate')) {
+            document.getElementById('lastUpdate').innerText = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         }
 
     } catch (error) {
@@ -135,7 +147,7 @@ function setupModalEvents() {
                     endpoint = '/evento';
                     payload = { nome: data.nome, data: data.data, local: data.desc, turmaId: data.turmaId };
                     break;
-                case 'lancamento': 
+                case 'lancamento':
                     endpoint = '/lancamento';
                     const val = parseFloat(data.valor || 0);
                     payload = { descricao: data.nome, tipo: val >= 0 ? 'receita' : 'despesa', valor: Math.abs(val), data: data.data, referencia: data.desc, turmaId: data.turmaId };
@@ -272,19 +284,17 @@ window.importarAlunosCSV = async (event) => {
     }
 };
 
-// --- LÓGICA DO NOVO MODAL CUSTOMIZADO DE EXCLUSÃO E EDIÇÃO ---
-
 let registroParaExcluir = null;
 
 window.excluirRegistro = (kind, id) => {
     registroParaExcluir = { kind, id };
     const modalConfirm = document.getElementById('confirmModal');
-    if(modalConfirm) {
+    if (modalConfirm) {
         modalConfirm.classList.remove('hidden');
         modalConfirm.classList.add('flex');
         
         const content = modalConfirm.querySelector('.bg-dark-800');
-        if(content) {
+        if (content) {
             content.classList.remove('scale-95', 'opacity-0');
             content.classList.add('scale-100', 'opacity-100');
         }
@@ -294,9 +304,9 @@ window.excluirRegistro = (kind, id) => {
 window.fecharConfirmacao = () => {
     registroParaExcluir = null;
     const modalConfirm = document.getElementById('confirmModal');
-    if(modalConfirm) {
+    if (modalConfirm) {
         const content = modalConfirm.querySelector('.bg-dark-800');
-        if(content) {
+        if (content) {
             content.classList.remove('scale-100', 'opacity-100');
             content.classList.add('scale-95', 'opacity-0');
         }
@@ -324,46 +334,46 @@ window.confirmarExclusaoAcao = async () => {
 
 window.editarRegistro = (kind, id) => {
     let lista = [];
-    if(kind === 'turma') lista = db.turmas;
-    else if(kind === 'aluno') lista = db.alunos;
-    else if(kind === 'evento') lista = db.eventos;
-    else if(kind === 'lancamento') lista = db.financeiro;
-    else if(kind === 'votacao') lista = db.votacoes;
+    if (kind === 'turma') lista = db.turmas;
+    else if (kind === 'aluno') lista = db.alunos;
+    else if (kind === 'evento') lista = db.eventos;
+    else if (kind === 'lancamento') lista = db.financeiro;
+    else if (kind === 'votacao') lista = db.votacoes;
 
     const item = lista.find(i => i.id === id);
-    if(!item) return;
+    if (!item) return;
 
     window.openModal('edit', kind);
     
     const idField = document.getElementById('modalItemId');
-    if(idField) idField.value = item.id;
+    if (idField) idField.value = item.id;
     
     const catField = document.getElementById('modalCategoria');
-    if(catField) catField.value = kind;
+    if (catField) catField.value = kind;
     
     modal.toggleFields();
 
     const nomeField = document.getElementById('modalNome');
-    if(nomeField) nomeField.value = item.nome || item.descricao || item.titulo || '';
+    if (nomeField) nomeField.value = item.nome || item.descricao || item.titulo || '';
     
-    if(kind !== 'turma') {
+    if (kind !== 'turma') {
         const turmaField = document.getElementById('modalTurmaSelect');
-        if(turmaField) turmaField.value = item.turma?.id || '';
+        if (turmaField) turmaField.value = item.turma?.id || '';
     }
 
     const descField = document.getElementById('modalDescricao');
     const dataField = document.getElementById('modalData');
     const valorField = document.getElementById('modalValor');
 
-    if(kind === 'aluno' && descField) descField.value = item.contato || '';
-    else if(kind === 'evento') {
-        if(dataField) dataField.value = item.dataEvento || '';
-        if(descField) descField.value = item.localEvento || '';
-    } else if(kind === 'lancamento') {
-        if(valorField) valorField.value = item.valor || '';
-        if(dataField) dataField.value = item.dataLancamento || '';
-        if(descField) descField.value = item.referencia || '';
-    } else if(kind === 'votacao') {
-        if(dataField) dataField.value = item.dataFim || '';
+    if (kind === 'aluno' && descField) descField.value = item.contato || '';
+    else if (kind === 'evento') {
+        if (dataField) dataField.value = item.dataEvento || '';
+        if (descField) descField.value = item.localEvento || '';
+    } else if (kind === 'lancamento') {
+        if (valorField) valorField.value = item.valor || '';
+        if (dataField) dataField.value = item.dataLancamento || '';
+        if (descField) descField.value = item.referencia || '';
+    } else if (kind === 'votacao') {
+        if (dataField) dataField.value = item.dataFim || '';
     }
 };

@@ -1,10 +1,12 @@
+import { auth } from './auth.js';
+
 const API_URL = "http://localhost:8080/api";
 const CADASTRO_URL = `${API_URL}/cadastro`;
 const AUTH_URL = `${API_URL}/auth`;
 const VOTACAO_URL = `${API_URL}/votacoes`;
 
 function authHeaders(isJson = true) {
-    const token = localStorage.getItem("token");
+    const token = auth.getToken();
     const headers = {};
 
     if (isJson) {
@@ -66,7 +68,6 @@ export const api = {
         return parseResponse(response);
     },
 
-    // Atualizado para aceitar PUT quando houver ID
     async salvar(endpoint, payload, method = "POST") {
         const response = await fetch(`${CADASTRO_URL}${endpoint}`, {
             method: method,
@@ -76,7 +77,6 @@ export const api = {
         return parseResponse(response);
     },
 
-    // Nova função para excluir
     async deletar(endpoint) {
         const response = await fetch(`${CADASTRO_URL}${endpoint}`, {
             method: "DELETE",
