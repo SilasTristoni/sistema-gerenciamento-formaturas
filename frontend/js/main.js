@@ -31,19 +31,15 @@ async function verificarSessao() {
         auth.saveSession({
             token,
             perfil: usuarioLogado.perfil,
-            nome: usuarioLogado.nome
+            nome: usuarioLogado.nome,
+            login: usuarioLogado.login || usuarioLogado.email
         });
 
-        if (document.getElementById('userNameDisplay')) {
-            document.getElementById('userNameDisplay').innerText = usuarioLogado.nome || 'Usuário';
-            document.getElementById('userAvatar').innerText = (usuarioLogado.nome || 'U').charAt(0).toUpperCase();
-
-            if (usuarioLogado.perfil === 'ROLE_COMISSAO') {
-                document.getElementById('userRoleDisplay').innerText = 'Comissão';
-            } else {
-                document.getElementById('userRoleDisplay').innerText = 'Formando(a)';
-            }
-        }
+        const nome = usuarioLogado.nome || 'Usuário';
+        document.getElementById('userNameDisplay') && (document.getElementById('userNameDisplay').innerText = nome);
+        document.getElementById('userAvatar') && (document.getElementById('userAvatar').innerText = nome.charAt(0).toUpperCase());
+        document.getElementById('userRoleDisplay') && (document.getElementById('userRoleDisplay').innerText = usuarioLogado.perfil === 'ROLE_COMISSAO' ? 'Comissão' : 'Formando(a)');
+        document.getElementById('userLoginDisplay') && (document.getElementById('userLoginDisplay').innerText = '@' + (usuarioLogado.login || usuarioLogado.email || '').replace('@gestaoform.local', ''));
 
         await carregarDados();
         document.body.classList.remove('auth-pending');
@@ -73,22 +69,18 @@ export async function carregarDados() {
 
         ui.renderTurmas(db.turmas);
         ui.renderAlunos(db.alunos);
-        if (document.getElementById('eventosBody')) ui.renderEventos(db.eventos);
-        if (document.getElementById('financeiroBody')) ui.renderFinanceiro(db.financeiro);
-        if (document.getElementById('votacoesContainer')) ui.renderVotacoes(db.votacoes, db.alunos);
-
+        document.getElementById('eventosBody') && ui.renderEventos(db.eventos);
+        document.getElementById('financeiroBody') && ui.renderFinanceiro(db.financeiro);
+        document.getElementById('votacoesContainer') && ui.renderVotacoes(db.votacoes, db.alunos);
         ui.atualizarDashboard(db);
-        
-        if (usuarioLogado && usuarioLogado.perfil === 'ROLE_COMISSAO') {
-            document.querySelectorAll('.btn-admin').forEach(btn => btn.style.display = 'inline-flex');
-        } else {
-            document.querySelectorAll('.btn-admin').forEach(btn => btn.style.display = 'none');
-        }
+
+        document.querySelectorAll('.btn-admin').forEach(btn => {
+            btn.style.display = usuarioLogado?.perfil === 'ROLE_COMISSAO' ? 'inline-flex' : 'none';
+        });
 
         if (document.getElementById('lastUpdate')) {
             document.getElementById('lastUpdate').innerText = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         }
-
     } catch (error) {
         console.error(error);
         if (error.message === 'Sessão expirada') {
@@ -102,14 +94,11 @@ export async function carregarDados() {
 window.carregarDados = carregarDados;
 
 function setupModalEvents() {
-    window.openModal = (mode, kind) => {
-        modal.open(kind, db.turmas);
-    };
+    window.openModal = (mode, kind) => modal.open(kind, db.turmas);
     window.closeModal = () => modal.close();
 
     window.salvarFormulario = async (e) => {
         e.preventDefault();
-
         const btn = e.target;
         const originalText = btn.innerText;
         btn.innerText = 'Salvando...';
@@ -141,17 +130,24 @@ function setupModalEvents() {
             switch (data.kind) {
                 case 'aluno':
                     endpoint = '/aluno';
-                    payload = { nome: data.nome, contato: data.desc, turmaId: data.turmaId, perfil: data.perfil };
+                    payload = {
+                        nome: data.nome,
+                        identificador: data.identificador,
+                        contato: data.desc,
+                        turmaId: data.turmaId,
+                        perfil: data.perfil
+                    };
                     break;
                 case 'evento':
                     endpoint = '/evento';
                     payload = { nome: data.nome, data: data.data, local: data.desc, turmaId: data.turmaId };
                     break;
-                case 'lancamento':
+                case 'lancamento': {
                     endpoint = '/lancamento';
                     const val = parseFloat(data.valor || 0);
                     payload = { descricao: data.nome, tipo: val >= 0 ? 'receita' : 'despesa', valor: Math.abs(val), data: data.data, referencia: data.desc, turmaId: data.turmaId };
                     break;
+                }
                 case 'votacao':
                     endpoint = '/votacao';
                     payload = { titulo: data.nome, dataFim: data.data, turmaId: data.turmaId };
@@ -187,20 +183,13 @@ function setupNavigation() {
             el.classList.add('hidden');
             el.classList.remove('active');
         });
-        document.querySelectorAll('.nav-item').forEach(el => {
-            el.classList.remove('active');
-        });
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
 
         const target = document.getElementById(`screen-${screenId}`);
         const btn = document.getElementById(`nav-${screenId}`);
-
-        if (target) {
-            target.classList.remove('hidden');
-            target.classList.add('active');
-        }
-        if (btn) {
-            btn.classList.add('active');
-        }
+        target?.classList.remove('hidden');
+        target?.classList.add('active');
+        btn?.classList.add('active');
     };
     window.navigate('dashboard');
 }
@@ -209,20 +198,16 @@ window.exportTableCSV = (tableId, filename) => {
     const table = document.getElementById(tableId);
     if (!table) return showToast('Tabela vazia', 'error');
 
-    let csv = [];
-    const rows = table.querySelectorAll('tr');
-
-    for (let i = 0; i < rows.length; i++) {
+    const csv = [];
+    table.querySelectorAll('tr').forEach(rowEl => {
         const row = [];
-        const cols = rows[i].querySelectorAll('td, th');
-
-        for (let j = 0; j < cols.length; j++) {
-            let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, '').trim();
+        rowEl.querySelectorAll('td, th').forEach(col => {
+            let data = col.innerText.replace(/(\r\n|\n|\r)/gm, '').trim();
             data = data.replace(/"/g, '""');
             row.push('"' + data + '"');
-        }
+        });
         csv.push(row.join(';'));
-    }
+    });
 
     const csvFile = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -244,7 +229,6 @@ window.votar = async (votacaoId, opcaoId) => {
 window.adicionarOpcaoUI = async (votacaoId) => {
     const nome = prompt('Nome da opção (Ex: Banda X):');
     if (!nome) return;
-
     try {
         await api.salvar(`/votacao/${votacaoId}/opcao`, { nome }, 'POST');
         showToast('Opção adicionada!', 'success');
@@ -257,7 +241,6 @@ window.adicionarOpcaoUI = async (votacaoId) => {
 window.importarAlunosCSV = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-
     if (db.turmas.length === 0) {
         showToast('Cadastre uma turma primeiro!', 'error');
         event.target.value = '';
@@ -266,7 +249,6 @@ window.importarAlunosCSV = async (event) => {
 
     const turmasStr = db.turmas.map(t => `${t.id} - ${t.nome}`).join('\n');
     const turmaIdStr = prompt(`Digite o ID da turma para importar os alunos:\n\n${turmasStr}`);
-
     if (!turmaIdStr) {
         event.target.value = '';
         return;
@@ -285,19 +267,14 @@ window.importarAlunosCSV = async (event) => {
 };
 
 let registroParaExcluir = null;
-
 window.excluirRegistro = (kind, id) => {
     registroParaExcluir = { kind, id };
     const modalConfirm = document.getElementById('confirmModal');
     if (modalConfirm) {
         modalConfirm.classList.remove('hidden');
         modalConfirm.classList.add('flex');
-        
-        const content = modalConfirm.querySelector('.bg-dark-800');
-        if (content) {
-            content.classList.remove('scale-95', 'opacity-0');
-            content.classList.add('scale-100', 'opacity-100');
-        }
+        modalConfirm.querySelector('.bg-dark-800')?.classList.replace('scale-95', 'scale-100');
+        modalConfirm.querySelector('.bg-dark-800')?.classList.replace('opacity-0', 'opacity-100');
     }
 };
 
@@ -305,11 +282,8 @@ window.fecharConfirmacao = () => {
     registroParaExcluir = null;
     const modalConfirm = document.getElementById('confirmModal');
     if (modalConfirm) {
-        const content = modalConfirm.querySelector('.bg-dark-800');
-        if (content) {
-            content.classList.remove('scale-100', 'opacity-100');
-            content.classList.add('scale-95', 'opacity-0');
-        }
+        modalConfirm.querySelector('.bg-dark-800')?.classList.replace('scale-100', 'scale-95');
+        modalConfirm.querySelector('.bg-dark-800')?.classList.replace('opacity-100', 'opacity-0');
         setTimeout(() => {
             modalConfirm.classList.add('hidden');
             modalConfirm.classList.remove('flex');
@@ -320,7 +294,6 @@ window.fecharConfirmacao = () => {
 window.confirmarExclusaoAcao = async () => {
     if (!registroParaExcluir) return;
     const { kind, id } = registroParaExcluir;
-    
     try {
         await api.deletar(`/${kind}/${id}`);
         showToast('Registro excluído com sucesso!', 'success');
@@ -344,36 +317,24 @@ window.editarRegistro = (kind, id) => {
     if (!item) return;
 
     window.openModal('edit', kind);
-    
-    const idField = document.getElementById('modalItemId');
-    if (idField) idField.value = item.id;
-    
-    const catField = document.getElementById('modalCategoria');
-    if (catField) catField.value = kind;
-    
+    document.getElementById('modalItemId') && (document.getElementById('modalItemId').value = item.id);
+    document.getElementById('modalCategoria') && (document.getElementById('modalCategoria').value = kind);
     modal.toggleFields();
 
-    const nomeField = document.getElementById('modalNome');
-    if (nomeField) nomeField.value = item.nome || item.descricao || item.titulo || '';
-    
-    if (kind !== 'turma') {
-        const turmaField = document.getElementById('modalTurmaSelect');
-        if (turmaField) turmaField.value = item.turma?.id || '';
-    }
+    document.getElementById('modalNome') && (document.getElementById('modalNome').value = item.nome || item.descricao || item.titulo || '');
+    if (kind !== 'turma') document.getElementById('modalTurmaSelect') && (document.getElementById('modalTurmaSelect').value = item.turma?.id || '');
 
-    const descField = document.getElementById('modalDescricao');
-    const dataField = document.getElementById('modalData');
-    const valorField = document.getElementById('modalValor');
-
-    if (kind === 'aluno' && descField) descField.value = item.contato || '';
-    else if (kind === 'evento') {
-        if (dataField) dataField.value = item.dataEvento || '';
-        if (descField) descField.value = item.localEvento || '';
+    if (kind === 'aluno') {
+        document.getElementById('modalDescricao') && (document.getElementById('modalDescricao').value = item.contato || '');
+        document.getElementById('modalIdentificador') && (document.getElementById('modalIdentificador').value = item.identificador || '');
+    } else if (kind === 'evento') {
+        document.getElementById('modalData') && (document.getElementById('modalData').value = item.dataEvento || '');
+        document.getElementById('modalDescricao') && (document.getElementById('modalDescricao').value = item.localEvento || '');
     } else if (kind === 'lancamento') {
-        if (valorField) valorField.value = item.valor || '';
-        if (dataField) dataField.value = item.dataLancamento || '';
-        if (descField) descField.value = item.referencia || '';
+        document.getElementById('modalValor') && (document.getElementById('modalValor').value = item.valor || '');
+        document.getElementById('modalData') && (document.getElementById('modalData').value = item.dataLancamento || '');
+        document.getElementById('modalDescricao') && (document.getElementById('modalDescricao').value = item.referencia || '');
     } else if (kind === 'votacao') {
-        if (dataField) dataField.value = item.dataFim || '';
+        document.getElementById('modalData') && (document.getElementById('modalData').value = item.dataFim || '');
     }
 };

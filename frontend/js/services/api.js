@@ -9,25 +9,15 @@ function authHeaders(isJson = true) {
     const token = auth.getToken();
     const headers = {};
 
-    if (isJson) {
-        headers["Content-Type"] = "application/json";
-    }
-
-    if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-    }
+    if (isJson) headers["Content-Type"] = "application/json";
+    if (token) headers["Authorization"] = `Bearer ${token}`;
 
     return headers;
 }
 
 async function parseResponse(response) {
-    if (response.status === 401) {
-        throw new Error("Sessão expirada");
-    }
-
-    if (response.status === 403) {
-        throw new Error("Acesso negado");
-    }
+    if (response.status === 401) throw new Error("Sessão expirada");
+    if (response.status === 403) throw new Error("Acesso negado");
 
     if (!response.ok) {
         const text = await response.text();
@@ -35,19 +25,15 @@ async function parseResponse(response) {
     }
 
     const contentType = response.headers.get("content-type") || "";
-    if (contentType.includes("application/json")) {
-        return response.json();
-    }
-
-    return response.text();
+    return contentType.includes("application/json") ? response.json() : response.text();
 }
 
 export const api = {
-    async login(email, senha) {
+    async login(login, senha) {
         const response = await fetch(`${AUTH_URL}/login`, {
             method: "POST",
             headers: authHeaders(true),
-            body: JSON.stringify({ email, senha })
+            body: JSON.stringify({ login, senha })
         });
         return parseResponse(response);
     },
@@ -70,7 +56,7 @@ export const api = {
 
     async salvar(endpoint, payload, method = "POST") {
         const response = await fetch(`${CADASTRO_URL}${endpoint}`, {
-            method: method,
+            method,
             headers: authHeaders(true),
             body: JSON.stringify(payload)
         });
