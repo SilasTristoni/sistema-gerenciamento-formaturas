@@ -37,16 +37,6 @@
         window.location.replace("./login.html");
       }
     })();
-
-    window.addEventListener("load", async () => {
-      if ("serviceWorker" in navigator) {
-        try {
-          await navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" });
-        } catch (err) {
-          console.log("Erro no SW", err);
-        }
-      }
-    });
   </script>
 </head>
 <body class="auth-pending bg-dark-900 text-slate-300 font-sans antialiased">
