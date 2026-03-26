@@ -3,6 +3,7 @@ package br.com.senac.formatura.sistema_gerenciamento_formaturas.controller;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 import java.util.List;
 import java.util.Map;
 
@@ -60,7 +61,6 @@ public class CadastroController {
     @Autowired private UsuarioRepository usuarioRepo;
     @Autowired private PasswordEncoder passwordEncoder;
 
-    // --- MÓDULO DE TURMAS ---
     @GetMapping("/turmas")
     public List<Turma> listarTurmas() { return turmaRepo.findAll(); }
 
@@ -82,28 +82,26 @@ public class CadastroController {
         return ResponseEntity.ok("Excluído com sucesso");
     }
 
-    // --- MÓDULO DE ALUNOS ---
     @GetMapping("/alunos")
     public List<Aluno> listarAlunos() { return alunoRepo.findAll(); }
 
     @PostMapping("/aluno")
     public Aluno criarAluno(@RequestBody AlunoInputDTO dto) {
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
-        
+        String identificador = gerarIdentificadorUnico(dto.identificador(), dto.nome());
+
         Aluno aluno = new Aluno();
         aluno.setNome(dto.nome());
-        aluno.setContato(dto.contato()); 
+        aluno.setIdentificador(identificador);
+        aluno.setContato(dto.contato());
         aluno.setTurma(turma);
         Aluno alunoSalvo = alunoRepo.save(aluno);
 
         Usuario usuario = new Usuario();
+        usuario.setLogin(identificador);
         usuario.setEmail(dto.contato());
         usuario.setSenha(passwordEncoder.encode("mudar123"));
-        if ("COMISSAO".equalsIgnoreCase(dto.perfil())) {
-            usuario.setPerfil(Perfil.ROLE_COMISSAO);
-        } else {
-            usuario.setPerfil(Perfil.ROLE_ALUNO);
-        }
+        usuario.setPerfil("COMISSAO".equalsIgnoreCase(dto.perfil()) ? Perfil.ROLE_COMISSAO : Perfil.ROLE_ALUNO);
         usuario.setAluno(alunoSalvo);
         usuarioRepo.save(usuario);
 
@@ -114,15 +112,28 @@ public class CadastroController {
     public Aluno atualizarAluno(@PathVariable Long id, @RequestBody AlunoInputDTO dto) {
         Aluno aluno = alunoRepo.findById(id).orElseThrow();
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
+        String identificador = gerarIdentificadorUnico(dto.identificador(), dto.nome(), aluno.getId());
+
         aluno.setNome(dto.nome());
+        aluno.setIdentificador(identificador);
         aluno.setContato(dto.contato());
         aluno.setTurma(turma);
-        return alunoRepo.save(aluno);
+        Aluno alunoAtualizado = alunoRepo.save(aluno);
+
+        usuarioRepo.findByAlunoId(aluno.getId()).ifPresent(usuario -> {
+            usuario.setLogin(identificador);
+            usuario.setEmail(dto.contato());
+            usuario.setPerfil("COMISSAO".equalsIgnoreCase(dto.perfil()) ? Perfil.ROLE_COMISSAO : Perfil.ROLE_ALUNO);
+            usuarioRepo.save(usuario);
+        });
+
+        return alunoAtualizado;
     }
 
     @DeleteMapping("/aluno/{id}")
     public ResponseEntity<?> deletarAluno(@PathVariable Long id) {
         if(!alunoRepo.existsById(id)) return ResponseEntity.notFound().build();
+        usuarioRepo.findByAlunoId(id).ifPresent(usuarioRepo::delete);
         alunoRepo.deleteById(id);
         return ResponseEntity.ok("Excluído com sucesso");
     }
@@ -131,6 +142,7 @@ public class CadastroController {
     public ResponseEntity<String> importarAlunosCSV(@RequestParam("arquivo") MultipartFile arquivo, @RequestParam("turmaId") Long turmaId) {
         Turma turma = turmaRepo.findById(turmaId).orElseThrow(() -> new RuntimeException("Turma não encontrada"));
         int cadastrados = 0;
+
         try (BufferedReader br = new BufferedReader(new InputStreamReader(arquivo.getInputStream(), StandardCharsets.UTF_8))) {
             String linha;
             boolean primeiraLinha = true;
@@ -138,18 +150,23 @@ public class CadastroController {
                 if (primeiraLinha) { primeiraLinha = false; continue; }
                 String[] dados = linha.split(";");
                 if (dados.length >= 1) {
+                    String nome = dados[0].trim();
+                    String emailContato = dados.length > 1 ? dados[1].trim() : "";
+                    String identificador = gerarIdentificadorUnico(null, nome);
+
                     Aluno aluno = new Aluno();
-                    aluno.setNome(dados[0].trim());
-                    String emailContato = dados.length > 1 ? dados[1].trim() : "aluno" + System.currentTimeMillis() + "@email.com";
-                    aluno.setContato(emailContato); 
+                    aluno.setNome(nome);
+                    aluno.setIdentificador(identificador);
+                    aluno.setContato(emailContato);
                     aluno.setTurma(turma);
                     Aluno alunoSalvo = alunoRepo.save(aluno);
-                    
+
                     Usuario usuario = new Usuario();
-                    usuario.setEmail(emailContato); 
-                    usuario.setSenha(passwordEncoder.encode("mudar123")); 
+                    usuario.setLogin(identificador);
+                    usuario.setEmail(emailContato.isBlank() ? identificador + "@gestaoform.local" : emailContato);
+                    usuario.setSenha(passwordEncoder.encode("mudar123"));
                     usuario.setPerfil(Perfil.ROLE_ALUNO);
-                    usuario.setAluno(alunoSalvo); 
+                    usuario.setAluno(alunoSalvo);
                     usuarioRepo.save(usuario);
                     cadastrados++;
                 }
@@ -160,7 +177,6 @@ public class CadastroController {
         }
     }
 
-    // --- MÓDULO DE EVENTOS ---
     @GetMapping("/eventos")
     public List<Evento> listarEventos() { return eventoRepo.findAll(); }
 
@@ -193,7 +209,6 @@ public class CadastroController {
         return ResponseEntity.ok("Excluído com sucesso");
     }
 
-    // --- MÓDULO FINANCEIRO ---
     @GetMapping("/financeiro")
     public List<LancamentoFinanceiro> listarFinanceiro() { return lancamentoRepo.findAll(); }
 
@@ -230,7 +245,6 @@ public class CadastroController {
         return ResponseEntity.ok("Excluído com sucesso");
     }
 
-    // --- MÓDULO DE VOTAÇÃO ---
     @GetMapping("/votacoes")
     public List<Votacao> listarVotacoes() { return votacaoRepo.findAll(); }
 
@@ -265,7 +279,7 @@ public class CadastroController {
     public OpcaoVotacao adicionarOpcao(@PathVariable Long id, @RequestBody Map<String, String> payload) {
         Votacao votacao = votacaoRepo.findById(id).orElseThrow();
         OpcaoVotacao opcao = new OpcaoVotacao();
-        opcao.setNomeFornecedor(payload.get("nome")); 
+        opcao.setNomeFornecedor(payload.get("nome"));
         opcao.setVotacao(votacao);
         return opcaoRepo.save(opcao);
     }
@@ -286,6 +300,47 @@ public class CadastroController {
         votoRepo.save(voto);
 
         return ResponseEntity.ok("Voto registado com sucesso!");
+    }
+
+    private String gerarIdentificadorUnico(String identificadorInformado, String nome) {
+        return gerarIdentificadorUnico(identificadorInformado, nome, null);
+    }
+
+    private String gerarIdentificadorUnico(String identificadorInformado, String nome, Long alunoIdAtual) {
+        String base = (identificadorInformado != null && !identificadorInformado.isBlank())
+            ? normalizarIdentificador(identificadorInformado)
+            : gerarIdentificadorBase(nome);
+
+        if (base.isBlank()) base = "aluno";
+
+        String candidato = base;
+        int contador = 2;
+
+        while (true) {
+            var existente = usuarioRepo.findUsuarioByLogin(candidato);
+            if (existente.isEmpty()) return candidato;
+            if (alunoIdAtual != null && existente.get().getAluno() != null && alunoIdAtual.equals(existente.get().getAluno().getId())) {
+                return candidato;
+            }
+            candidato = base + "." + contador++;
+        }
+    }
+
+    private String gerarIdentificadorBase(String nome) {
+        if (nome == null || nome.isBlank()) return "aluno";
+        String limpo = Normalizer.normalize(nome, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
+        String[] partes = limpo.trim().toLowerCase().split("\\s+");
+        if (partes.length == 1) return normalizarIdentificador(partes[0]);
+        return normalizarIdentificador(partes[0] + "." + partes[partes.length - 1]);
+    }
+
+    private String normalizarIdentificador(String valor) {
+        return Normalizer.normalize(valor == null ? "" : valor, Normalizer.Form.NFD)
+            .replaceAll("\\p{M}", "")
+            .toLowerCase()
+            .replaceAll("[^a-z0-9._-]", ".")
+            .replaceAll("\\.{2,}", ".")
+            .replaceAll("^[._-]+|[._-]+$", "");
     }
 
     public record VotoInputRequest(Long votacaoId, Long opcaoId, Long alunoId) {}

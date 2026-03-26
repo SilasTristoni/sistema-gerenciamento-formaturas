@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.UsuarioRepository;
-import br.com.senac.formatura.sistema_gerenciamento_formaturas.service.TokenService; // Import corrigido!
+import br.com.senac.formatura.sistema_gerenciamento_formaturas.service.TokenService;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -28,10 +28,15 @@ public class SecurityFilter extends OncePerRequestFilter {
 
         if (tokenJWT != null) {
             String subject = tokenService.getSubject(tokenJWT);
-            UserDetails usuario = repository.findByEmail(subject);
+            UserDetails usuario = repository.findByLogin(subject);
+            if (usuario == null) {
+                usuario = repository.findByEmail(subject);
+            }
 
-            var authentication = new UsernamePasswordAuthenticationToken(usuario, null, usuario.getAuthorities());
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            if (usuario != null) {
+                var authentication = new UsernamePasswordAuthenticationToken(usuario, null, usuario.getAuthorities());
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
         }
 
         filterChain.doFilter(request, response);
