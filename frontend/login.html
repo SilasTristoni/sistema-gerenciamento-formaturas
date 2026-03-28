@@ -77,7 +77,7 @@
       </div>
 
       <div class="text-xs text-slate-500">
-        Acesso da comissão: <span class="text-slate-300 font-medium">admin</span> / <span class="text-slate-300 font-medium">admin123</span>
+        Acesso da comissão: <span class="text-slate-300 font-medium">admin@gestaoform.com</span> / <span class="text-slate-300 font-medium">admin123</span>
       </div>
     </section>
 
@@ -94,7 +94,7 @@
         </div>
 
         <div class="mb-6 rounded-2xl border border-emerald-400/15 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200">
-          Você pode entrar com seu <strong>identificador</strong> ou, temporariamente, com o login já cadastrado no sistema.
+          Você pode entrar com seu <strong>identificador</strong> ou com o login já cadastrado no sistema.
         </div>
 
         <form id="loginForm" class="space-y-5">
@@ -102,7 +102,7 @@
             <label class="block text-xs uppercase font-bold text-slate-400 mb-2 tracking-[.18em]">Identificador ou login</label>
             <div class="relative">
               <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500"><i class="ph ph-user"></i></span>
-              <input type="text" id="loginEmail" required class="w-full rounded-2xl border border-white/10 bg-slate-950/70 pl-11 pr-4 py-3.5 text-white placeholder-slate-600 outline-none transition-all focus:border-emerald-400/70 focus:ring-4 focus:ring-emerald-400/10" placeholder="ex.: admin ou silas.tristoni">
+              <input type="text" id="loginEmail" required class="w-full rounded-2xl border border-white/10 bg-slate-950/70 pl-11 pr-4 py-3.5 text-white placeholder-slate-600 outline-none transition-all focus:border-emerald-400/70 focus:ring-4 focus:ring-emerald-400/10" placeholder="ex.: admin@gestaoform.com ou silas.tristoni">
             </div>
           </div>
 
@@ -119,17 +119,6 @@
             Entrar no painel
           </button>
         </form>
-
-        <div class="mt-6 grid grid-cols-2 gap-3 text-xs text-slate-400">
-          <div class="rounded-2xl border border-white/8 bg-white/[0.04] p-4">
-            <p class="font-semibold text-slate-200">Acesso rápido</p>
-            <p class="mt-1">Administração, alunos e comissão no mesmo painel.</p>
-          </div>
-          <div class="rounded-2xl border border-white/8 bg-white/[0.04] p-4">
-            <p class="font-semibold text-slate-200">Experiência moderna</p>
-            <p class="mt-1">Interface mais elegante e agradável para uso diário.</p>
-          </div>
-        </div>
       </div>
     </section>
   </main>
@@ -139,17 +128,19 @@
       import { auth } from './js/services/auth.js';
       import { showToast } from './js/components/toast.js';
 
+      auth.clearSession();
+
       document.getElementById('loginForm').addEventListener('submit', async (e) => {
           e.preventDefault();
           const btn = document.getElementById('btnLogin');
-          const email = document.getElementById('loginEmail').value;
+          const login = document.getElementById('loginEmail').value;
           const senha = document.getElementById('loginSenha').value;
 
           btn.innerHTML = '<i class="ph ph-spinner-gap animate-spin"></i> Autenticando...';
           btn.disabled = true;
 
           try {
-              const dados = await api.login(email, senha);
+              const dados = await api.login(login, senha);
               auth.saveSession(dados);
               showToast('Login efetuado com sucesso!');
               setTimeout(() => {

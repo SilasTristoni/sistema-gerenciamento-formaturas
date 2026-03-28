@@ -1,5 +1,6 @@
 import { api } from './services/api.js';
 import { auth } from './services/auth.js';
+import { dashboardPrefs } from './services/dashboardPrefs.js';
 import { ui } from './components/ui.js';
 import { modal } from './components/modal.js';
 import { showToast } from './components/toast.js';
@@ -8,9 +9,10 @@ let db = { turmas: [], alunos: [], eventos: [], financeiro: [], votacoes: [] };
 let usuarioLogado = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-    verificarSessao();
     setupNavigation();
     setupModalEvents();
+    dashboardPrefs.init();
+    verificarSessao();
 });
 
 function redirectToLogin() {
@@ -36,10 +38,12 @@ async function verificarSessao() {
         });
 
         const nome = usuarioLogado.nome || 'Usuário';
-        document.getElementById('userNameDisplay') && (document.getElementById('userNameDisplay').innerText = nome);
-        document.getElementById('userAvatar') && (document.getElementById('userAvatar').innerText = nome.charAt(0).toUpperCase());
-        document.getElementById('userRoleDisplay') && (document.getElementById('userRoleDisplay').innerText = usuarioLogado.perfil === 'ROLE_COMISSAO' ? 'Comissão' : 'Formando(a)');
-        document.getElementById('userLoginDisplay') && (document.getElementById('userLoginDisplay').innerText = '@' + (usuarioLogado.login || usuarioLogado.email || '').replace('@gestaoform.local', ''));
+        const login = usuarioLogado.login || usuarioLogado.email || 'usuario';
+
+        if (document.getElementById('userNameDisplay')) document.getElementById('userNameDisplay').innerText = nome;
+        if (document.getElementById('userAvatar')) document.getElementById('userAvatar').innerText = nome.charAt(0).toUpperCase();
+        if (document.getElementById('userRoleDisplay')) document.getElementById('userRoleDisplay').innerText = usuarioLogado.perfil === 'ROLE_COMISSAO' ? 'Comissão' : 'Formando(a)';
+        if (document.getElementById('userLoginDisplay')) document.getElementById('userLoginDisplay').innerText = '@' + login.replace('@gestaoform.local', '');
 
         await carregarDados();
         document.body.classList.remove('auth-pending');
@@ -69,9 +73,9 @@ export async function carregarDados() {
 
         ui.renderTurmas(db.turmas);
         ui.renderAlunos(db.alunos);
-        document.getElementById('eventosBody') && ui.renderEventos(db.eventos);
-        document.getElementById('financeiroBody') && ui.renderFinanceiro(db.financeiro);
-        document.getElementById('votacoesContainer') && ui.renderVotacoes(db.votacoes, db.alunos);
+        if (document.getElementById('eventosBody')) ui.renderEventos(db.eventos);
+        if (document.getElementById('financeiroBody')) ui.renderFinanceiro(db.financeiro);
+        if (document.getElementById('votacoesContainer')) ui.renderVotacoes(db.votacoes, db.alunos);
         ui.atualizarDashboard(db);
 
         document.querySelectorAll('.btn-admin').forEach(btn => {
@@ -255,7 +259,7 @@ window.importarAlunosCSV = async (event) => {
     }
 
     try {
-        showToast('A ler o ficheiro...', 'success');
+        showToast('Lendo o arquivo...', 'success');
         const resposta = await api.importarAlunosCSV(file, parseInt(turmaIdStr, 10));
         showToast(resposta || 'Importação concluída!', 'success');
         await carregarDados();

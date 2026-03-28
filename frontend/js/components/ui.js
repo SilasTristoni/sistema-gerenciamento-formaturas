@@ -111,14 +111,38 @@ export const ui = {
         const inadimplentes = (db.alunos || []).filter(a => a.status === 'pendente' || a.status === 'atrasado').length;
         const proximoEvento = db.eventos && db.eventos.length > 0 ? db.eventos[0] : null;
 
-        document.getElementById('totalReceita') && (document.getElementById('totalReceita').innerText = `R$ ${saldo.toFixed(2)}`);
-        document.getElementById('txtEntradas') && (document.getElementById('txtEntradas').innerText = `R$ ${receitas.toFixed(2)}`);
-        document.getElementById('txtSaidas') && (document.getElementById('txtSaidas').innerText = `R$ ${despesas.toFixed(2)}`);
-        document.getElementById('totalInadimplencia') && (document.getElementById('totalInadimplencia').innerText = inadimplentes);
-        document.getElementById('proximoEvento') && (document.getElementById('proximoEvento').innerText = proximoEvento?.nome || '--');
-        document.getElementById('dataEvento') && (document.getElementById('dataEvento').innerText = proximoEvento?.dataEvento || '--');
-        document.getElementById('kpiTurmas') && (document.getElementById('kpiTurmas').innerText = db.turmas?.length || 0);
-        document.getElementById('kpiAlunos') && (document.getElementById('kpiAlunos').innerText = db.alunos?.length || 0);
-        document.getElementById('kpiEventos') && (document.getElementById('kpiEventos').innerText = db.eventos?.length || 0);
+        const setText = (id, value) => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = value;
+        };
+
+        setText('totalReceita', `R$ ${saldo.toFixed(2)}`);
+        setText('txtEntradas', `R$ ${receitas.toFixed(2)}`);
+        setText('txtSaidas', `R$ ${despesas.toFixed(2)}`);
+        setText('totalInadimplencia', inadimplentes);
+        setText('proximoEvento', proximoEvento?.nome || '--');
+        setText('dataEvento', proximoEvento?.dataEvento || '--');
+        setText('kpiTurmas', db.turmas?.length || 0);
+        setText('kpiAlunos', db.alunos?.length || 0);
+        setText('kpiEventos', db.eventos?.length || 0);
+        setText('resumoReceitas', `R$ ${receitas.toFixed(2)}`);
+        setText('resumoDespesas', `R$ ${despesas.toFixed(2)}`);
+        setText('resumoVotacoes', db.votacoes?.length || 0);
+        setText('resumoInadimplentes', inadimplentes);
+
+        const recentList = document.getElementById('dashboardRecentList');
+        if (recentList) {
+            recentList.innerHTML = financeiro.slice(-4).reverse().map(f => `
+                <div class="dashboard-activity-item">
+                    <div>
+                        <p class="text-sm text-white font-medium">${f.descricao}</p>
+                        <p class="text-xs text-slate-500 mt-1">${f.dataLancamento || 'Sem data'}</p>
+                    </div>
+                    <span class="text-sm font-semibold ${f.tipo === 'receita' ? 'text-emerald-400' : 'text-red-400'}">
+                        ${f.tipo === 'receita' ? '+' : '-'} R$ ${f.valor.toFixed(2)}
+                    </span>
+                </div>
+            `).join('') || '<p class="text-sm text-slate-500">Nenhuma movimentação recente.</p>';
+        }
     }
 };

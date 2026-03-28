@@ -36,7 +36,6 @@
 </head>
 <body class="auth-pending bg-dark-950 text-slate-300 font-sans antialiased">
   <noscript><div class="noscript-warning">Este sistema precisa de JavaScript habilitado para funcionar.</div></noscript>
-
   <div class="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,.12),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,.10),transparent_22%)]"></div>
 
   <div class="flex h-screen">
@@ -85,6 +84,7 @@
           </div>
         </div>
         <div class="flex items-center gap-3">
+          <button onclick="openDashboardSettings()" class="btn-outline"><i class="ph ph-sliders-horizontal"></i><span class="hidden sm:inline">Personalizar dashboard</span></button>
           <button onclick="carregarDados()" class="btn-outline"><i class="ph ph-arrows-clockwise"></i><span class="hidden sm:inline">Atualizar</span></button>
           <button onclick="openModal('new','lancamento')" class="btn btn-primary btn-admin shadow-lg"><i class="ph ph-plus-bold"></i> <span class="hidden sm:inline">Novo registro</span></button>
         </div>
@@ -94,39 +94,91 @@
         <section id="screen-dashboard" class="screen active">
           <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6">
             <div>
-              <h2 class="text-3xl font-extrabold text-white tracking-tight">Visão Geral</h2>
-              <p class="text-sm text-slate-500 mt-1">Última atualização: <span id="lastUpdate">Agora</span></p>
+              <h2 class="text-3xl font-extrabold text-white tracking-tight">Dashboard</h2>
+              <p class="text-sm text-slate-500 mt-1">Widgets simples, modernos e configuráveis pelo usuário.</p>
             </div>
-            <div class="grid grid-cols-3 gap-3 lg:w-auto w-full">
-              <div class="card-panel px-4 py-3 text-center"><p class="text-xs text-slate-500 uppercase tracking-wider">Turmas</p><p id="kpiTurmas" class="text-xl font-bold text-white mt-1">0</p></div>
-              <div class="card-panel px-4 py-3 text-center"><p class="text-xs text-slate-500 uppercase tracking-wider">Alunos</p><p id="kpiAlunos" class="text-xl font-bold text-white mt-1">0</p></div>
-              <div class="card-panel px-4 py-3 text-center"><p class="text-xs text-slate-500 uppercase tracking-wider">Eventos</p><p id="kpiEventos" class="text-xl font-bold text-white mt-1">0</p></div>
+            <div class="flex flex-wrap items-center gap-3 text-sm text-slate-400">
+              <span class="inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/[0.04] px-3 py-2">
+                <i class="ph ph-clock"></i>
+                Última atualização: <span id="lastUpdate">Agora</span>
+              </span>
             </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-            <div class="dashboard-widget group">
+          <div id="dashboardTopStats" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="dashboard-kpi">
+              <p class="text-xs text-slate-500 uppercase tracking-wider">Turmas</p>
+              <p id="kpiTurmas" class="text-2xl font-bold text-white mt-2">0</p>
+            </div>
+            <div class="dashboard-kpi">
+              <p class="text-xs text-slate-500 uppercase tracking-wider">Alunos</p>
+              <p id="kpiAlunos" class="text-2xl font-bold text-white mt-2">0</p>
+            </div>
+            <div class="dashboard-kpi">
+              <p class="text-xs text-slate-500 uppercase tracking-wider">Eventos</p>
+              <p id="kpiEventos" class="text-2xl font-bold text-white mt-2">0</p>
+            </div>
+          </div>
+
+          <div id="dashboardWidgetGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div class="dashboard-widget group" data-widget-id="saldo">
               <div class="absolute right-0 top-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity"><i class="ph ph-wallet text-6xl text-primary-500"></i></div>
               <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Saldo em Caixa</p>
               <h3 class="text-3xl text-white font-bold mt-2 tracking-tight" id="totalReceita">R$ --</h3>
               <p class="text-xs font-medium text-emerald-400 mt-3 flex items-center gap-1"><i class="ph-bold ph-trend-up"></i> Disponível</p>
             </div>
-            <div class="dashboard-widget">
+
+            <div class="dashboard-widget" data-widget-id="fluxo">
               <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Fluxo Mensal</p>
               <div class="mt-4 space-y-3">
                 <div class="flex justify-between text-sm text-slate-300"><span>Entradas</span><span id="txtEntradas" class="text-emerald-400 font-semibold">R$ 0</span></div>
                 <div class="flex justify-between text-sm text-slate-300"><span>Saídas</span><span id="txtSaidas" class="text-red-400 font-semibold">R$ 0</span></div>
               </div>
             </div>
-            <div class="dashboard-widget">
+
+            <div class="dashboard-widget" data-widget-id="pendencias">
               <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Pendências</p>
               <h3 class="text-3xl text-white font-bold mt-2" id="totalInadimplencia">--</h3>
               <p class="text-xs text-orange-400 mt-3">Alunos com atraso</p>
             </div>
-            <div class="dashboard-widget">
+
+            <div class="dashboard-widget" data-widget-id="proximoEvento">
               <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Próximo Evento</p>
               <h3 class="text-lg text-white font-bold mt-2 truncate" id="proximoEvento">--</h3>
               <p class="text-xs text-purple-300 mt-3 flex items-center gap-1"><i class="ph-bold ph-calendar"></i> <span id="dataEvento">--</span></p>
+            </div>
+
+            <div class="dashboard-widget xl:col-span-2" data-widget-id="atalhos">
+              <div class="flex items-center justify-between gap-4 mb-4">
+                <div>
+                  <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Atalhos Rápidos</p>
+                  <h3 class="text-lg text-white font-bold mt-1">Ações do dia a dia</h3>
+                </div>
+                <i class="ph ph-lightning text-2xl text-primary-400"></i>
+              </div>
+              <div class="grid sm:grid-cols-2 gap-3">
+                <button onclick="openModal('new','aluno')" class="dashboard-action-btn btn-admin"><i class="ph ph-user-plus"></i> Novo aluno</button>
+                <button onclick="openModal('new','evento')" class="dashboard-action-btn btn-admin"><i class="ph ph-calendar-plus"></i> Novo evento</button>
+                <button onclick="navigate('financeiro')" class="dashboard-action-btn"><i class="ph ph-bank"></i> Ir para financeiro</button>
+                <button onclick="navigate('votacao')" class="dashboard-action-btn"><i class="ph ph-chart-bar"></i> Abrir enquetes</button>
+              </div>
+            </div>
+
+            <div class="dashboard-widget xl:col-span-2" data-widget-id="resumo">
+              <div class="flex items-center justify-between gap-4 mb-4">
+                <div>
+                  <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Resumo Operacional</p>
+                  <h3 class="text-lg text-white font-bold mt-1">Números rápidos e movimentações</h3>
+                </div>
+                <i class="ph ph-chart-line-up text-2xl text-primary-400"></i>
+              </div>
+              <div class="grid sm:grid-cols-2 gap-3 mb-4">
+                <div class="rounded-2xl border border-white/8 bg-white/[0.03] p-4"><p class="text-xs text-slate-500 uppercase tracking-wider">Receitas</p><p id="resumoReceitas" class="text-xl text-white font-bold mt-2">R$ 0</p></div>
+                <div class="rounded-2xl border border-white/8 bg-white/[0.03] p-4"><p class="text-xs text-slate-500 uppercase tracking-wider">Despesas</p><p id="resumoDespesas" class="text-xl text-white font-bold mt-2">R$ 0</p></div>
+                <div class="rounded-2xl border border-white/8 bg-white/[0.03] p-4"><p class="text-xs text-slate-500 uppercase tracking-wider">Votações</p><p id="resumoVotacoes" class="text-xl text-white font-bold mt-2">0</p></div>
+                <div class="rounded-2xl border border-white/8 bg-white/[0.03] p-4"><p class="text-xs text-slate-500 uppercase tracking-wider">Inadimplentes</p><p id="resumoInadimplentes" class="text-xl text-white font-bold mt-2">0</p></div>
+              </div>
+              <div id="dashboardRecentList" class="space-y-1"></div>
             </div>
           </div>
         </section>
@@ -143,16 +195,7 @@
               <button onclick="openModal('new','aluno')" class="btn btn-primary btn-admin">Novo Aluno</button>
             </div>
           </div>
-          <div class="card-panel">
-            <div class="overflow-x-auto">
-              <table id="alunosTable" class="w-full text-left text-sm text-slate-400">
-                <thead class="bg-dark-900/50 text-xs uppercase font-semibold text-slate-500 tracking-wider">
-                  <tr><th class="px-6 py-4">Aluno / Login</th><th class="px-6 py-4">Turma</th><th class="px-6 py-4">Contato</th><th class="px-6 py-4">Status</th><th class="px-6 py-4 text-right">Ações</th></tr>
-                </thead>
-                <tbody id="alunosBody" class="divide-y divide-white/5"></tbody>
-              </table>
-            </div>
-          </div>
+          <div class="card-panel"><div class="overflow-x-auto"><table id="alunosTable" class="w-full text-left text-sm text-slate-400"><thead class="bg-dark-900/50 text-xs uppercase font-semibold text-slate-500 tracking-wider"><tr><th class="px-6 py-4">Aluno / Login</th><th class="px-6 py-4">Turma</th><th class="px-6 py-4">Contato</th><th class="px-6 py-4">Status</th><th class="px-6 py-4 text-right">Ações</th></tr></thead><tbody id="alunosBody" class="divide-y divide-white/5"></tbody></table></div></div>
         </section>
 
         <section id="screen-turmas" class="screen hidden">
@@ -178,6 +221,50 @@
     </main>
   </div>
 
+  <div id="dashboardSettingsModal" class="fixed inset-0 bg-dark-900/80 backdrop-blur-sm hidden items-center justify-center z-[80] p-4">
+    <div class="dashboard-settings-shell">
+      <div class="px-6 py-5 border-b border-white/6 flex items-center justify-between gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-[.18em] text-slate-500 font-bold">Preferências</p>
+          <h3 class="text-xl text-white font-bold mt-1">Personalizar dashboard</h3>
+        </div>
+        <button onclick="closeDashboardSettings()" class="text-slate-500 hover:text-white transition-colors p-1 rounded-md hover:bg-dark-700"><i class="ph ph-x text-lg"></i></button>
+      </div>
+      <div class="p-6 space-y-5 max-h-[80vh] overflow-y-auto custom-scroll">
+        <div class="grid sm:grid-cols-2 gap-3">
+          <div class="dashboard-settings-row">
+            <div>
+              <p class="text-sm font-semibold text-white">Faixa superior de KPIs</p>
+              <p class="text-xs text-slate-500 mt-1">Mostra turmas, alunos e eventos no topo.</p>
+            </div>
+            <label class="dashboard-switch"><input type="checkbox" id="toggleTopStats" onchange="toggleDashboardTopStats(this.checked)"><span>Ativar</span></label>
+          </div>
+          <div class="dashboard-settings-row">
+            <div>
+              <p class="text-sm font-semibold text-white">Modo compacto</p>
+              <p class="text-xs text-slate-500 mt-1">Reduz espaçamentos para um painel mais denso.</p>
+            </div>
+            <label class="dashboard-switch"><input type="checkbox" id="toggleCompactMode" onchange="toggleDashboardCompactMode(this.checked)"><span>Ativar</span></label>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-3 gap-3">
+            <div>
+              <p class="text-sm font-semibold text-white">Widgets</p>
+              <p class="text-xs text-slate-500 mt-1">Escolha a ordem e o que deseja ver no dashboard.</p>
+            </div>
+            <button onclick="resetDashboardPreferences()" class="btn-outline text-sm">Restaurar padrão</button>
+          </div>
+          <div id="dashboardConfigList" class="space-y-3"></div>
+        </div>
+      </div>
+      <div class="px-6 py-4 border-t border-white/6 bg-dark-900/40 flex justify-end">
+        <button onclick="closeDashboardSettings()" class="btn-gradient text-sm">Concluir</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toastContainer" class="fixed top-5 right-5 z-[60] flex flex-col gap-2 w-full max-w-xs pointer-events-none"></div>
 
   <div id="modalBackdrop" class="fixed inset-0 bg-dark-900/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 modal-backdrop">
@@ -186,7 +273,6 @@
         <h3 id="modalTitle" class="text-lg font-bold text-white flex items-center gap-2"><i class="ph ph-pencil-simple text-primary-500"></i> <span>Formulário</span></h3>
         <button onclick="closeModal()" class="text-slate-500 hover:text-white transition-colors p-1 rounded-md hover:bg-dark-700"><i class="ph ph-x text-lg"></i></button>
       </div>
-
       <div class="p-6 max-h-[80vh] overflow-y-auto custom-scroll">
         <form id="modalForm" class="space-y-5">
           <input type="hidden" id="modalItemId" value="">
@@ -203,32 +289,26 @@
               <i class="ph ph-caret-down absolute right-4 top-3.5 text-slate-400 pointer-events-none"></i>
             </div>
           </div>
-
           <div>
             <label class="form-label">Título / Nome</label>
             <input id="modalNome" type="text" required class="form-input" placeholder="Digite aqui..." />
           </div>
-
           <div id="divIdentificador" class="hidden">
             <label class="form-label">Identificador do aluno</label>
             <input id="modalIdentificador" type="text" class="form-input" placeholder="ex.: silas.tristoni" />
             <p class="text-xs text-slate-500 mt-2">Esse identificador será usado no login do aluno. Se você deixar em branco, o sistema gera automaticamente.</p>
           </div>
-
           <div class="grid grid-cols-2 gap-4" id="divDataValor">
             <div><label class="form-label">Data</label><input id="modalData" type="date" class="form-input" /></div>
             <div><label class="form-label">Valor (R$)</label><input id="modalValor" type="number" step="0.01" class="form-input" placeholder="0.00" /></div>
           </div>
-
           <div>
             <label id="lblDescricao" class="form-label">Descrição</label>
             <textarea id="modalDescricao" rows="3" class="form-input" placeholder="Detalhes adicionais..."></textarea>
-
             <div class="mt-3 relative" id="divTurmaSelect">
               <select id="modalTurmaSelect" class="form-input form-select"><option value="">Selecione a Turma...</option></select>
               <i class="ph ph-caret-down absolute right-4 top-3.5 text-slate-400 pointer-events-none"></i>
             </div>
-
             <div id="divPerfil" class="mt-3 hidden">
               <label class="form-label">Cargo / Perfil</label>
               <div class="relative">
@@ -242,7 +322,6 @@
           </div>
         </form>
       </div>
-
       <div class="px-6 py-4 bg-dark-900/45 border-t border-white/6 flex gap-3">
         <button type="button" onclick="closeModal()" class="flex-1 btn-outline w-full text-center text-sm font-medium">Cancelar</button>
         <button onclick="salvarFormulario(event)" type="button" class="flex-1 btn-gradient w-full text-center text-sm">Salvar</button>
@@ -261,6 +340,7 @@
       </div>
     </div>
   </div>
+
   <script type="module" src="./js/main.js"></script>
 </body>
 </html>
