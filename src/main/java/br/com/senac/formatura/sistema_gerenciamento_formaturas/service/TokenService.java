@@ -3,11 +3,14 @@ package br.com.senac.formatura.sistema_gerenciamento_formaturas.service; // Corr
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+
 import org.springframework.stereotype.Service;
+
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Usuario;
 
 @Service
@@ -19,7 +22,7 @@ public class TokenService {
             var algoritmo = Algorithm.HMAC256(secret);
             return JWT.create()
                     .withIssuer("API Gestao Formaturas")
-                    .withSubject(usuario.getEmail())
+                    .withSubject(usuario.getUsername()) // <-- Mude aqui!
                     .withClaim("id", usuario.getId())
                     .withClaim("perfil", usuario.getPerfil().name())
                     .withExpiresAt(dataExpiracao())

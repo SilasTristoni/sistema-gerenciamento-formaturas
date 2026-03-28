@@ -5,6 +5,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.UsuarioRepository;
 
 @Service
@@ -15,6 +16,15 @@ public class AutenticacaoService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return repository.findByEmail(username);
+        UserDetails usuario = repository.findByLogin(username);
+
+        if (usuario == null) {
+            usuario = repository.findByEmail(username);
+        }
+        if (usuario == null) {
+            throw new UsernameNotFoundException("Usuário não encontrado: " + username);
+        }
+        
+        return usuario;
     }
 }
