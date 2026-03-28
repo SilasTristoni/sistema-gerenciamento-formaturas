@@ -15,6 +15,10 @@ function authHeaders(isJson = true) {
     return headers;
 }
 
+function jsonHeaders() {
+    return { "Content-Type": "application/json" };
+}
+
 async function parseResponse(response) {
     if (response.status === 401) throw new Error("Sessão expirada");
     if (response.status === 403) throw new Error("Acesso negado");
@@ -32,7 +36,7 @@ export const api = {
     async login(login, senha) {
         const response = await fetch(`${AUTH_URL}/login`, {
             method: "POST",
-            headers: authHeaders(true),
+            headers: jsonHeaders(),
             body: JSON.stringify({ login, senha })
         });
         return parseResponse(response);
