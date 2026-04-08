@@ -43,6 +43,10 @@ public class PresencaEventoController {
         Aluno aluno = usuario.getAluno();
         Evento evento = eventoRepository.findById(dto.eventoId()).orElseThrow();
 
+        if (evento.getTurma() == null || aluno.getTurma() == null || !evento.getTurma().getId().equals(aluno.getTurma().getId())) {
+            return ResponseEntity.status(403).body("Voce nao pode confirmar presenca para um evento de outra turma.");
+        }
+
         PresencaEvento presenca = presencaRepository
             .findByEventoIdAndAlunoId(evento.getId(), aluno.getId())
             .orElseGet(PresencaEvento::new);

@@ -27,6 +27,7 @@ public class ContaController {
                 usuario.getId(),
                 nome,
                 usuario.getEmail(),
+                usuario.getLogin(),
                 usuario.getPerfil().name(),
                 alunoId
             )

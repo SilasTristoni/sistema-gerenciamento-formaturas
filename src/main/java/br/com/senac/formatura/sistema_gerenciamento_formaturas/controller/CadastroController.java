@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -62,7 +63,7 @@ public class CadastroController {
     @Autowired private PasswordEncoder passwordEncoder;
 
     @GetMapping("/turmas")
-    public List<Turma> listarTurmas() { return turmaRepo.findAll(); }
+    public List<Turma> listarTurmas() { return turmaRepo.findAll(Sort.by(Sort.Order.asc("nome"))); }
 
     @PostMapping("/turma")
     public Turma criarTurma(@RequestBody Turma turma) { return turmaRepo.save(turma); }
@@ -83,23 +84,26 @@ public class CadastroController {
     }
 
     @GetMapping("/alunos")
-    public List<Aluno> listarAlunos() { return alunoRepo.findAll(); }
+    public List<Aluno> listarAlunos() { return alunoRepo.findAll(Sort.by(Sort.Order.asc("nome"))); }
 
     @PostMapping("/aluno")
     public Aluno criarAluno(@RequestBody AlunoInputDTO dto) {
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
-        String identificador = gerarIdentificadorUnico(dto.identificador(), dto.nome());
+        String nome = normalizeText(dto.nome());
+        String contato = normalizeText(dto.contato());
+        String identificador = gerarIdentificadorUnico(dto.identificador(), nome);
+        String emailContato = resolveEmailContato(contato, identificador);
 
         Aluno aluno = new Aluno();
-        aluno.setNome(dto.nome());
+        aluno.setNome(nome);
         aluno.setIdentificador(identificador);
-        aluno.setContato(dto.contato());
+        aluno.setContato(contato);
         aluno.setTurma(turma);
         Aluno alunoSalvo = alunoRepo.save(aluno);
 
         Usuario usuario = new Usuario();
         usuario.setLogin(identificador);
-        usuario.setEmail(dto.contato());
+        usuario.setEmail(emailContato);
         usuario.setSenha(passwordEncoder.encode("mudar123"));
         usuario.setPerfil("COMISSAO".equalsIgnoreCase(dto.perfil()) ? Perfil.ROLE_COMISSAO : Perfil.ROLE_ALUNO);
         usuario.setAluno(alunoSalvo);
@@ -112,17 +116,20 @@ public class CadastroController {
     public Aluno atualizarAluno(@PathVariable Long id, @RequestBody AlunoInputDTO dto) {
         Aluno aluno = alunoRepo.findById(id).orElseThrow();
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
-        String identificador = gerarIdentificadorUnico(dto.identificador(), dto.nome(), aluno.getId());
+        String nome = normalizeText(dto.nome());
+        String contato = normalizeText(dto.contato());
+        String identificador = gerarIdentificadorUnico(dto.identificador(), nome, aluno.getId());
+        String emailContato = resolveEmailContato(contato, identificador);
 
-        aluno.setNome(dto.nome());
+        aluno.setNome(nome);
         aluno.setIdentificador(identificador);
-        aluno.setContato(dto.contato());
+        aluno.setContato(contato);
         aluno.setTurma(turma);
         Aluno alunoAtualizado = alunoRepo.save(aluno);
 
         usuarioRepo.findByAlunoId(aluno.getId()).ifPresent(usuario -> {
             usuario.setLogin(identificador);
-            usuario.setEmail(dto.contato());
+            usuario.setEmail(emailContato);
             usuario.setPerfil("COMISSAO".equalsIgnoreCase(dto.perfil()) ? Perfil.ROLE_COMISSAO : Perfil.ROLE_ALUNO);
             usuarioRepo.save(usuario);
         });
@@ -151,7 +158,7 @@ public class CadastroController {
                 String[] dados = linha.split(";");
                 if (dados.length >= 1) {
                     String nome = dados[0].trim();
-                    String emailContato = dados.length > 1 ? dados[1].trim() : "";
+                    String emailContato = dados.length > 1 ? normalizeText(dados[1]) : "";
                     String identificador = gerarIdentificadorUnico(null, nome);
 
                     Aluno aluno = new Aluno();
@@ -163,7 +170,7 @@ public class CadastroController {
 
                     Usuario usuario = new Usuario();
                     usuario.setLogin(identificador);
-                    usuario.setEmail(emailContato.isBlank() ? identificador + "@gestaoform.local" : emailContato);
+                    usuario.setEmail(resolveEmailContato(emailContato, identificador));
                     usuario.setSenha(passwordEncoder.encode("mudar123"));
                     usuario.setPerfil(Perfil.ROLE_ALUNO);
                     usuario.setAluno(alunoSalvo);
@@ -178,15 +185,20 @@ public class CadastroController {
     }
 
     @GetMapping("/eventos")
-    public List<Evento> listarEventos() { return eventoRepo.findAll(); }
+    public List<Evento> listarEventos() {
+        return eventoRepo.findAll(Sort.by(
+            Sort.Order.asc("dataEvento"),
+            Sort.Order.asc("nome")
+        ));
+    }
 
     @PostMapping("/evento")
     public Evento criarEvento(@RequestBody EventoInputDTO dto) {
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
         Evento evento = new Evento();
-        evento.setNome(dto.nome());
+        evento.setNome(normalizeText(dto.nome()));
         evento.setDataEvento(dto.data());
-        evento.setLocalEvento(dto.local());
+        evento.setLocalEvento(normalizeText(dto.local()));
         evento.setTurma(turma);
         return eventoRepo.save(evento);
     }
@@ -195,9 +207,9 @@ public class CadastroController {
     public Evento atualizarEvento(@PathVariable Long id, @RequestBody EventoInputDTO dto) {
         Evento evento = eventoRepo.findById(id).orElseThrow();
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
-        evento.setNome(dto.nome());
+        evento.setNome(normalizeText(dto.nome()));
         evento.setDataEvento(dto.data());
-        evento.setLocalEvento(dto.local());
+        evento.setLocalEvento(normalizeText(dto.local()));
         evento.setTurma(turma);
         return eventoRepo.save(evento);
     }
@@ -210,17 +222,22 @@ public class CadastroController {
     }
 
     @GetMapping("/financeiro")
-    public List<LancamentoFinanceiro> listarFinanceiro() { return lancamentoRepo.findAll(); }
+    public List<LancamentoFinanceiro> listarFinanceiro() {
+        return lancamentoRepo.findAll(Sort.by(
+            Sort.Order.desc("dataLancamento"),
+            Sort.Order.asc("descricao")
+        ));
+    }
 
     @PostMapping("/lancamento")
     public LancamentoFinanceiro criarLancamento(@RequestBody LancamentoInputDTO dto) {
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
         LancamentoFinanceiro lanc = new LancamentoFinanceiro();
-        lanc.setDescricao(dto.descricao());
+        lanc.setDescricao(normalizeText(dto.descricao()));
         lanc.setValor(dto.valor());
         lanc.setTipo(dto.tipo());
         lanc.setDataLancamento(dto.data());
-        lanc.setReferencia(dto.referencia());
+        lanc.setReferencia(normalizeText(dto.referencia()));
         lanc.setTurma(turma);
         return lancamentoRepo.save(lanc);
     }
@@ -229,11 +246,11 @@ public class CadastroController {
     public LancamentoFinanceiro atualizarLancamento(@PathVariable Long id, @RequestBody LancamentoInputDTO dto) {
         LancamentoFinanceiro lanc = lancamentoRepo.findById(id).orElseThrow();
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
-        lanc.setDescricao(dto.descricao());
+        lanc.setDescricao(normalizeText(dto.descricao()));
         lanc.setValor(dto.valor());
         lanc.setTipo(dto.tipo());
         lanc.setDataLancamento(dto.data());
-        lanc.setReferencia(dto.referencia());
+        lanc.setReferencia(normalizeText(dto.referencia()));
         lanc.setTurma(turma);
         return lancamentoRepo.save(lanc);
     }
@@ -246,13 +263,18 @@ public class CadastroController {
     }
 
     @GetMapping("/votacoes")
-    public List<Votacao> listarVotacoes() { return votacaoRepo.findAll(); }
+    public List<Votacao> listarVotacoes() {
+        return votacaoRepo.findAll(Sort.by(
+            Sort.Order.asc("dataFim"),
+            Sort.Order.asc("titulo")
+        ));
+    }
 
     @PostMapping("/votacao")
     public Votacao criarVotacao(@RequestBody VotacaoInputDTO dto) {
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
         Votacao vot = new Votacao();
-        vot.setTitulo(dto.titulo());
+        vot.setTitulo(normalizeText(dto.titulo()));
         vot.setDataFim(dto.dataFim());
         vot.setTurma(turma);
         return votacaoRepo.save(vot);
@@ -262,7 +284,7 @@ public class CadastroController {
     public Votacao atualizarVotacao(@PathVariable Long id, @RequestBody VotacaoInputDTO dto) {
         Votacao vot = votacaoRepo.findById(id).orElseThrow();
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
-        vot.setTitulo(dto.titulo());
+        vot.setTitulo(normalizeText(dto.titulo()));
         vot.setDataFim(dto.dataFim());
         vot.setTurma(turma);
         return votacaoRepo.save(vot);
@@ -341,6 +363,15 @@ public class CadastroController {
             .replaceAll("[^a-z0-9._-]", ".")
             .replaceAll("\\.{2,}", ".")
             .replaceAll("^[._-]+|[._-]+$", "");
+    }
+
+    private String normalizeText(String value) {
+        return value == null ? "" : value.trim().replaceAll("\\s{2,}", " ");
+    }
+
+    private String resolveEmailContato(String contato, String identificador) {
+        String email = normalizeText(contato);
+        return email.isBlank() ? identificador + "@gestaoform.local" : email;
     }
 
     public record VotoInputRequest(Long votacaoId, Long opcaoId, Long alunoId) {}

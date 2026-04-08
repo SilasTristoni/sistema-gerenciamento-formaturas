@@ -1,5 +1,7 @@
 package br.com.senac.formatura.sistema_gerenciamento_formaturas.repository;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -9,4 +11,5 @@ import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Voto;
 public interface VotoRepository extends JpaRepository<Voto, Long> {
     // Verifica se já existe um voto deste aluno nesta votação específica
     boolean existsByVotacaoIdAndAlunoId(Long votacaoId, Long alunoId);
+    List<Voto> findAllByAlunoId(Long alunoId);
 }

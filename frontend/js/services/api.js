@@ -50,6 +50,27 @@ export const api = {
         return parseResponse(response);
     },
 
+    async dashboardResumo(filters = {}) {
+        const params = new URLSearchParams();
+        if (filters.turmaId) params.set('turmaId', String(filters.turmaId));
+        if (filters.periodMonths) params.set('periodoMeses', String(filters.periodMonths));
+
+        const queryString = params.toString();
+        const response = await fetch(`${API_URL}/dashboard/resumo${queryString ? `?${queryString}` : ''}`, {
+            method: "GET",
+            headers: authHeaders(false)
+        });
+        return parseResponse(response);
+    },
+
+    async alunoPainel() {
+        const response = await fetch(`${API_URL}/aluno/painel`, {
+            method: "GET",
+            headers: authHeaders(false)
+        });
+        return parseResponse(response);
+    },
+
     async buscar(endpoint) {
         const response = await fetch(`${CADASTRO_URL}/${endpoint}`, {
             method: "GET",
@@ -80,6 +101,15 @@ export const api = {
             method: "POST",
             headers: authHeaders(true),
             body: JSON.stringify({ votacaoId, opcaoId })
+        });
+        return parseResponse(response);
+    },
+
+    async confirmarPresenca(eventoId, status) {
+        const response = await fetch(`${API_URL}/eventos/confirmar-presenca`, {
+            method: "POST",
+            headers: authHeaders(true),
+            body: JSON.stringify({ eventoId, status })
         });
         return parseResponse(response);
     },

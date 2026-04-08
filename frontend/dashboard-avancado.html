@@ -3,133 +3,187 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>GestãoForm — Dashboard Avançado</title>
+  <title>GestaoForm | Central de comando</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <link rel="stylesheet" href="./css/dashboard-avancado.css" />
 </head>
-<body class="bg-slate-950 text-slate-200 font-sans antialiased">
-  <div class="page-shell">
+<body>
+  <div class="app-shell">
     <aside class="sidebar">
       <div class="brand-card">
         <div class="brand-icon">GF</div>
         <div>
-          <p class="brand-title">GestãoForm</p>
-          <p class="brand-subtitle">Dashboard avançado</p>
+          <p class="brand-kicker">GestaoForm</p>
+          <h1 class="brand-title">Central de comando</h1>
         </div>
       </div>
 
-      <nav class="side-nav">
-        <button class="side-nav__item active" data-tab-target="dashboard"><i class="ph ph-squares-four"></i> Dashboard</button>
-        <button class="side-nav__item" data-tab-target="agenda"><i class="ph ph-calendar-dots"></i> Agenda</button>
-        <button class="side-nav__item" data-tab-target="financeiro"><i class="ph ph-chart-line-up"></i> Financeiro</button>
+      <nav class="nav-group">
+        <button class="nav-item active" data-tab-target="overview"><i class="ph ph-chart-pie-slice"></i> Visao geral</button>
+        <button class="nav-item" data-tab-target="agenda"><i class="ph ph-calendar-check"></i> Agenda</button>
+        <button class="nav-item" data-tab-target="finance"><i class="ph ph-bank"></i> Financeiro</button>
+        <button class="nav-item" data-tab-target="turmas"><i class="ph ph-users-three"></i> Turmas</button>
       </nav>
 
-      <div class="user-card">
+      <section class="sidebar-block">
+        <p class="block-label">Atalhos</p>
+        <button class="shortcut-btn" id="refreshBtn"><i class="ph ph-arrows-clockwise"></i> Atualizar painel</button>
+        <button class="shortcut-btn" id="scrollAlertsBtn"><i class="ph ph-siren"></i> Ver alertas</button>
+        <a class="shortcut-btn" href="./index.html"><i class="ph ph-browser"></i> Abrir modulo completo</a>
+      </section>
+
+      <section class="sidebar-block user-block">
         <div class="user-avatar" id="userAvatar">U</div>
-        <div class="min-w-0">
+        <div>
           <p class="user-name" id="userName">Carregando...</p>
           <p class="user-role" id="userRole">...</p>
         </div>
-      </div>
+      </section>
 
-      <div class="sidebar-actions">
-        <a href="./index.html" class="ghost-link"><i class="ph ph-arrow-square-out"></i> Abrir sistema atual</a>
-        <button class="danger-link" id="logoutBtn"><i class="ph ph-sign-out"></i> Sair</button>
-      </div>
+      <button class="logout-btn" id="logoutBtn"><i class="ph ph-sign-out"></i> Encerrar sessao</button>
     </aside>
 
     <main class="main-content">
-      <header class="topbar">
+      <header class="hero">
         <div>
-          <p class="eyebrow">Painel inteligente</p>
-          <h1 class="page-title">Dashboard financeira e agenda</h1>
+          <p class="eyebrow">Painel estrategico</p>
+          <h2 class="hero-title">Gestao de formaturas com visao operacional e financeira</h2>
+          <p class="hero-copy">Acompanhe caixa, agenda, inadimplencia e performance das turmas em uma unica leitura.</p>
         </div>
-        <div class="topbar-actions">
-          <span class="update-chip"><i class="ph ph-clock"></i> <span id="lastUpdate">Agora</span></span>
-          <button class="outline-btn" id="refreshBtn"><i class="ph ph-arrows-clockwise"></i> Atualizar</button>
+        <div class="hero-side">
+          <div class="health-card">
+            <span class="health-label">Saude da operacao</span>
+            <strong class="health-score" id="healthScore">0</strong>
+            <small id="lastUpdate">Atualizando...</small>
+          </div>
         </div>
       </header>
 
-      <section id="tab-dashboard" class="tab-panel active">
-        <div class="stats-grid">
-          <article class="stat-card">
-            <p class="stat-label">Saldo atual</p>
-            <h2 class="stat-value" id="statSaldo">R$ 0,00</h2>
-            <span class="stat-meta"><i class="ph ph-wallet"></i> Caixa consolidado</span>
+      <section class="mb-8 rounded-[28px] border border-white/10 bg-white/[0.04] px-5 py-4 backdrop-blur-xl">
+        <div class="grid gap-4 lg:grid-cols-[1.2fr_220px_1fr]">
+          <div>
+            <p class="text-xs uppercase tracking-[0.22em] text-slate-500 font-semibold">Filtro do painel</p>
+            <p class="mt-2 text-lg font-semibold text-white" id="dashboardScopeLabel">Visao consolidada de todas as turmas</p>
+            <p class="mt-1 text-sm text-slate-400" id="dashboardFilterHint">Escolha uma turma e a janela de analise para focar as decisoes.</p>
+          </div>
+
+          <label class="block">
+            <span class="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Turma</span>
+            <select id="dashboardTurmaFilter" class="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition focus:border-emerald-400/70 focus:ring-4 focus:ring-emerald-400/10">
+              <option value="">Todas as turmas</option>
+            </select>
+          </label>
+
+          <label class="block">
+            <span class="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Periodo</span>
+            <select id="dashboardPeriodFilter" class="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition focus:border-emerald-400/70 focus:ring-4 focus:ring-emerald-400/10">
+              <option value="3">Ultimos 3 meses</option>
+              <option value="6">Ultimos 6 meses</option>
+              <option value="12">Ultimos 12 meses</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="status-strip">
+        <article class="metric-card accent-balance">
+          <span class="metric-label">Saldo atual</span>
+          <strong class="metric-value" id="statSaldo">R$ 0,00</strong>
+          <small class="metric-foot">Caixa consolidado</small>
+        </article>
+        <article class="metric-card accent-income">
+          <span class="metric-label">Receitas</span>
+          <strong class="metric-value" id="statReceitas">R$ 0,00</strong>
+          <small class="metric-foot">Entradas registradas</small>
+        </article>
+        <article class="metric-card accent-expense">
+          <span class="metric-label">Despesas</span>
+          <strong class="metric-value" id="statDespesas">R$ 0,00</strong>
+          <small class="metric-foot">Saidas acumuladas</small>
+        </article>
+        <article class="metric-card accent-risk">
+          <span class="metric-label">Inadimplentes</span>
+          <strong class="metric-value" id="statInadimplentes">0</strong>
+          <small class="metric-foot">Alunos em atraso ou pendentes</small>
+        </article>
+      </section>
+
+      <section id="tab-overview" class="tab-panel active">
+        <div class="content-grid">
+          <article class="feature-card feature-card--wide">
+            <div class="section-head">
+              <div>
+                <p class="section-kicker">Radar operacional</p>
+                <h3 class="section-title">Proximo marco da formatura</h3>
+              </div>
+              <span class="pill" id="nextEventStatus">Planejamento</span>
+            </div>
+            <div class="event-highlight">
+              <div>
+                <strong class="event-name" id="nextEventName">Nenhum evento agendado</strong>
+                <p class="event-meta" id="nextEventDate">Sem data definida</p>
+                <p class="event-meta" id="nextEventLocation">Local a definir</p>
+              </div>
+              <div class="days-box">
+                <span>Dias</span>
+                <strong id="nextEventCountdown">--</strong>
+              </div>
+            </div>
+            <div class="ops-grid">
+              <div class="ops-card">
+                <span>Adimplencia</span>
+                <strong id="opsAdimplencia">0%</strong>
+              </div>
+              <div class="ops-card">
+                <span>Eventos no mes</span>
+                <strong id="opsEventosMes">0</strong>
+              </div>
+              <div class="ops-card">
+                <span>Votacoes abertas</span>
+                <strong id="opsVotacoes">0</strong>
+              </div>
+              <div class="ops-card">
+                <span>Ticket medio por aluno</span>
+                <strong id="opsTicketMedio">R$ 0,00</strong>
+              </div>
+            </div>
           </article>
-          <article class="stat-card">
-            <p class="stat-label">Receitas</p>
-            <h2 class="stat-value" id="statReceitas">R$ 0,00</h2>
-            <span class="stat-meta"><i class="ph ph-trend-up"></i> Entradas acumuladas</span>
-          </article>
-          <article class="stat-card">
-            <p class="stat-label">Despesas</p>
-            <h2 class="stat-value" id="statDespesas">R$ 0,00</h2>
-            <span class="stat-meta"><i class="ph ph-trend-down"></i> Saídas do período</span>
-          </article>
-          <article class="stat-card">
-            <p class="stat-label">Inadimplentes</p>
-            <h2 class="stat-value" id="statInadimplentes">0</h2>
-            <span class="stat-meta"><i class="ph ph-warning-circle"></i> Alunos em atraso</span>
+
+          <article class="feature-card" id="alertsSection">
+            <div class="section-head">
+              <div>
+                <p class="section-kicker">Prioridades</p>
+                <h3 class="section-title">Alertas inteligentes</h3>
+              </div>
+            </div>
+            <div id="alertsList" class="stack-list"></div>
           </article>
         </div>
 
-        <div class="dashboard-grid">
-          <article class="panel-card panel-card--wide">
-            <div class="panel-head">
+        <div class="content-grid charts-area">
+          <article class="feature-card feature-card--wide">
+            <div class="section-head">
               <div>
-                <p class="panel-label">Acesso rápido</p>
-                <h3 class="panel-title">Ações principais</h3>
+                <p class="section-kicker">Analise financeira</p>
+                <h3 class="section-title">Receitas, despesas e saldo por mes</h3>
               </div>
-              <i class="ph ph-lightning panel-icon"></i>
-            </div>
-            <div class="quick-grid">
-              <button class="quick-action" data-tab-target="financeiro"><i class="ph ph-bank"></i><span>Ver financeiro</span></button>
-              <button class="quick-action" data-tab-target="agenda"><i class="ph ph-calendar-blank"></i><span>Ver agenda</span></button>
-              <a class="quick-action" href="./index.html"><i class="ph ph-browser"></i><span>Sistema completo</span></a>
-              <button class="quick-action" id="scrollChartsBtn"><i class="ph ph-chart-bar"></i><span>Ir para gráficos</span></button>
-            </div>
-          </article>
-
-          <article class="panel-card">
-            <div class="panel-head">
-              <div>
-                <p class="panel-label">Próximo evento</p>
-                <h3 class="panel-title" id="nextEventName">Nenhum agendado</h3>
-              </div>
-              <i class="ph ph-calendar-check panel-icon"></i>
-            </div>
-            <p class="event-date" id="nextEventDate">Sem data</p>
-            <p class="event-location" id="nextEventLocation">Local a definir</p>
-          </article>
-        </div>
-
-        <div class="charts-grid" id="chartsSection">
-          <article class="panel-card panel-card--wide">
-            <div class="panel-head">
-              <div>
-                <p class="panel-label">Análise financeira</p>
-                <h3 class="panel-title">Receitas x despesas por mês</h3>
-              </div>
-              <i class="ph ph-chart-bar-horizontal panel-icon"></i>
             </div>
             <div class="chart-shell">
               <canvas id="monthlyChart"></canvas>
             </div>
           </article>
 
-          <article class="panel-card">
-            <div class="panel-head">
+          <article class="feature-card">
+            <div class="section-head">
               <div>
-                <p class="panel-label">Despesas por categoria</p>
-                <h3 class="panel-title">Distribuição dos gastos</h3>
+                <p class="section-kicker">Custos</p>
+                <h3 class="section-title">Despesas por categoria</h3>
               </div>
-              <i class="ph ph-chart-donut panel-icon"></i>
             </div>
             <div class="chart-shell chart-shell--small">
               <canvas id="categoryChart"></canvas>
@@ -137,25 +191,23 @@
           </article>
         </div>
 
-        <div class="dashboard-grid">
-          <article class="panel-card">
-            <div class="panel-head">
+        <div class="content-grid">
+          <article class="feature-card">
+            <div class="section-head">
               <div>
-                <p class="panel-label">Agenda da semana</p>
-                <h3 class="panel-title">Próximos eventos</h3>
+                <p class="section-kicker">Agenda</p>
+                <h3 class="section-title">Proximos eventos</h3>
               </div>
-              <i class="ph ph-calendar-dots panel-icon"></i>
             </div>
             <div id="agendaPreviewList" class="stack-list"></div>
           </article>
 
-          <article class="panel-card panel-card--wide">
-            <div class="panel-head">
+          <article class="feature-card feature-card--wide">
+            <div class="section-head">
               <div>
-                <p class="panel-label">Movimentações recentes</p>
-                <h3 class="panel-title">Últimos lançamentos</h3>
+                <p class="section-kicker">Fluxo recente</p>
+                <h3 class="section-title">Ultimos lancamentos financeiros</h3>
               </div>
-              <i class="ph ph-list-bullets panel-icon"></i>
             </div>
             <div id="recentTransactions" class="stack-list"></div>
           </article>
@@ -163,79 +215,80 @@
       </section>
 
       <section id="tab-agenda" class="tab-panel">
-        <div class="section-header">
-          <div>
-            <p class="panel-label">Agenda</p>
-            <h2 class="section-title">Eventos organizados</h2>
-          </div>
-          <a href="./index.html" class="outline-btn"><i class="ph ph-calendar-plus"></i> Gerenciar no sistema</a>
-        </div>
-
-        <div class="agenda-layout">
-          <article class="panel-card panel-card--wide">
-            <div class="panel-head">
+        <div class="single-grid">
+          <article class="feature-card">
+            <div class="section-head">
               <div>
-                <p class="panel-label">Linha do tempo</p>
-                <h3 class="panel-title">Próximos compromissos</h3>
+                <p class="section-kicker">Agenda executiva</p>
+                <h3 class="section-title">Linha do tempo de eventos</h3>
               </div>
+              <span class="pill" id="summaryEvents">0 eventos</span>
             </div>
             <div id="agendaTimeline" class="stack-list"></div>
-          </article>
-
-          <article class="panel-card">
-            <div class="panel-head">
-              <div>
-                <p class="panel-label">Resumo</p>
-                <h3 class="panel-title">Visão rápida</h3>
-              </div>
-            </div>
-            <div class="summary-card">
-              <span>Total de eventos</span>
-              <strong id="summaryEvents">0</strong>
-            </div>
-            <div class="summary-card">
-              <span>Próximo evento</span>
-              <strong id="summaryNextEvent">Nenhum</strong>
-            </div>
-            <div class="summary-card">
-              <span>Organização</span>
-              <p>Mantenha data e local preenchidos para uma agenda mais clara.</p>
-            </div>
           </article>
         </div>
       </section>
 
-      <section id="tab-financeiro" class="tab-panel">
-        <div class="section-header">
-          <div>
-            <p class="panel-label">Financeiro</p>
-            <h2 class="section-title">Análise consolidada</h2>
-          </div>
-          <a href="./index.html" class="outline-btn"><i class="ph ph-browser"></i> Abrir módulo completo</a>
+      <section id="tab-finance" class="tab-panel">
+        <div class="content-grid">
+          <article class="feature-card">
+            <div class="section-head">
+              <div>
+                <p class="section-kicker">Resumo</p>
+                <h3 class="section-title">Indicadores financeiros</h3>
+              </div>
+            </div>
+            <div class="summary-stack">
+              <div class="summary-row"><span>Saldo total</span><strong id="financeSaldo">R$ 0,00</strong></div>
+              <div class="summary-row"><span>Total de receitas</span><strong id="financeReceitas">R$ 0,00</strong></div>
+              <div class="summary-row"><span>Total de despesas</span><strong id="financeDespesas">R$ 0,00</strong></div>
+              <div class="summary-row"><span>Total de votacoes</span><strong id="financeVotacoes">0</strong></div>
+              <div class="summary-row"><span>Saldo projetado</span><strong id="financeProjectedBalance">R$ 0,00</strong></div>
+              <div class="summary-row"><span>Media mensal</span><strong id="financeAverageNet">R$ 0,00</strong></div>
+            </div>
+            <p class="mt-5 text-sm text-slate-400" id="forecastRecommendation">Sem previsao calculada ainda.</p>
+          </article>
+
+          <article class="feature-card feature-card--wide">
+            <div class="section-head">
+              <div>
+                <p class="section-kicker">Categorias criticas</p>
+                <h3 class="section-title">Maiores centros de custo</h3>
+              </div>
+            </div>
+            <div id="expenseList" class="stack-list"></div>
+          </article>
         </div>
+      </section>
 
-        <div class="finance-grid">
-          <article class="panel-card">
-            <div class="panel-head">
+      <section id="tab-turmas" class="tab-panel">
+        <div class="single-grid">
+          <article class="feature-card">
+            <div class="section-head">
               <div>
-                <p class="panel-label">Resumo</p>
-                <h3 class="panel-title">Números principais</h3>
+                <p class="section-kicker">Performance</p>
+                <h3 class="section-title">Ranking de turmas</h3>
               </div>
+              <span class="pill" id="summaryTurmas">0 turmas</span>
             </div>
-            <div class="summary-card"><span>Saldo</span><strong id="financeSaldo">R$ 0,00</strong></div>
-            <div class="summary-card"><span>Receitas</span><strong id="financeReceitas">R$ 0,00</strong></div>
-            <div class="summary-card"><span>Despesas</span><strong id="financeDespesas">R$ 0,00</strong></div>
+            <div id="turmasRanking" class="stack-list"></div>
           </article>
+        </div>
+      </section>
 
-          <article class="panel-card panel-card--wide">
-            <div class="panel-head">
-              <div>
-                <p class="panel-label">Lançamentos</p>
-                <h3 class="panel-title">Últimos registros financeiros</h3>
-              </div>
-            </div>
-            <div id="financeList" class="stack-list"></div>
-          </article>
+      <section class="screen-state hidden" id="loadingState">
+        <div class="state-card">
+          <div class="spinner"></div>
+          <strong>Atualizando dashboard</strong>
+          <p>Consolidando dados operacionais e financeiros.</p>
+        </div>
+      </section>
+
+      <section class="screen-state hidden" id="errorState">
+        <div class="state-card">
+          <i class="ph ph-warning-octagon"></i>
+          <strong>Falha ao carregar a dashboard</strong>
+          <p id="errorMessage">Tente novamente em alguns instantes.</p>
         </div>
       </section>
     </main>

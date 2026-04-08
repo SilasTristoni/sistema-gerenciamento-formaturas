@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GestaoForm | Area do formando</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["Inter", "sans-serif"],
+            display: ["Space Grotesk", "sans-serif"]
+          },
+          colors: {
+            dark: { 950: "#020617", 900: "#0f172a", 800: "#111827", 700: "#1f2937", 600: "#334155" },
+            primary: { 400: "#34d399", 500: "#10b981", 600: "#059669" }
+          }
+        }
+      }
+    };
+  </script>
+
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body class="bg-dark-950 text-slate-200 font-sans antialiased">
+  <div class="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,.16),transparent_26%),radial-gradient(circle_at_bottom_right,rgba(56,189,248,.10),transparent_24%)]"></div>
+
+  <div id="toastContainer" class="fixed top-5 right-5 z-[60] flex flex-col gap-2 w-full max-w-xs pointer-events-none"></div>
+
+  <main class="student-shell">
+    <header class="student-hero">
+      <div class="student-hero__copy">
+        <span class="student-pill">Area do formando</span>
+        <h1 class="student-hero__title">Tudo o que voce precisa acompanhar da sua turma</h1>
+        <p class="student-hero__text">
+          Consulte seus proximos eventos, confirme presenca e participe das votacoes da turma sem entrar na area administrativa.
+        </p>
+        <div class="student-profile">
+          <div class="student-avatar" id="studentAvatar">A</div>
+          <div>
+            <p class="student-profile__name" id="studentName">Carregando...</p>
+            <p class="student-profile__meta" id="studentTurma">Turma</p>
+            <p class="student-profile__meta" id="studentLogin">@usuario</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="student-hero__side">
+        <article class="student-highlight">
+          <span class="student-highlight__label">Proximo evento</span>
+          <strong id="nextEventName" class="student-highlight__title">Carregando...</strong>
+          <p id="nextEventDate" class="student-highlight__copy">Sem data definida</p>
+          <p id="nextEventLocation" class="student-highlight__copy">Local a definir</p>
+          <div class="student-highlight__footer">
+            <span class="student-status-badge" id="studentStatusBadge">pendente</span>
+            <strong id="nextEventCountdown">--</strong>
+          </div>
+        </article>
+
+        <div class="student-actions">
+          <button id="refreshBtn" class="btn-outline"><i class="ph ph-arrows-clockwise"></i> Atualizar</button>
+          <button id="logoutBtn" class="btn-outline student-logout"><i class="ph ph-sign-out"></i> Sair</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="student-metrics">
+      <article class="student-metric">
+        <span class="student-metric__label">Status financeiro</span>
+        <strong id="studentStatusText" class="student-metric__value">pendente</strong>
+        <small>Indicador atual do seu cadastro</small>
+      </article>
+      <article class="student-metric">
+        <span class="student-metric__label">Eventos da turma</span>
+        <strong id="summaryEvents" class="student-metric__value">0</strong>
+        <small>Total de compromissos cadastrados</small>
+      </article>
+      <article class="student-metric">
+        <span class="student-metric__label">Presencas respondidas</span>
+        <strong id="summaryPresence" class="student-metric__value">0</strong>
+        <small>Confirmacoes ja enviadas</small>
+      </article>
+      <article class="student-metric">
+        <span class="student-metric__label">Votacoes abertas</span>
+        <strong id="summaryVotesOpen" class="student-metric__value">0</strong>
+        <small>Enquetes esperando seu voto</small>
+      </article>
+    </section>
+
+    <section class="student-grid">
+      <article class="student-card student-card--wide">
+        <div class="student-card__head">
+          <div>
+            <p class="student-card__eyebrow">Agenda</p>
+            <h2 class="student-card__title">Eventos da sua turma</h2>
+          </div>
+          <span class="student-chip" id="summaryPendingPresence">0 pendentes</span>
+        </div>
+        <div id="eventList" class="student-stack"></div>
+      </article>
+
+      <article class="student-card">
+        <div class="student-card__head">
+          <div>
+            <p class="student-card__eyebrow">Seu cadastro</p>
+            <h2 class="student-card__title">Informacoes rapidas</h2>
+          </div>
+        </div>
+        <div class="student-detail-list">
+          <div class="student-detail-row"><span>Curso</span><strong id="studentCourse">---</strong></div>
+          <div class="student-detail-row"><span>Contato</span><strong id="studentContact">---</strong></div>
+          <div class="student-detail-row"><span>Identificador</span><strong id="studentIdentifier">---</strong></div>
+          <div class="student-detail-row"><span>Votacoes respondidas</span><strong id="summaryVotesDone">0</strong></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="student-card">
+      <div class="student-card__head">
+        <div>
+          <p class="student-card__eyebrow">Decisoes da turma</p>
+          <h2 class="student-card__title">Votacoes e enquetes</h2>
+        </div>
+      </div>
+      <div id="voteList" class="student-vote-list"></div>
+    </section>
+
+    <section class="screen-state hidden" id="loadingState">
+      <div class="state-card">
+        <div class="spinner"></div>
+        <strong>Atualizando sua area</strong>
+        <p>Carregando eventos, votacoes e confirmacoes.</p>
+      </div>
+    </section>
+
+    <section class="screen-state hidden" id="errorState">
+      <div class="state-card">
+        <i class="ph ph-warning-octagon"></i>
+        <strong>Falha ao carregar sua area</strong>
+        <p id="errorMessage">Tente novamente em alguns instantes.</p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./js/aluno.js"></script>
+</body>
+</html>

@@ -1,5 +1,7 @@
 package br.com.senac.formatura.sistema_gerenciamento_formaturas.controller;
 
+import java.time.LocalDate;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -57,6 +59,15 @@ public class VotacaoSeguraController {
 
         Votacao votacao = votacaoRepo.findById(request.votacaoId()).orElseThrow();
         OpcaoVotacao opcao = opcaoRepo.findById(request.opcaoId()).orElseThrow();
+
+        if (votacao.getTurma() == null || aluno.getTurma() == null || !votacao.getTurma().getId().equals(aluno.getTurma().getId())) {
+            return ResponseEntity.status(403).body("Voce nao pode votar em uma enquete de outra turma.");
+        }
+
+        if ("encerrada".equalsIgnoreCase(votacao.getStatus())
+            || (votacao.getDataFim() != null && votacao.getDataFim().isBefore(LocalDate.now()))) {
+            return ResponseEntity.badRequest().body("Esta votacao ja foi encerrada.");
+        }
 
         if (opcao.getVotacao() == null || !opcao.getVotacao().getId().equals(votacao.getId())) {
             return ResponseEntity.badRequest().body("A opção não pertence à votação informada.");

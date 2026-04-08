@@ -1,0 +1,102 @@
+classDiagram
+    class Turma {
+        +Long id
+        +String nome
+        +String curso
+        +String instituicao
+        +Double totalArrecadado
+        +String status
+        +Integer getQuantidadeAlunos()
+    }
+
+    class Aluno {
+        +Long id
+        +String nome
+        +String identificador
+        +String contato
+        +String status
+        +String getNomeTurma()
+    }
+
+    class Usuario {
+        +Long id
+        +String login
+        +String email
+        +String senha
+        +Perfil perfil
+        +String getUsername()
+    }
+
+    class Evento {
+        +Long id
+        +String nome
+        +LocalDate dataEvento
+        +String localEvento
+        +String status
+    }
+
+    class PresencaEvento {
+        +Long id
+        +String status
+    }
+
+    class LancamentoFinanceiro {
+        +Long id
+        +String descricao
+        +String tipo
+        +Double valor
+        +LocalDate dataLancamento
+        +String referencia
+    }
+
+    class Votacao {
+        +Long id
+        +String titulo
+        +String status
+        +LocalDate dataFim
+    }
+
+    class OpcaoVotacao {
+        +Long id
+        +String nomeFornecedor
+        +String detalhesProposta
+        +Double valorProposta
+    }
+
+    class Voto {
+        +Long id
+        +LocalDateTime dataVoto
+    }
+
+    class Tarefa {
+        +Long id
+        +String titulo
+        +String descricao
+        +String status
+        +LocalDate dataLimite
+    }
+
+    class Perfil {
+        <<enumeration>>
+        ROLE_COMISSAO
+        ROLE_ALUNO
+    }
+
+    Turma "1" --> "*" Aluno
+    Turma "1" --> "*" Evento
+    Turma "1" --> "*" LancamentoFinanceiro
+    Turma "1" --> "*" Votacao
+    Turma "1" --> "*" Tarefa
+
+    Aluno "1" --> "0..1" Usuario
+    Aluno "1" --> "*" Voto
+    Aluno "1" --> "*" PresencaEvento
+    Aluno "0..1" --> "*" Tarefa : responsavel
+    Aluno "0..1" --> "*" LancamentoFinanceiro : referencia opcional
+
+    Evento "1" --> "*" PresencaEvento
+    Votacao "1" --> "*" OpcaoVotacao
+    Votacao "1" --> "*" Voto
+    OpcaoVotacao "1" --> "*" Voto
+
+    Usuario --> Perfil

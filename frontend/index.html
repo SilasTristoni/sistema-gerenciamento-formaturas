@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Gestão de Formaturas — Dashboard</title>
+  <title>Gestao de Formaturas | Central</title>
 
   <script>
     window.APP_CONFIG = { LOGIN_URL: "./login.html", MAIN_SCRIPT: "./js/main.js" };
   </script>
 
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
@@ -19,7 +19,10 @@
       darkMode: "class",
       theme: {
         extend: {
-          fontFamily: { sans: ["Inter", "sans-serif"] },
+          fontFamily: {
+            sans: ["Inter", "sans-serif"],
+            display: ["Space Grotesk", "sans-serif"]
+          },
           colors: {
             dark: { 950: "#020617", 900: "#0f172a", 800: "#111827", 700: "#1f2937", 600: "#334155" },
             primary: { 400: "#34d399", 500: "#10b981", 600: "#059669" }
@@ -44,8 +47,8 @@
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-500 to-teal-400 flex items-center justify-center text-white font-extrabold shadow-lg shadow-emerald-500/20">GF</div>
           <div>
-            <div class="text-white font-semibold text-lg leading-tight">GestãoForm</div>
-            <div class="text-xs text-slate-500">Painel inteligente da comissão</div>
+            <div class="text-white font-semibold text-lg leading-tight">GestaoForm</div>
+            <div class="text-xs text-slate-500">Painel inteligente da comissao</div>
           </div>
         </div>
       </div>
@@ -80,11 +83,10 @@
           <button id="menuToggle" class="md:hidden text-slate-400 hover:text-white"><i class="ph ph-list text-2xl"></i></button>
           <div>
             <p class="text-xs uppercase tracking-[.2em] text-slate-500 font-bold">Painel central</p>
-            <h1 class="text-xl text-white font-bold">Gestão de Formaturas</h1>
+            <h1 class="text-xl text-white font-bold">Gestao de Formaturas</h1>
           </div>
         </div>
         <div class="flex items-center gap-3">
-          <button onclick="openDashboardSettings()" class="btn-outline"><i class="ph ph-sliders-horizontal"></i><span class="hidden sm:inline">Personalizar dashboard</span></button>
           <button onclick="carregarDados()" class="btn-outline"><i class="ph ph-arrows-clockwise"></i><span class="hidden sm:inline">Atualizar</span></button>
           <button onclick="openModal('new','lancamento')" class="btn btn-primary btn-admin shadow-lg"><i class="ph ph-plus-bold"></i> <span class="hidden sm:inline">Novo registro</span></button>
         </div>
@@ -92,94 +94,140 @@
 
       <div class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
         <section id="screen-dashboard" class="screen active">
-          <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6">
+          <div class="simple-hero">
             <div>
-              <h2 class="text-3xl font-extrabold text-white tracking-tight">Dashboard</h2>
-              <p class="text-sm text-slate-500 mt-1">Widgets simples, modernos e configuráveis pelo usuário.</p>
+              <p class="simple-kicker">Tudo em um lugar</p>
+              <h2 class="simple-title">O que a turma precisa ver hoje</h2>
+              <p class="simple-copy">Uma visao rapida para acompanhar dinheiro, proximos passos e o que precisa de atencao.</p>
             </div>
-            <div class="flex flex-wrap items-center gap-3 text-sm text-slate-400">
-              <span class="inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/[0.04] px-3 py-2">
-                <i class="ph ph-clock"></i>
-                Última atualização: <span id="lastUpdate">Agora</span>
-              </span>
-            </div>
-          </div>
-
-          <div id="dashboardTopStats" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div class="dashboard-kpi">
-              <p class="text-xs text-slate-500 uppercase tracking-wider">Turmas</p>
-              <p id="kpiTurmas" class="text-2xl font-bold text-white mt-2">0</p>
-            </div>
-            <div class="dashboard-kpi">
-              <p class="text-xs text-slate-500 uppercase tracking-wider">Alunos</p>
-              <p id="kpiAlunos" class="text-2xl font-bold text-white mt-2">0</p>
-            </div>
-            <div class="dashboard-kpi">
-              <p class="text-xs text-slate-500 uppercase tracking-wider">Eventos</p>
-              <p id="kpiEventos" class="text-2xl font-bold text-white mt-2">0</p>
+            <div class="simple-update">
+              <span class="simple-update__label">Atualizado</span>
+              <strong id="lastUpdate" class="simple-update__value">Agora</strong>
             </div>
           </div>
 
-          <div id="dashboardWidgetGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            <div class="dashboard-widget group" data-widget-id="saldo">
-              <div class="absolute right-0 top-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity"><i class="ph ph-wallet text-6xl text-primary-500"></i></div>
-              <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Saldo em Caixa</p>
-              <h3 class="text-3xl text-white font-bold mt-2 tracking-tight" id="totalReceita">R$ --</h3>
-              <p class="text-xs font-medium text-emerald-400 mt-3 flex items-center gap-1"><i class="ph-bold ph-trend-up"></i> Disponível</p>
-            </div>
-
-            <div class="dashboard-widget" data-widget-id="fluxo">
-              <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Fluxo Mensal</p>
-              <div class="mt-4 space-y-3">
-                <div class="flex justify-between text-sm text-slate-300"><span>Entradas</span><span id="txtEntradas" class="text-emerald-400 font-semibold">R$ 0</span></div>
-                <div class="flex justify-between text-sm text-slate-300"><span>Saídas</span><span id="txtSaidas" class="text-red-400 font-semibold">R$ 0</span></div>
+          <div class="mb-6 rounded-[24px] border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl">
+            <div class="grid gap-4 lg:grid-cols-[1.2fr_220px_220px]">
+              <div>
+                <p class="text-xs uppercase tracking-[0.22em] text-slate-500 font-semibold">Filtro da dashboard</p>
+                <p class="mt-2 text-base font-semibold text-white" id="mainDashboardScopeLabel">Visao consolidada de todas as turmas</p>
+                <p class="mt-1 text-sm text-slate-400" id="mainDashboardFilterHint">Ajuste o recorte para analisar uma turma especifica ou ampliar a janela historica.</p>
               </div>
-            </div>
 
-            <div class="dashboard-widget" data-widget-id="pendencias">
-              <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Pendências</p>
-              <h3 class="text-3xl text-white font-bold mt-2" id="totalInadimplencia">--</h3>
-              <p class="text-xs text-orange-400 mt-3">Alunos com atraso</p>
-            </div>
+              <label class="block">
+                <span class="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Turma</span>
+                <select id="mainDashboardTurmaFilter" class="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition focus:border-emerald-400/70 focus:ring-4 focus:ring-emerald-400/10">
+                  <option value="">Todas as turmas</option>
+                </select>
+              </label>
 
-            <div class="dashboard-widget" data-widget-id="proximoEvento">
-              <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Próximo Evento</p>
-              <h3 class="text-lg text-white font-bold mt-2 truncate" id="proximoEvento">--</h3>
-              <p class="text-xs text-purple-300 mt-3 flex items-center gap-1"><i class="ph-bold ph-calendar"></i> <span id="dataEvento">--</span></p>
+              <label class="block">
+                <span class="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Periodo</span>
+                <select id="mainDashboardPeriodFilter" class="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition focus:border-emerald-400/70 focus:ring-4 focus:ring-emerald-400/10">
+                  <option value="3">Ultimos 3 meses</option>
+                  <option value="6">Ultimos 6 meses</option>
+                  <option value="12">Ultimos 12 meses</option>
+                </select>
+              </label>
             </div>
+          </div>
 
-            <div class="dashboard-widget xl:col-span-2" data-widget-id="atalhos">
-              <div class="flex items-center justify-between gap-4 mb-4">
+          <div class="simple-cards">
+            <article class="simple-card simple-card--money">
+              <span class="simple-card__label">Quanto temos hoje</span>
+              <strong id="statSaldo" class="simple-card__value">R$ 0,00</strong>
+              <small id="financeStatus">Estamos acompanhando o caixa da turma.</small>
+            </article>
+            <article class="simple-card simple-card--event">
+              <span class="simple-card__label">Proximo evento</span>
+              <strong id="nextEventName" class="simple-card__value simple-card__value--sm">Nenhum evento agendado</strong>
+              <small id="nextEventDate">Sem data definida</small>
+            </article>
+            <article class="simple-card simple-card--attention">
+              <span class="simple-card__label">Quem precisa de atencao</span>
+              <strong id="statInadimplentes" class="simple-card__value">0</strong>
+              <small>alunos com pendencia no momento</small>
+            </article>
+          </div>
+
+          <div class="simple-grid">
+            <article class="simple-panel simple-panel--wide">
+              <div class="simple-panel__head">
                 <div>
-                  <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Atalhos Rápidos</p>
-                  <h3 class="text-lg text-white font-bold mt-1">Ações do dia a dia</h3>
+                  <p class="simple-kicker">Resumo rapido</p>
+                  <h3 class="simple-panel__title">Como estamos agora</h3>
                 </div>
-                <i class="ph ph-lightning text-2xl text-primary-400"></i>
               </div>
-              <div class="grid sm:grid-cols-2 gap-3">
-                <button onclick="openModal('new','aluno')" class="dashboard-action-btn btn-admin"><i class="ph ph-user-plus"></i> Novo aluno</button>
-                <button onclick="openModal('new','evento')" class="dashboard-action-btn btn-admin"><i class="ph ph-calendar-plus"></i> Novo evento</button>
-                <button onclick="navigate('financeiro')" class="dashboard-action-btn"><i class="ph ph-bank"></i> Ir para financeiro</button>
-                <button onclick="navigate('votacao')" class="dashboard-action-btn"><i class="ph ph-chart-bar"></i> Abrir enquetes</button>
+              <div class="simple-summary">
+                <div class="simple-summary__row"><span>Receitas ja registradas</span><strong id="statReceitas">R$ 0,00</strong></div>
+                <div class="simple-summary__row"><span>Despesas ja registradas</span><strong id="statDespesas">R$ 0,00</strong></div>
+                <div class="simple-summary__row"><span>Proximo local</span><strong id="nextEventLocation">Local a definir</strong></div>
+                <div class="simple-summary__row"><span>Faltam</span><strong id="nextEventCountdown">--</strong></div>
               </div>
-            </div>
+            </article>
 
-            <div class="dashboard-widget xl:col-span-2" data-widget-id="resumo">
-              <div class="flex items-center justify-between gap-4 mb-4">
+            <article class="simple-panel">
+              <div class="simple-panel__head">
                 <div>
-                  <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Resumo Operacional</p>
-                  <h3 class="text-lg text-white font-bold mt-1">Números rápidos e movimentações</h3>
+                  <p class="simple-kicker">Avisos</p>
+                  <h3 class="simple-panel__title">O que merece olhar hoje</h3>
                 </div>
-                <i class="ph ph-chart-line-up text-2xl text-primary-400"></i>
               </div>
-              <div class="grid sm:grid-cols-2 gap-3 mb-4">
-                <div class="rounded-2xl border border-white/8 bg-white/[0.03] p-4"><p class="text-xs text-slate-500 uppercase tracking-wider">Receitas</p><p id="resumoReceitas" class="text-xl text-white font-bold mt-2">R$ 0</p></div>
-                <div class="rounded-2xl border border-white/8 bg-white/[0.03] p-4"><p class="text-xs text-slate-500 uppercase tracking-wider">Despesas</p><p id="resumoDespesas" class="text-xl text-white font-bold mt-2">R$ 0</p></div>
-                <div class="rounded-2xl border border-white/8 bg-white/[0.03] p-4"><p class="text-xs text-slate-500 uppercase tracking-wider">Votações</p><p id="resumoVotacoes" class="text-xl text-white font-bold mt-2">0</p></div>
-                <div class="rounded-2xl border border-white/8 bg-white/[0.03] p-4"><p class="text-xs text-slate-500 uppercase tracking-wider">Inadimplentes</p><p id="resumoInadimplentes" class="text-xl text-white font-bold mt-2">0</p></div>
+              <div id="alertsList" class="simple-stack"></div>
+            </article>
+          </div>
+
+          <div class="simple-grid">
+            <article class="simple-panel simple-panel--wide">
+              <div class="simple-panel__head">
+                <div>
+                  <p class="simple-kicker">Dinheiro da turma</p>
+                  <h3 class="simple-panel__title">Entradas e saidas nos ultimos meses</h3>
+                </div>
               </div>
-              <div id="dashboardRecentList" class="space-y-1"></div>
-            </div>
+              <div class="simple-chart">
+                <canvas id="monthlyChart"></canvas>
+              </div>
+            </article>
+
+            <article class="simple-panel">
+              <div class="simple-panel__head">
+                <div>
+                  <p class="simple-kicker">Agenda</p>
+                  <h3 class="simple-panel__title">Proximos compromissos</h3>
+                </div>
+              </div>
+              <div id="agendaPreviewList" class="simple-stack"></div>
+            </article>
+          </div>
+
+          <div class="simple-grid">
+            <article class="simple-panel">
+              <div class="simple-panel__head">
+                <div>
+                  <p class="simple-kicker">Financeiro</p>
+                  <h3 class="simple-panel__title">Numeros importantes</h3>
+                </div>
+              </div>
+              <div class="simple-summary">
+                <div class="simple-summary__row"><span>Saldo total</span><strong id="financeSaldo">R$ 0,00</strong></div>
+                <div class="simple-summary__row"><span>Total de receitas</span><strong id="financeReceitas">R$ 0,00</strong></div>
+                <div class="simple-summary__row"><span>Total de despesas</span><strong id="financeDespesas">R$ 0,00</strong></div>
+                <div class="simple-summary__row"><span>Votacoes abertas</span><strong id="financeVotacoes">0</strong></div>
+                <div class="simple-summary__row"><span>Saldo projetado</span><strong id="mainForecastBalance">R$ 0,00</strong></div>
+              </div>
+              <p class="mt-4 text-sm text-slate-400" id="mainForecastHint">Sem previsao calculada ainda.</p>
+            </article>
+
+            <article class="simple-panel simple-panel--wide">
+              <div class="simple-panel__head">
+                <div>
+                  <p class="simple-kicker">Movimentacoes recentes</p>
+                  <h3 class="simple-panel__title">Ultimos registros</h3>
+                </div>
+              </div>
+              <div id="recentTransactions" class="simple-stack"></div>
+            </article>
           </div>
         </section>
 
@@ -187,7 +235,7 @@
           <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4">
             <div>
               <h2 class="text-2xl font-bold text-white">Alunos</h2>
-              <p class="text-sm text-slate-500 mt-1">Cadastre alunos com identificador próprio para login.</p>
+              <p class="text-sm text-slate-500 mt-1">Cadastre alunos com identificador proprio para login.</p>
             </div>
             <div class="flex gap-2 flex-wrap">
               <input type="file" id="fileImportCSV" accept=".csv" class="hidden" onchange="importarAlunosCSV(event)">
@@ -195,74 +243,109 @@
               <button onclick="openModal('new','aluno')" class="btn btn-primary btn-admin">Novo Aluno</button>
             </div>
           </div>
-          <div class="card-panel"><div class="overflow-x-auto"><table id="alunosTable" class="w-full text-left text-sm text-slate-400"><thead class="bg-dark-900/50 text-xs uppercase font-semibold text-slate-500 tracking-wider"><tr><th class="px-6 py-4">Aluno / Login</th><th class="px-6 py-4">Turma</th><th class="px-6 py-4">Contato</th><th class="px-6 py-4">Status</th><th class="px-6 py-4 text-right">Ações</th></tr></thead><tbody id="alunosBody" class="divide-y divide-white/5"></tbody></table></div></div>
+          <div class="card-panel"><div class="overflow-x-auto"><table id="alunosTable" class="w-full text-left text-sm text-slate-400"><thead class="bg-dark-900/50 text-xs uppercase font-semibold text-slate-500 tracking-wider"><tr><th class="px-6 py-4">Aluno / Login</th><th class="px-6 py-4">Turma</th><th class="px-6 py-4">Contato</th><th class="px-6 py-4">Status</th><th class="px-6 py-4 text-right">Acoes</th></tr></thead><tbody id="alunosBody" class="divide-y divide-white/5"></tbody></table></div></div>
         </section>
 
         <section id="screen-turmas" class="screen hidden">
           <div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold text-white">Turmas</h2><button onclick="openModal('new','turma')" class="btn btn-primary btn-admin">Nova Turma</button></div>
-          <div class="card-panel"><div class="overflow-x-auto"><table id="turmasTable" class="w-full text-left text-sm text-slate-400"><thead class="bg-dark-900/50 text-xs uppercase font-semibold text-slate-500"><tr><th class="px-6 py-4">Turma</th><th class="px-6 py-4">Curso</th><th class="px-6 py-4">Alunos</th><th class="px-6 py-4">Arrecadado</th><th class="px-6 py-4 text-right">Ações</th></tr></thead><tbody id="turmasBody" class="divide-y divide-white/5"></tbody></table></div></div>
+          <div class="card-panel"><div class="overflow-x-auto"><table id="turmasTable" class="w-full text-left text-sm text-slate-400"><thead class="bg-dark-900/50 text-xs uppercase font-semibold text-slate-500"><tr><th class="px-6 py-4">Turma</th><th class="px-6 py-4">Curso</th><th class="px-6 py-4">Alunos</th><th class="px-6 py-4">Arrecadado</th><th class="px-6 py-4 text-right">Acoes</th></tr></thead><tbody id="turmasBody" class="divide-y divide-white/5"></tbody></table></div></div>
         </section>
 
         <section id="screen-eventos" class="screen hidden">
-          <div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold text-white">Eventos</h2><button onclick="openModal('new','evento')" class="btn btn-primary btn-admin">Novo Evento</button></div>
-          <div class="card-panel"><div class="overflow-x-auto"><table id="eventosTable" class="w-full text-left text-sm text-slate-400"><thead class="bg-dark-900/50 text-xs uppercase font-semibold text-slate-500"><tr><th class="px-6 py-4">Evento</th><th class="px-6 py-4">Data</th><th class="px-6 py-4">Local</th><th class="px-6 py-4">Status</th><th class="px-6 py-4 text-right">Ações</th></tr></thead><tbody id="eventosBody" class="divide-y divide-white/5"></tbody></table></div></div>
+          <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-5">
+            <div>
+              <h2 class="text-2xl font-bold text-white">Agenda</h2>
+              <p class="text-sm text-slate-500 mt-1">Veja os proximos eventos e crie novos compromissos direto no calendario.</p>
+            </div>
+            <div class="flex gap-2 flex-wrap">
+              <button onclick="openModal('new','evento')" class="btn btn-primary btn-admin">Novo evento completo</button>
+            </div>
+          </div>
+
+          <div class="agenda-grid">
+            <article class="agenda-panel agenda-panel--calendar">
+              <div class="agenda-toolbar">
+                <button onclick="mudarMesAgenda(-1)" class="agenda-nav-btn" aria-label="Mes anterior"><i class="ph ph-caret-left"></i></button>
+                <div>
+                  <p class="agenda-label">Calendario</p>
+                  <h3 id="agendaMonthLabel" class="agenda-title">Mes atual</h3>
+                </div>
+                <button onclick="mudarMesAgenda(1)" class="agenda-nav-btn" aria-label="Proximo mes"><i class="ph ph-caret-right"></i></button>
+              </div>
+
+              <div class="agenda-weekdays">
+                <span>Seg</span>
+                <span>Ter</span>
+                <span>Qua</span>
+                <span>Qui</span>
+                <span>Sex</span>
+                <span>Sab</span>
+                <span>Dom</span>
+              </div>
+
+              <div id="agendaCalendarGrid" class="agenda-calendar"></div>
+            </article>
+
+            <article class="agenda-panel">
+              <div class="agenda-section">
+                <p class="agenda-label">Data selecionada</p>
+                <h3 id="agendaSelectedDateLabel" class="agenda-title">Selecione um dia</h3>
+              </div>
+
+              <div class="agenda-section">
+                <div class="agenda-section__head">
+                  <h4>Eventos do dia</h4>
+                  <button onclick="abrirNovoEventoDataSelecionada()" class="agenda-link-btn">Usar essa data</button>
+                </div>
+                <div id="agendaDayEvents" class="agenda-stack"></div>
+              </div>
+
+              <div class="agenda-section">
+                <div class="agenda-section__head">
+                  <h4>Criar evento rapido</h4>
+                </div>
+                <div class="agenda-quick-form">
+                  <div>
+                    <label class="form-label">Nome do evento</label>
+                    <input id="agendaQuickName" type="text" class="form-input" placeholder="Ex.: Reuniao da turma" />
+                  </div>
+                  <div>
+                    <label class="form-label">Local</label>
+                    <input id="agendaQuickLocal" type="text" class="form-input" placeholder="Ex.: Auditorio do colegio" />
+                  </div>
+                  <div>
+                    <label class="form-label">Turma</label>
+                    <div class="relative">
+                      <select id="agendaQuickTurma" class="form-input form-select"></select>
+                      <i class="ph ph-caret-down absolute right-4 top-3.5 text-slate-400 pointer-events-none"></i>
+                    </div>
+                  </div>
+                  <button onclick="salvarEventoRapido()" class="btn btn-primary w-full justify-center">Salvar na agenda</button>
+                </div>
+              </div>
+            </article>
+
+            <article class="agenda-panel">
+              <div class="agenda-section">
+                <p class="agenda-label">Proximos passos</p>
+                <h3 class="agenda-title">Eventos chegando</h3>
+              </div>
+              <div id="agendaUpcomingList" class="agenda-stack"></div>
+            </article>
+          </div>
         </section>
 
         <section id="screen-financeiro" class="screen hidden">
-          <div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold text-white">Financeiro</h2><button onclick="openModal('new','lancamento')" class="btn btn-primary btn-admin">Novo Lançamento</button></div>
-          <div class="card-panel"><div class="overflow-x-auto"><table id="financeiroTable" class="w-full text-left text-sm text-slate-400"><thead class="bg-dark-900/50 text-xs uppercase font-semibold text-slate-500"><tr><th class="px-6 py-4">Descrição</th><th class="px-6 py-4">Tipo</th><th class="px-6 py-4">Valor</th><th class="px-6 py-4">Data</th><th class="px-6 py-4 text-right">Ações</th></tr></thead><tbody id="financeiroBody" class="divide-y divide-white/5"></tbody></table></div></div>
+          <div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold text-white">Financeiro</h2><button onclick="openModal('new','lancamento')" class="btn btn-primary btn-admin">Novo Lancamento</button></div>
+          <div class="card-panel"><div class="overflow-x-auto"><table id="financeiroTable" class="w-full text-left text-sm text-slate-400"><thead class="bg-dark-900/50 text-xs uppercase font-semibold text-slate-500"><tr><th class="px-6 py-4">Descricao</th><th class="px-6 py-4">Tipo</th><th class="px-6 py-4">Valor</th><th class="px-6 py-4">Data</th><th class="px-6 py-4 text-right">Acoes</th></tr></thead><tbody id="financeiroBody" class="divide-y divide-white/5"></tbody></table></div></div>
         </section>
 
         <section id="screen-votacao" class="screen hidden">
-          <div class="flex justify-between items-center mb-6"><div><h2 class="text-2xl font-bold text-white">Votações & Enquetes</h2><p class="text-sm text-slate-500">Decisões democráticas da turma</p></div><button onclick="openModal('new','votacao')" class="btn btn-primary btn-admin"><i class="ph ph-plus-bold"></i> Nova Votação</button></div>
+          <div class="flex justify-between items-center mb-6"><div><h2 class="text-2xl font-bold text-white">Votacoes e Enquetes</h2><p class="text-sm text-slate-500">Decisoes democraticas da turma</p></div><button onclick="openModal('new','votacao')" class="btn btn-primary btn-admin"><i class="ph ph-plus-bold"></i> Nova Votacao</button></div>
           <div id="votacoesContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"></div>
         </section>
       </div>
     </main>
-  </div>
-
-  <div id="dashboardSettingsModal" class="fixed inset-0 bg-dark-900/80 backdrop-blur-sm hidden items-center justify-center z-[80] p-4">
-    <div class="dashboard-settings-shell">
-      <div class="px-6 py-5 border-b border-white/6 flex items-center justify-between gap-4">
-        <div>
-          <p class="text-xs uppercase tracking-[.18em] text-slate-500 font-bold">Preferências</p>
-          <h3 class="text-xl text-white font-bold mt-1">Personalizar dashboard</h3>
-        </div>
-        <button onclick="closeDashboardSettings()" class="text-slate-500 hover:text-white transition-colors p-1 rounded-md hover:bg-dark-700"><i class="ph ph-x text-lg"></i></button>
-      </div>
-      <div class="p-6 space-y-5 max-h-[80vh] overflow-y-auto custom-scroll">
-        <div class="grid sm:grid-cols-2 gap-3">
-          <div class="dashboard-settings-row">
-            <div>
-              <p class="text-sm font-semibold text-white">Faixa superior de KPIs</p>
-              <p class="text-xs text-slate-500 mt-1">Mostra turmas, alunos e eventos no topo.</p>
-            </div>
-            <label class="dashboard-switch"><input type="checkbox" id="toggleTopStats" onchange="toggleDashboardTopStats(this.checked)"><span>Ativar</span></label>
-          </div>
-          <div class="dashboard-settings-row">
-            <div>
-              <p class="text-sm font-semibold text-white">Modo compacto</p>
-              <p class="text-xs text-slate-500 mt-1">Reduz espaçamentos para um painel mais denso.</p>
-            </div>
-            <label class="dashboard-switch"><input type="checkbox" id="toggleCompactMode" onchange="toggleDashboardCompactMode(this.checked)"><span>Ativar</span></label>
-          </div>
-        </div>
-
-        <div>
-          <div class="flex items-center justify-between mb-3 gap-3">
-            <div>
-              <p class="text-sm font-semibold text-white">Widgets</p>
-              <p class="text-xs text-slate-500 mt-1">Escolha a ordem e o que deseja ver no dashboard.</p>
-            </div>
-            <button onclick="resetDashboardPreferences()" class="btn-outline text-sm">Restaurar padrão</button>
-          </div>
-          <div id="dashboardConfigList" class="space-y-3"></div>
-        </div>
-      </div>
-      <div class="px-6 py-4 border-t border-white/6 bg-dark-900/40 flex justify-end">
-        <button onclick="closeDashboardSettings()" class="btn-gradient text-sm">Concluir</button>
-      </div>
-    </div>
   </div>
 
   <div id="toastContainer" class="fixed top-5 right-5 z-[60] flex flex-col gap-2 w-full max-w-xs pointer-events-none"></div>
@@ -270,7 +353,7 @@
   <div id="modalBackdrop" class="fixed inset-0 bg-dark-900/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 modal-backdrop">
     <div id="modalPanel" class="bg-dark-800/95 w-full max-w-xl rounded-[28px] shadow-2xl border border-white/8 transform scale-95 opacity-0 modal-panel">
       <div class="px-6 py-5 border-b border-white/6 flex justify-between items-center bg-dark-800/60">
-        <h3 id="modalTitle" class="text-lg font-bold text-white flex items-center gap-2"><i class="ph ph-pencil-simple text-primary-500"></i> <span>Formulário</span></h3>
+        <h3 id="modalTitle" class="text-lg font-bold text-white flex items-center gap-2"><i class="ph ph-pencil-simple text-primary-500"></i> <span>Formulario</span></h3>
         <button onclick="closeModal()" class="text-slate-500 hover:text-white transition-colors p-1 rounded-md hover:bg-dark-700"><i class="ph ph-x text-lg"></i></button>
       </div>
       <div class="p-6 max-h-[80vh] overflow-y-auto custom-scroll">
@@ -284,26 +367,26 @@
                 <option value="aluno">Aluno</option>
                 <option value="turma">Turma</option>
                 <option value="lancamento">Financeiro</option>
-                <option value="votacao">Votação</option>
+                <option value="votacao">Votacao</option>
               </select>
               <i class="ph ph-caret-down absolute right-4 top-3.5 text-slate-400 pointer-events-none"></i>
             </div>
           </div>
           <div>
-            <label class="form-label">Título / Nome</label>
+            <label class="form-label">Titulo / Nome</label>
             <input id="modalNome" type="text" required class="form-input" placeholder="Digite aqui..." />
           </div>
           <div id="divIdentificador" class="hidden">
             <label class="form-label">Identificador do aluno</label>
             <input id="modalIdentificador" type="text" class="form-input" placeholder="ex.: silas.tristoni" />
-            <p class="text-xs text-slate-500 mt-2">Esse identificador será usado no login do aluno. Se você deixar em branco, o sistema gera automaticamente.</p>
+            <p class="text-xs text-slate-500 mt-2">Esse identificador sera usado no login do aluno. Se voce deixar em branco, o sistema gera automaticamente.</p>
           </div>
           <div class="grid grid-cols-2 gap-4" id="divDataValor">
             <div><label class="form-label">Data</label><input id="modalData" type="date" class="form-input" /></div>
             <div><label class="form-label">Valor (R$)</label><input id="modalValor" type="number" step="0.01" class="form-input" placeholder="0.00" /></div>
           </div>
           <div>
-            <label id="lblDescricao" class="form-label">Descrição</label>
+            <label id="lblDescricao" class="form-label">Descricao</label>
             <textarea id="modalDescricao" rows="3" class="form-input" placeholder="Detalhes adicionais..."></textarea>
             <div class="mt-3 relative" id="divTurmaSelect">
               <select id="modalTurmaSelect" class="form-input form-select"><option value="">Selecione a Turma...</option></select>
@@ -314,7 +397,7 @@
               <div class="relative">
                 <select id="modalPerfil" class="form-input form-select">
                   <option value="ALUNO">Aluno Simples</option>
-                  <option value="COMISSAO">Membro da Comissão</option>
+                  <option value="COMISSAO">Membro da Comissao</option>
                 </select>
                 <i class="ph ph-caret-down absolute right-4 top-3.5 text-slate-400 pointer-events-none"></i>
               </div>
@@ -333,7 +416,7 @@
     <div class="bg-dark-800 w-full max-w-sm rounded-2xl shadow-2xl border border-dark-700 p-6 text-center transform scale-95 transition-all duration-300">
       <i class="ph-fill ph-warning-circle text-5xl text-red-500 mb-4 inline-block"></i>
       <h3 class="text-xl font-bold text-white mb-2">Excluir Registro?</h3>
-      <p class="text-sm text-slate-400 mb-6">Esta ação não pode ser desfeita. Os dados serão apagados permanentemente.</p>
+      <p class="text-sm text-slate-400 mb-6">Esta acao nao pode ser desfeita. Os dados serao apagados permanentemente.</p>
       <div class="flex gap-3">
         <button onclick="fecharConfirmacao()" class="flex-1 px-4 py-2 rounded-xl border border-dark-600 text-slate-300 font-medium hover:bg-dark-700 transition-all">Cancelar</button>
         <button onclick="confirmarExclusaoAcao()" class="flex-1 px-4 py-2 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all">Sim, Excluir</button>

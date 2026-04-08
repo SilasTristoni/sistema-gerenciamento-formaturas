@@ -1,0 +1,107 @@
+erDiagram
+    TURMA {
+        BIGINT id PK
+        VARCHAR nome
+        VARCHAR curso
+        VARCHAR instituicao
+        DECIMAL total_arrecadado
+        VARCHAR status
+    }
+
+    ALUNO {
+        BIGINT id PK
+        BIGINT turma_id FK
+        VARCHAR nome
+        VARCHAR identificador
+        VARCHAR contato
+        VARCHAR status
+    }
+
+    USUARIOS {
+        BIGINT id PK
+        VARCHAR login
+        VARCHAR email
+        VARCHAR senha
+        VARCHAR perfil
+        BIGINT aluno_id FK
+    }
+
+    EVENTO {
+        BIGINT id PK
+        BIGINT turma_id FK
+        VARCHAR nome
+        DATE data_evento
+        VARCHAR local_evento
+        VARCHAR status
+    }
+
+    PRESENCAS_EVENTO {
+        BIGINT id PK
+        BIGINT evento_id FK
+        BIGINT aluno_id FK
+        VARCHAR status
+    }
+
+    LANCAMENTO_FINANCEIRO {
+        BIGINT id PK
+        BIGINT turma_id FK
+        BIGINT aluno_id FK
+        VARCHAR descricao
+        VARCHAR tipo
+        DECIMAL valor
+        DATE data_lancamento
+        VARCHAR referencia
+    }
+
+    TAREFA {
+        BIGINT id PK
+        BIGINT turma_id FK
+        BIGINT responsavel_id FK
+        VARCHAR titulo
+        TEXT descricao
+        VARCHAR status
+        DATE data_limite
+    }
+
+    VOTACAO {
+        BIGINT id PK
+        BIGINT turma_id FK
+        VARCHAR titulo
+        VARCHAR status
+        DATE data_fim
+    }
+
+    OPCAO_VOTACAO {
+        BIGINT id PK
+        BIGINT votacao_id FK
+        VARCHAR nome_fornecedor
+        TEXT detalhes_proposta
+        DECIMAL valor_proposta
+    }
+
+    VOTO {
+        BIGINT id PK
+        BIGINT votacao_id FK
+        BIGINT opcao_id FK
+        BIGINT aluno_id FK
+        TIMESTAMP data_voto
+    }
+
+    TURMA ||--o{ ALUNO : possui
+    TURMA ||--o{ EVENTO : organiza
+    TURMA ||--o{ LANCAMENTO_FINANCEIRO : consolida
+    TURMA ||--o{ TAREFA : possui
+    TURMA ||--o{ VOTACAO : promove
+
+    ALUNO ||--o| USUARIOS : representa
+    ALUNO ||--o{ PRESENCAS_EVENTO : responde
+    ALUNO ||--o{ VOTO : registra
+    ALUNO o|--o{ TAREFA : responsavel
+    ALUNO o|--o{ LANCAMENTO_FINANCEIRO : referencia
+
+    EVENTO ||--o{ PRESENCAS_EVENTO : recebe
+
+    VOTACAO ||--o{ OPCAO_VOTACAO : contem
+    VOTACAO ||--o{ VOTO : recebe
+
+    OPCAO_VOTACAO ||--o{ VOTO : selecionada_em

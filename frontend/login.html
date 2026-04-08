@@ -143,8 +143,9 @@
               const dados = await api.login(login, senha);
               auth.saveSession(dados);
               showToast('Login efetuado com sucesso!');
+              const destino = dados.perfil === 'ROLE_COMISSAO' ? 'index.html' : 'aluno.html';
               setTimeout(() => {
-                  window.location.href = 'index.html';
+                  window.location.href = destino;
               }, 500);
           } catch (err) {
               showToast('Login inválido. Confira seu identificador e senha.', 'error');

@@ -1,81 +1,140 @@
-import { api } from './services/api.js';
-import { auth } from './services/auth.js';
+import { api } from "./services/api.js";
+import { auth } from "./services/auth.js";
 
 let monthlyChart = null;
 let categoryChart = null;
+let filtersBound = false;
 
-const currencyFormatter = new Intl.NumberFormat('pt-BR', {
-  style: 'currency',
-  currency: 'BRL'
+const DASHBOARD_FILTER_KEY = "gestaoform.dashboard.filters";
+const DEFAULT_FILTERS = {
+  turmaId: "",
+  periodMonths: "6"
+};
+
+const currencyFormatter = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL"
 });
 
-const formatCurrency = (value = 0) => currencyFormatter.format(Number(value || 0));
+const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric"
+});
+
+function formatCurrency(value = 0) {
+  return currencyFormatter.format(Number(value || 0));
+}
 
 function formatDate(value) {
-  if (!value) return 'Sem data';
+  if (!value) return "Sem data";
   const date = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString('pt-BR');
-}
-
-function monthKey(value) {
-  if (!value) return 'Sem data';
-  const date = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return 'Sem data';
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-}
-
-function monthLabel(key) {
-  if (key === 'Sem data') return key;
-  const [year, month] = key.split('-');
-  const date = new Date(Number(year), Number(month) - 1, 1);
-  return date.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
-}
-
-function sortByDateAsc(items = [], field = 'dataEvento') {
-  return [...items].sort((a, b) => {
-    const da = a?.[field] ? new Date(`${a[field]}T00:00:00`).getTime() : Number.MAX_SAFE_INTEGER;
-    const db = b?.[field] ? new Date(`${b[field]}T00:00:00`).getTime() : Number.MAX_SAFE_INTEGER;
-    return da - db;
-  });
+  if (Number.isNaN(date.getTime())) return "Sem data";
+  return dateFormatter.format(date);
 }
 
 function setText(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = value;
+  const node = document.getElementById(id);
+  if (node) node.textContent = value;
 }
 
-function buildMonthlySeries(financeiro = []) {
-  const grouped = new Map();
+function escapeHtml(value = "") {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
 
-  financeiro.forEach(item => {
-    const key = monthKey(item.dataLancamento);
-    if (!grouped.has(key)) grouped.set(key, { receitas: 0, despesas: 0 });
+function readDashboardFilters() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(DASHBOARD_FILTER_KEY) || "{}");
+    return {
+      turmaId: saved.turmaId || DEFAULT_FILTERS.turmaId,
+      periodMonths: saved.periodMonths || DEFAULT_FILTERS.periodMonths
+    };
+  } catch (error) {
+    return { ...DEFAULT_FILTERS };
+  }
+}
 
-    const entry = grouped.get(key);
-    if ((item.tipo || '').toLowerCase() === 'receita') {
-      entry.receitas += Number(item.valor || 0);
-    } else {
-      entry.despesas += Number(item.valor || 0);
-    }
+function writeDashboardFilters(filters) {
+  localStorage.setItem(DASHBOARD_FILTER_KEY, JSON.stringify(filters));
+}
+
+function getDashboardFilters() {
+  const filters = readDashboardFilters();
+  return {
+    turmaId: filters.turmaId ? Number(filters.turmaId) : undefined,
+    periodMonths: Number(filters.periodMonths || DEFAULT_FILTERS.periodMonths)
+  };
+}
+
+function syncFilterInputs() {
+  const filters = readDashboardFilters();
+  const turmaSelect = document.getElementById("dashboardTurmaFilter");
+  const periodSelect = document.getElementById("dashboardPeriodFilter");
+  if (turmaSelect) turmaSelect.value = filters.turmaId;
+  if (periodSelect) periodSelect.value = filters.periodMonths;
+}
+
+function populateTurmaFilter(turmas = []) {
+    const select = document.getElementById("dashboardTurmaFilter");
+    if (!select) return;
+
+    const currentValue = readDashboardFilters().turmaId;
+  select.innerHTML = `
+    <option value="">Todas as turmas</option>
+    ${turmas.map(turma => `<option value="${turma.id}">${escapeHtml(turma.nome || "Turma")}</option>`).join("")}
+  `;
+  select.value = turmas.some(turma => String(turma.id) === currentValue) ? currentValue : "";
+}
+
+function normalizeDashboardFiltersForTurmas(turmas = []) {
+  const filters = readDashboardFilters();
+  if (filters.turmaId && !turmas.some(turma => String(turma.id) === filters.turmaId)) {
+    filters.turmaId = "";
+    writeDashboardFilters(filters);
+  }
+}
+
+function bindDashboardFilters() {
+  if (filtersBound) return;
+
+  document.getElementById("dashboardTurmaFilter")?.addEventListener("change", event => {
+    const filters = readDashboardFilters();
+    filters.turmaId = event.target.value || "";
+    writeDashboardFilters(filters);
+    loadDashboard().catch(console.error);
   });
 
-  return [...grouped.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .slice(-6)
-    .map(([key, values]) => ({ label: monthLabel(key), ...values }));
+  document.getElementById("dashboardPeriodFilter")?.addEventListener("change", event => {
+    const filters = readDashboardFilters();
+    filters.periodMonths = event.target.value || DEFAULT_FILTERS.periodMonths;
+    writeDashboardFilters(filters);
+    loadDashboard().catch(console.error);
+  });
+
+  filtersBound = true;
 }
 
-function buildCategorySeries(financeiro = []) {
-  const grouped = new Map();
-  financeiro
-    .filter(item => (item.tipo || '').toLowerCase() === 'despesa')
-    .forEach(item => {
-      const category = item.referencia || item.descricao || 'Sem categoria';
-      grouped.set(category, (grouped.get(category) || 0) + Number(item.valor || 0));
-    });
+function showState({ loading = false, error = "" } = {}) {
+  document.getElementById("loadingState")?.classList.toggle("hidden", !loading);
+  document.getElementById("errorState")?.classList.toggle("hidden", !error);
+  if (error) setText("errorMessage", error);
+}
 
-  return [...grouped.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+function renderList(containerId, items, formatter, emptyMessage) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  if (!items?.length) {
+    container.innerHTML = `<div class="summary-row"><span>${escapeHtml(emptyMessage)}</span></div>`;
+    return;
+  }
+
+  container.innerHTML = items.map(formatter).join("");
 }
 
 function destroyCharts() {
@@ -85,34 +144,40 @@ function destroyCharts() {
   categoryChart = null;
 }
 
-function renderCharts(financeiro) {
-  const monthlyCanvas = document.getElementById('monthlyChart');
-  const categoryCanvas = document.getElementById('categoryChart');
-  if (!monthlyCanvas || !categoryCanvas || typeof Chart === 'undefined') return;
+function renderCharts(monthlyFinancial = [], expenseCategories = []) {
+  const monthlyCanvas = document.getElementById("monthlyChart");
+  const categoryCanvas = document.getElementById("categoryChart");
+  if (!monthlyCanvas || !categoryCanvas || typeof Chart === "undefined") return;
 
   destroyCharts();
 
-  const monthlySeries = buildMonthlySeries(financeiro);
-  const categorySeries = buildCategorySeries(financeiro);
-
   monthlyChart = new Chart(monthlyCanvas, {
-    type: 'bar',
+    type: "bar",
     data: {
-      labels: monthlySeries.map(item => item.label),
+      labels: monthlyFinancial.map(item => item.monthLabel),
       datasets: [
         {
-          label: 'Receitas',
-          data: monthlySeries.map(item => item.receitas),
-          backgroundColor: 'rgba(16, 185, 129, 0.76)',
+          label: "Receitas",
+          data: monthlyFinancial.map(item => item.receitas),
+          backgroundColor: "rgba(52, 211, 153, 0.72)",
           borderRadius: 10,
-          maxBarThickness: 28
+          maxBarThickness: 26
         },
         {
-          label: 'Despesas',
-          data: monthlySeries.map(item => item.despesas),
-          backgroundColor: 'rgba(239, 68, 68, 0.72)',
+          label: "Despesas",
+          data: monthlyFinancial.map(item => item.despesas),
+          backgroundColor: "rgba(248, 113, 113, 0.72)",
           borderRadius: 10,
-          maxBarThickness: 28
+          maxBarThickness: 26
+        },
+        {
+          label: "Saldo",
+          data: monthlyFinancial.map(item => item.saldo),
+          type: "line",
+          tension: 0.38,
+          borderColor: "#4fd1c5",
+          pointBackgroundColor: "#4fd1c5",
+          pointRadius: 4
         }
       ]
     },
@@ -120,74 +185,83 @@ function renderCharts(financeiro) {
       maintainAspectRatio: false,
       plugins: {
         legend: {
-          labels: { color: '#cbd5e1', usePointStyle: true, boxWidth: 10 }
+          labels: {
+            color: "#e2e8f0",
+            usePointStyle: true,
+            boxWidth: 10
+          }
         }
       },
       scales: {
-        x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
+        x: {
+          ticks: { color: "#9fb1c7" },
+          grid: { display: false }
+        },
         y: {
-          ticks: { color: '#94a3b8', callback: value => formatCurrency(value) },
-          grid: { color: 'rgba(148,163,184,0.08)' }
+          ticks: {
+            color: "#9fb1c7",
+            callback: value => formatCurrency(value)
+          },
+          grid: { color: "rgba(159, 177, 199, 0.12)" }
         }
       }
     }
   });
 
   categoryChart = new Chart(categoryCanvas, {
-    type: 'doughnut',
+    type: "doughnut",
     data: {
-      labels: categorySeries.map(item => item[0]),
+      labels: expenseCategories.map(item => item.categoria),
       datasets: [{
-        data: categorySeries.map(item => item[1]),
+        data: expenseCategories.map(item => item.valor),
         backgroundColor: [
-          'rgba(16, 185, 129, 0.82)',
-          'rgba(59, 130, 246, 0.82)',
-          'rgba(168, 85, 247, 0.82)',
-          'rgba(249, 115, 22, 0.82)',
-          'rgba(236, 72, 153, 0.82)'
+          "rgba(79, 209, 197, 0.8)",
+          "rgba(246, 197, 95, 0.8)",
+          "rgba(248, 113, 113, 0.8)",
+          "rgba(96, 165, 250, 0.8)",
+          "rgba(196, 181, 253, 0.8)"
         ],
         borderWidth: 0,
-        hoverOffset: 6
+        hoverOffset: 8
       }]
     },
     options: {
       maintainAspectRatio: false,
-      cutout: '68%',
+      cutout: "68%",
       plugins: {
         legend: {
-          position: 'bottom',
-          labels: { color: '#cbd5e1', usePointStyle: true, boxWidth: 10, padding: 18 }
+          position: "bottom",
+          labels: {
+            color: "#e2e8f0",
+            usePointStyle: true,
+            boxWidth: 10,
+            padding: 18
+          }
         }
       }
     }
   });
 }
 
-function renderList(containerId, items, formatter) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  container.innerHTML = items.map(formatter).join('') || '<div class="summary-card"><p>Nenhum registro disponível.</p></div>';
-}
-
 function showTab(tabId) {
-  document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
-  document.querySelectorAll('.side-nav__item').forEach(item => item.classList.remove('active'));
-  document.getElementById(`tab-${tabId}`)?.classList.add('active');
-  document.querySelector(`.side-nav__item[data-tab-target="${tabId}"]`)?.classList.add('active');
+  document.querySelectorAll(".tab-panel").forEach(panel => panel.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
+  document.getElementById(`tab-${tabId}`)?.classList.add("active");
+  document.querySelector(`.nav-item[data-tab-target="${tabId}"]`)?.classList.add("active");
 }
 
 function bindNavigation() {
-  document.querySelectorAll('[data-tab-target]').forEach(item => {
-    item.addEventListener('click', () => showTab(item.dataset.tabTarget));
+  document.querySelectorAll("[data-tab-target]").forEach(item => {
+    item.addEventListener("click", () => showTab(item.dataset.tabTarget));
   });
 
-  document.getElementById('scrollChartsBtn')?.addEventListener('click', () => {
-    document.getElementById('chartsSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById("scrollAlertsBtn")?.addEventListener("click", () => {
+    document.getElementById("alertsSection")?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 }
 
 function redirectToLogin() {
-  window.location.href = './login.html';
+  window.location.href = "./login.html";
 }
 
 async function validateSession() {
@@ -199,12 +273,16 @@ async function validateSession() {
 
   try {
     const me = await api.me();
-    const login = me.login || me.email || 'usuario';
-    setText('userName', me.nome || 'Usuário');
-    setText('userRole', me.perfil === 'ROLE_COMISSAO' ? 'Comissão' : 'Formando(a)');
-    const avatar = document.getElementById('userAvatar');
-    if (avatar) avatar.textContent = (me.nome || 'U').charAt(0).toUpperCase();
-    auth.saveSession({ token, perfil: me.perfil, nome: me.nome, login });
+    if (me.perfil !== "ROLE_COMISSAO") {
+      window.location.href = "./aluno.html";
+      return null;
+    }
+
+    setText("userName", me.nome || "Usuario");
+    setText("userRole", me.perfil === "ROLE_COMISSAO" ? "Comissao" : "Formando(a)");
+    const avatar = document.getElementById("userAvatar");
+    if (avatar) avatar.textContent = (me.nome || "U").charAt(0).toUpperCase();
+    auth.saveSession({ token, perfil: me.perfil, nome: me.nome, login: me.login || me.email || "usuario" });
     return me;
   } catch (error) {
     auth.clearSession();
@@ -213,101 +291,195 @@ async function validateSession() {
   }
 }
 
-async function loadDashboard() {
-  const me = await validateSession();
-  if (!me) return;
-
-  const [turmas, alunos, financeiro, eventos, votacoes] = await Promise.all([
-    api.buscar('turmas'),
-    api.buscar('alunos'),
-    api.buscar('financeiro'),
-    api.buscar('eventos'),
-    api.buscar('votacoes')
-  ]);
-
-  const receitas = financeiro.filter(item => (item.tipo || '').toLowerCase() === 'receita')
-    .reduce((sum, item) => sum + Number(item.valor || 0), 0);
-  const despesas = financeiro.filter(item => (item.tipo || '').toLowerCase() === 'despesa')
-    .reduce((sum, item) => sum + Number(item.valor || 0), 0);
-  const saldo = receitas - despesas;
-  const inadimplentes = alunos.filter(aluno => ['pendente', 'atrasado'].includes((aluno.status || '').toLowerCase())).length;
-  const orderedEvents = sortByDateAsc(eventos, 'dataEvento');
-  const nextEvent = orderedEvents[0] || {};
-
-  setText('statSaldo', formatCurrency(saldo));
-  setText('statReceitas', formatCurrency(receitas));
-  setText('statDespesas', formatCurrency(despesas));
-  setText('statInadimplentes', inadimplentes);
-  setText('nextEventName', nextEvent.nome || 'Nenhum agendado');
-  setText('nextEventDate', nextEvent.dataEvento ? formatDate(nextEvent.dataEvento) : 'Sem data');
-  setText('nextEventLocation', nextEvent.localEvento || 'Local a definir');
-
-  setText('summaryEvents', eventos.length);
-  setText('summaryNextEvent', nextEvent.nome || 'Nenhum');
-  setText('financeSaldo', formatCurrency(saldo));
-  setText('financeReceitas', formatCurrency(receitas));
-  setText('financeDespesas', formatCurrency(despesas));
-  setText('lastUpdate', new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
-
-  renderCharts(financeiro);
-
-  renderList('agendaPreviewList', orderedEvents.slice(0, 4), evento => `
-    <article class="list-item">
-      <div class="list-item__meta">
-        <p class="list-item__title">${evento.nome || 'Evento sem nome'}</p>
-        <small class="list-item__subtitle">${formatDate(evento.dataEvento)} • ${evento.localEvento || 'Local a definir'}</small>
-      </div>
-      <span class="badge">${evento.status || 'Agendado'}</span>
-    </article>
-  `);
-
-  renderList('agendaTimeline', orderedEvents.slice(0, 10), evento => `
-    <article class="list-item">
-      <div class="list-item__date">
-        <span>${evento.dataEvento ? formatDate(evento.dataEvento).split('/')[0] : '--'}</span>
-        <small>${evento.dataEvento ? formatDate(evento.dataEvento).split('/').slice(1).join('/') : 'sem data'}</small>
-      </div>
-      <div class="list-item__meta">
-        <p class="list-item__title">${evento.nome || 'Evento sem nome'}</p>
-        <small class="list-item__subtitle">${evento.localEvento || 'Local a definir'}</small>
-      </div>
-      <span class="badge">${evento.status || 'Agendado'}</span>
-    </article>
-  `);
-
-  renderList('recentTransactions', [...financeiro].slice(-5).reverse(), item => `
-    <article class="list-item">
-      <div class="list-item__meta">
-        <p class="list-item__title">${item.descricao}</p>
-        <small class="list-item__subtitle">${item.dataLancamento ? formatDate(item.dataLancamento) : 'Sem data'} • ${item.referencia || 'Financeiro'}</small>
-      </div>
-      <strong class="${(item.tipo || '').toLowerCase() === 'receita' ? 'money-positive' : 'money-negative'}">
-        ${(item.tipo || '').toLowerCase() === 'receita' ? '+' : '-'} ${formatCurrency(item.valor)}
-      </strong>
-    </article>
-  `);
-
-  renderList('financeList', [...financeiro].reverse().slice(0, 8), item => `
-    <article class="list-item">
-      <div class="list-item__meta">
-        <p class="list-item__title">${item.descricao}</p>
-        <small class="list-item__subtitle">${item.dataLancamento ? formatDate(item.dataLancamento) : 'Sem data'} • ${item.referencia || 'Sem referência'}</small>
-      </div>
-      <strong class="${(item.tipo || '').toLowerCase() === 'receita' ? 'money-positive' : 'money-negative'}">
-        ${(item.tipo || '').toLowerCase() === 'receita' ? '+' : '-'} ${formatCurrency(item.valor)}
-      </strong>
-    </article>
-  `);
+function renderFilterSummary(filters = {}, forecast = {}) {
+  setText("dashboardScopeLabel", filters.scopeLabel || "Visao consolidada de todas as turmas");
+  setText(
+    "dashboardFilterHint",
+    `${filters.turmaNome || "Todas as turmas"} | Janela de ${filters.periodMonths || DEFAULT_FILTERS.periodMonths} meses | Tendencia ${forecast.trend || "neutral"}`
+  );
 }
 
-document.getElementById('logoutBtn')?.addEventListener('click', () => {
+function renderOverview(data) {
+  const overview = data.overview || {};
+  const operational = data.operational || {};
+  const nextEvent = data.nextEvent || {};
+  const forecast = data.forecast || {};
+
+  setText("healthScore", overview.healthScore ?? 0);
+  setText("lastUpdate", `Atualizado ${new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`);
+
+  setText("statSaldo", formatCurrency(overview.saldoTotal));
+  setText("statReceitas", formatCurrency(overview.totalReceitas));
+  setText("statDespesas", formatCurrency(overview.totalDespesas));
+  setText("statInadimplentes", overview.inadimplentes ?? 0);
+
+  setText("nextEventName", nextEvent.nome || "Nenhum evento agendado");
+  setText("nextEventDate", nextEvent.data ? formatDate(nextEvent.data) : "Sem data definida");
+  setText("nextEventLocation", nextEvent.local || "Local a definir");
+  setText("nextEventStatus", (nextEvent.status || "planejamento").toUpperCase());
+  setText("nextEventCountdown", nextEvent.diasRestantes >= 0 ? nextEvent.diasRestantes : "--");
+
+  setText("opsAdimplencia", `${Number(operational.percentualAdimplencia || 0).toFixed(1)}%`);
+  setText("opsEventosMes", operational.eventosNoMes ?? 0);
+  setText("opsVotacoes", operational.votacoesAbertas ?? 0);
+  setText("opsTicketMedio", formatCurrency(operational.ticketMedioPorAluno));
+
+  setText("summaryEvents", `${overview.totalEventos ?? 0} eventos`);
+  setText("summaryTurmas", `${overview.totalTurmas ?? 0} turmas`);
+  setText("financeSaldo", formatCurrency(overview.saldoTotal));
+  setText("financeReceitas", formatCurrency(overview.totalReceitas));
+  setText("financeDespesas", formatCurrency(overview.totalDespesas));
+  setText("financeVotacoes", overview.totalVotacoes ?? 0);
+  setText("financeProjectedBalance", formatCurrency(forecast.projectedNextBalance));
+  setText("financeAverageNet", formatCurrency(forecast.averageNet));
+  setText("forecastRecommendation", forecast.recommendation || "Sem previsao calculada ainda.");
+
+  renderFilterSummary(data.filters, forecast);
+}
+
+function renderAlerts(alerts = []) {
+  renderList(
+    "alertsList",
+    alerts,
+    item => `
+      <article class="alert-item alert-${escapeHtml(item.level || "low")}">
+        <p class="alert-title">${escapeHtml(item.title || "Sem alerta")}</p>
+        <p class="alert-copy">${escapeHtml(item.description || "")}</p>
+      </article>
+    `,
+    "Nenhum alerta relevante no momento."
+  );
+}
+
+function renderEvents(events = []) {
+  renderList(
+    "agendaPreviewList",
+    events,
+    item => `
+      <article class="list-item">
+        <div class="item-main">
+          <p class="item-title">${escapeHtml(item.nome || "Evento sem nome")}</p>
+          <p class="item-subtitle">${escapeHtml(formatDate(item.data))} | ${escapeHtml(item.local || "Local a definir")}</p>
+        </div>
+        <span class="status-badge">${escapeHtml(item.status || "agendado")}</span>
+      </article>
+    `,
+    "Nenhum evento cadastrado."
+  );
+
+  renderList(
+    "agendaTimeline",
+    events,
+    item => `
+      <article class="list-item">
+        <div class="item-main">
+          <p class="item-title">${escapeHtml(item.nome || "Evento sem nome")}</p>
+          <p class="item-subtitle">${escapeHtml(formatDate(item.data))} | ${escapeHtml(item.local || "Local a definir")} | ${escapeHtml(item.diasRestantes >= 0 ? `${item.diasRestantes} dias restantes` : "Data indefinida")}</p>
+        </div>
+        <span class="status-badge">${escapeHtml(item.status || "agendado")}</span>
+      </article>
+    `,
+    "Nenhum evento disponivel na agenda."
+  );
+}
+
+function renderTransactions(transactions = []) {
+  renderList(
+    "recentTransactions",
+    transactions,
+    item => `
+      <article class="list-item">
+        <div class="item-main">
+          <p class="item-title">${escapeHtml(item.descricao || "Lancamento")}</p>
+          <p class="item-subtitle">${escapeHtml(formatDate(item.data))} | ${escapeHtml(item.referencia || "Sem referencia")} | ${escapeHtml(item.turmaNome || "Sem turma")}</p>
+        </div>
+        <div class="item-side">
+          <strong class="${(item.tipo || "").toLowerCase() === "receita" ? "money-positive" : "money-negative"}">
+            ${(item.tipo || "").toLowerCase() === "receita" ? "+" : "-"} ${escapeHtml(formatCurrency(item.valor))}
+          </strong>
+        </div>
+      </article>
+    `,
+    "Nenhum lancamento recente."
+  );
+}
+
+function renderExpenses(expenses = []) {
+  renderList(
+    "expenseList",
+    expenses,
+    item => `
+      <article class="list-item">
+        <div class="item-main">
+          <p class="item-title">${escapeHtml(item.categoria || "Sem categoria")}</p>
+          <p class="item-subtitle">Categoria de despesa monitorada pelo painel</p>
+        </div>
+        <div class="item-side">
+          <strong class="money-negative">${escapeHtml(formatCurrency(item.valor))}</strong>
+        </div>
+      </article>
+    `,
+    "Nenhuma categoria de despesa encontrada."
+  );
+}
+
+function renderTurmas(turmas = []) {
+  renderList(
+    "turmasRanking",
+    turmas,
+    item => `
+      <article class="list-item">
+        <div class="item-main">
+          <p class="item-title">${escapeHtml(item.nome || "Turma sem nome")}</p>
+          <p class="item-subtitle">${escapeHtml(item.curso || "Curso nao informado")} | ${escapeHtml(String(item.quantidadeAlunos || 0))} alunos</p>
+        </div>
+        <div class="item-side">
+          <strong>${escapeHtml(formatCurrency(item.totalArrecadado))}</strong>
+          <p class="item-subtitle">${escapeHtml(item.status || "emdia")}</p>
+        </div>
+      </article>
+    `,
+    "Nenhuma turma disponivel."
+  );
+}
+
+async function loadDashboard() {
+  showState({ loading: true, error: "" });
+
+  const session = await validateSession();
+  if (!session) return;
+
+  try {
+    syncFilterInputs();
+    const turmas = await api.buscar("turmas");
+    normalizeDashboardFiltersForTurmas(turmas);
+    populateTurmaFilter(turmas);
+    syncFilterInputs();
+    const dashboard = await api.dashboardResumo(getDashboardFilters());
+
+    renderOverview(dashboard);
+    renderAlerts(dashboard.alerts);
+    renderEvents(dashboard.upcomingEvents);
+    renderTransactions(dashboard.recentTransactions);
+    renderExpenses(dashboard.expenseCategories);
+    renderTurmas(dashboard.topTurmas);
+    renderCharts(dashboard.monthlyFinancial, dashboard.expenseCategories);
+    showState({ loading: false, error: "" });
+  } catch (error) {
+    showState({ loading: false, error: error.message || "Nao foi possivel carregar os dados." });
+  }
+}
+
+document.getElementById("logoutBtn")?.addEventListener("click", () => {
   auth.clearSession();
   redirectToLogin();
 });
 
-document.getElementById('refreshBtn')?.addEventListener('click', () => {
+document.getElementById("refreshBtn")?.addEventListener("click", () => {
   loadDashboard().catch(console.error);
 });
 
+syncFilterInputs();
 bindNavigation();
+bindDashboardFilters();
 loadDashboard().catch(console.error);

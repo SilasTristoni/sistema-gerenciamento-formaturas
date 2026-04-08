@@ -1,83 +1,148 @@
+const currencyFormatter = new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+});
+
+function escapeHtml(value = '') {
+    return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+}
+
+function formatCurrency(value = 0) {
+    return currencyFormatter.format(Number(value || 0));
+}
+
+function formatDate(value) {
+    if (!value) return '---';
+    const date = new Date(`${value}T00:00:00`);
+    return Number.isNaN(date.getTime()) ? '---' : date.toLocaleDateString('pt-BR');
+}
+
+function sortByName(items = [], field = 'nome') {
+    return [...items].sort((a, b) => String(a?.[field] || '').localeCompare(String(b?.[field] || ''), 'pt-BR'));
+}
+
+function sortByDateAsc(items = [], field) {
+    return [...items].sort((a, b) => {
+        const da = a?.[field] ? new Date(`${a[field]}T00:00:00`).getTime() : Number.MAX_SAFE_INTEGER;
+        const db = b?.[field] ? new Date(`${b[field]}T00:00:00`).getTime() : Number.MAX_SAFE_INTEGER;
+        return da - db;
+    });
+}
+
+function sortByDateDesc(items = [], field) {
+    return sortByDateAsc(items, field).reverse();
+}
+
+function renderEmptyRow(message, columns) {
+    return `
+        <tr>
+            <td colspan="${columns}" class="px-6 py-8 text-center text-sm text-slate-500">${escapeHtml(message)}</td>
+        </tr>
+    `;
+}
+
+function statusBadge(status = '') {
+    const normalized = String(status || '').toLowerCase();
+    const className = normalized === 'emdia'
+        ? 'bg-emerald-500/20 text-emerald-400'
+        : normalized === 'aberta' || normalized === 'agendado'
+            ? 'bg-sky-500/20 text-sky-300'
+            : 'bg-orange-500/20 text-orange-400';
+
+    return `<span class="px-2.5 py-1 rounded-full text-xs font-semibold ${className}">${escapeHtml(status || '---')}</span>`;
+}
+
 export const ui = {
     renderTurmas(turmas) {
         const tbody = document.getElementById('turmasBody');
         if (!tbody) return;
-        tbody.innerHTML = turmas.map(t => `
+
+        const ordered = sortByName(turmas);
+        tbody.innerHTML = ordered.length ? ordered.map(t => `
             <tr>
-                <td class="px-6 py-4 font-medium text-white">${t.nome}</td>
-                <td class="px-6 py-4">${t.curso}</td>
-                <td class="px-6 py-4">${t.quantidadeAlunos || 0}</td>
-                <td class="px-6 py-4 text-emerald-400 font-semibold">R$ ${(t.totalArrecadado || 0).toFixed(2)}</td>
+                <td class="px-6 py-4 font-medium text-white">${escapeHtml(t.nome)}</td>
+                <td class="px-6 py-4">${escapeHtml(t.curso || '---')}</td>
+                <td class="px-6 py-4">${escapeHtml(String(t.quantidadeAlunos || 0))}</td>
+                <td class="px-6 py-4 text-emerald-400 font-semibold">${escapeHtml(formatCurrency(t.totalArrecadado || 0))}</td>
                 <td class="px-6 py-4 text-right flex justify-end gap-3">
                     <button onclick="editarRegistro('turma', ${t.id})" class="btn-admin text-primary-500 hover:text-primary-400" style="display:none;"><i class="ph ph-pencil-simple text-lg"></i></button>
                     <button onclick="excluirRegistro('turma', ${t.id})" class="btn-admin text-red-500 hover:text-red-400" style="display:none;"><i class="ph ph-trash text-lg"></i></button>
                 </td>
             </tr>
-        `).join('');
+        `).join('') : renderEmptyRow('Nenhuma turma cadastrada ainda.', 5);
     },
 
     renderAlunos(alunos) {
         const tbody = document.getElementById('alunosBody');
         if (!tbody) return;
-        tbody.innerHTML = alunos.map(a => `
+
+        const ordered = sortByName(alunos);
+        tbody.innerHTML = ordered.length ? ordered.map(a => `
             <tr>
                 <td class="px-6 py-4">
-                    <div class="font-medium text-white">${a.nome}</div>
-                    <div class="text-xs text-emerald-300 mt-1">@${a.identificador || 'sem-login'}</div>
+                    <div class="font-medium text-white">${escapeHtml(a.nome)}</div>
+                    <div class="text-xs text-emerald-300 mt-1">@${escapeHtml(a.identificador || 'sem-login')}</div>
                 </td>
-                <td class="px-6 py-4">${a.nomeTurma || '---'}</td>
-                <td class="px-6 py-4">${a.contato || '---'}</td>
-                <td class="px-6 py-4">
-                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${a.status === 'emdia' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-orange-500/20 text-orange-400'}">
-                        ${a.status}
-                    </span>
-                </td>
+                <td class="px-6 py-4">${escapeHtml(a.nomeTurma || '---')}</td>
+                <td class="px-6 py-4">${escapeHtml(a.contato || '---')}</td>
+                <td class="px-6 py-4">${statusBadge(a.status)}</td>
                 <td class="px-6 py-4 text-right flex justify-end gap-3">
                     <button onclick="editarRegistro('aluno', ${a.id})" class="btn-admin text-primary-500 hover:text-primary-400" style="display:none;"><i class="ph ph-pencil-simple text-lg"></i></button>
                     <button onclick="excluirRegistro('aluno', ${a.id})" class="btn-admin text-red-500 hover:text-red-400" style="display:none;"><i class="ph ph-trash text-lg"></i></button>
                 </td>
             </tr>
-        `).join('');
+        `).join('') : renderEmptyRow('Nenhum aluno cadastrado ainda.', 5);
     },
 
     renderEventos(eventos) {
         const tbody = document.getElementById('eventosBody');
         if (!tbody) return;
-        tbody.innerHTML = eventos.map(e => `
+
+        const ordered = sortByDateAsc(eventos, 'dataEvento');
+        tbody.innerHTML = ordered.length ? ordered.map(e => `
             <tr>
-                <td class="px-6 py-4 font-medium text-white">${e.nome}</td>
-                <td class="px-6 py-4">${e.dataEvento || '---'}</td>
-                <td class="px-6 py-4">${e.localEvento || '---'}</td>
-                <td class="px-6 py-4"><span class="px-2.5 py-1 bg-primary-500/20 text-primary-400 rounded-full text-xs font-semibold">${e.status || 'Ativo'}</span></td>
+                <td class="px-6 py-4 font-medium text-white">${escapeHtml(e.nome)}</td>
+                <td class="px-6 py-4">${escapeHtml(formatDate(e.dataEvento))}</td>
+                <td class="px-6 py-4">${escapeHtml(e.localEvento || '---')}</td>
+                <td class="px-6 py-4">${statusBadge(e.status || 'agendado')}</td>
                 <td class="px-6 py-4 text-right flex justify-end gap-3">
                     <button onclick="editarRegistro('evento', ${e.id})" class="btn-admin text-primary-500 hover:text-primary-400" style="display:none;"><i class="ph ph-pencil-simple text-lg"></i></button>
                     <button onclick="excluirRegistro('evento', ${e.id})" class="btn-admin text-red-500 hover:text-red-400" style="display:none;"><i class="ph ph-trash text-lg"></i></button>
                 </td>
             </tr>
-        `).join('');
+        `).join('') : renderEmptyRow('Nenhum evento cadastrado ainda.', 5);
     },
 
     renderFinanceiro(financeiro) {
         const tbody = document.getElementById('financeiroBody');
         if (!tbody) return;
-        tbody.innerHTML = financeiro.map(f => `
+
+        const ordered = sortByDateDesc(financeiro, 'dataLancamento');
+        tbody.innerHTML = ordered.length ? ordered.map(f => `
             <tr>
-                <td class="px-6 py-4 text-white">${f.descricao}</td>
-                <td class="px-6 py-4 uppercase text-xs tracking-wider">${f.tipo}</td>
-                <td class="px-6 py-4 font-bold ${f.tipo === 'receita' ? 'text-emerald-400' : 'text-red-400'}">R$ ${f.valor.toFixed(2)}</td>
-                <td class="px-6 py-4">${f.dataLancamento || '---'}</td>
+                <td class="px-6 py-4 text-white">${escapeHtml(f.descricao)}</td>
+                <td class="px-6 py-4 uppercase text-xs tracking-wider">${escapeHtml(f.tipo || '---')}</td>
+                <td class="px-6 py-4 font-bold ${(f.tipo || '').toLowerCase() === 'receita' ? 'text-emerald-400' : 'text-red-400'}">${escapeHtml(formatCurrency(f.valor || 0))}</td>
+                <td class="px-6 py-4">${escapeHtml(formatDate(f.dataLancamento))}</td>
                 <td class="px-6 py-4 text-right flex justify-end gap-3">
                     <button onclick="editarRegistro('lancamento', ${f.id})" class="btn-admin text-primary-500 hover:text-primary-400" style="display:none;"><i class="ph ph-pencil-simple text-lg"></i></button>
                     <button onclick="excluirRegistro('lancamento', ${f.id})" class="btn-admin text-red-500 hover:text-red-400" style="display:none;"><i class="ph ph-trash text-lg"></i></button>
                 </td>
             </tr>
-        `).join('');
+        `).join('') : renderEmptyRow('Nenhum lancamento financeiro cadastrado ainda.', 5);
     },
 
     renderVotacoes(votacoes) {
         const container = document.getElementById('votacoesContainer');
         if (!container) return;
-        container.innerHTML = votacoes.map(v => `
+
+        const ordered = sortByDateAsc(votacoes, 'dataFim');
+        container.innerHTML = ordered.length ? ordered.map(v => `
             <div class="bg-dark-800 p-5 rounded-[22px] border border-white/8 shadow-lg relative group overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-br from-white/[0.04] to-transparent pointer-events-none"></div>
                 <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -85,64 +150,36 @@ export const ui = {
                     <button onclick="excluirRegistro('votacao', ${v.id})" class="btn-admin text-red-500 hover:text-red-400" style="display:none;"><i class="ph ph-trash text-lg"></i></button>
                 </div>
                 <div class="relative flex justify-between items-center mb-4 pr-16 gap-3">
-                    <h3 class="font-bold text-white text-lg leading-tight">${v.titulo}</h3>
-                    <span class="text-xs bg-dark-700 px-2.5 py-1 rounded-full text-slate-300 whitespace-nowrap">Até ${v.dataFim || '---'}</span>
+                    <h3 class="font-bold text-white text-lg leading-tight">${escapeHtml(v.titulo)}</h3>
+                    <span class="text-xs bg-dark-700 px-2.5 py-1 rounded-full text-slate-300 whitespace-nowrap">Ate ${escapeHtml(formatDate(v.dataFim))}</span>
                 </div>
+                <div class="relative flex items-center justify-between gap-3 text-xs text-slate-400">
+                    ${statusBadge(v.status || 'aberta')}
+                    <span>${escapeHtml(v.turma?.nome || 'Sem turma')}</span>
+                </div>
+                <p class="relative mt-3 text-sm text-slate-400">A comissao organiza as opcoes aqui. A votacao em si acontece no portal do aluno.</p>
                 <div class="relative space-y-2.5 mt-4">
-                    ${(v.opcoes || []).map(o => `
-                        <button onclick="votar(${v.id}, ${o.id})" class="w-full text-left p-3.5 rounded-2xl border border-white/8 bg-dark-900 hover:border-primary-500/50 transition-colors flex justify-between items-center group/btn">
-                            <span class="text-slate-300 group-hover/btn:text-white font-medium">${o.nomeFornecedor}</span>
-                            <i class="ph-fill ph-check-circle text-primary-500 opacity-0 group-hover/btn:opacity-100 transition-opacity"></i>
-                        </button>
-                    `).join('')}
+                    ${(v.opcoes || []).length ? (v.opcoes || []).map(o => `
+                        <div class="rounded-2xl border border-white/8 bg-dark-900/90 p-3.5">
+                            <div class="flex items-center justify-between gap-3">
+                                <span class="text-slate-200 font-medium">${escapeHtml(o.nomeFornecedor || 'Opcao sem nome')}</span>
+                                ${o.valorProposta != null ? `<strong class="text-emerald-300">${escapeHtml(formatCurrency(o.valorProposta))}</strong>` : ''}
+                            </div>
+                            ${o.detalhesProposta ? `<p class="mt-2 text-sm text-slate-400">${escapeHtml(o.detalhesProposta)}</p>` : ''}
+                        </div>
+                    `).join('') : '<div class="rounded-2xl border border-dashed border-white/10 bg-dark-900/70 p-4 text-sm text-slate-500">Nenhuma opcao cadastrada ainda.</div>'}
                 </div>
-                <button onclick="adicionarOpcaoUI(${v.id})" class="btn-admin mt-4 text-sm font-medium text-primary-400 hover:text-primary-300 flex items-center gap-1 transition-colors" style="display:none;">
-                    <i class="ph ph-plus-bold"></i> Adicionar opção
-                </button>
+                <div class="relative mt-4 flex items-center justify-between gap-3 text-sm">
+                    <span class="text-slate-500">${escapeHtml(String((v.opcoes || []).length))} opcoes cadastradas</span>
+                    <button onclick="adicionarOpcaoUI(${v.id})" class="btn-admin text-sm font-medium text-primary-400 hover:text-primary-300 flex items-center gap-1 transition-colors" style="display:none;">
+                        <i class="ph ph-plus-bold"></i> Adicionar opcao
+                    </button>
+                </div>
             </div>
-        `).join('');
+        `).join('') : '<div class="text-sm text-slate-500">Nenhuma votacao cadastrada ainda.</div>';
     },
 
-    atualizarDashboard(db) {
-        const financeiro = db.financeiro || [];
-        const receitas = financeiro.filter(f => f.tipo === 'receita').reduce((acc, curr) => acc + curr.valor, 0);
-        const despesas = financeiro.filter(f => f.tipo === 'despesa').reduce((acc, curr) => acc + curr.valor, 0);
-        const saldo = receitas - despesas;
-        const inadimplentes = (db.alunos || []).filter(a => a.status === 'pendente' || a.status === 'atrasado').length;
-        const proximoEvento = db.eventos && db.eventos.length > 0 ? db.eventos[0] : null;
-
-        const setText = (id, value) => {
-            const el = document.getElementById(id);
-            if (el) el.innerText = value;
-        };
-
-        setText('totalReceita', `R$ ${saldo.toFixed(2)}`);
-        setText('txtEntradas', `R$ ${receitas.toFixed(2)}`);
-        setText('txtSaidas', `R$ ${despesas.toFixed(2)}`);
-        setText('totalInadimplencia', inadimplentes);
-        setText('proximoEvento', proximoEvento?.nome || '--');
-        setText('dataEvento', proximoEvento?.dataEvento || '--');
-        setText('kpiTurmas', db.turmas?.length || 0);
-        setText('kpiAlunos', db.alunos?.length || 0);
-        setText('kpiEventos', db.eventos?.length || 0);
-        setText('resumoReceitas', `R$ ${receitas.toFixed(2)}`);
-        setText('resumoDespesas', `R$ ${despesas.toFixed(2)}`);
-        setText('resumoVotacoes', db.votacoes?.length || 0);
-        setText('resumoInadimplentes', inadimplentes);
-
-        const recentList = document.getElementById('dashboardRecentList');
-        if (recentList) {
-            recentList.innerHTML = financeiro.slice(-4).reverse().map(f => `
-                <div class="dashboard-activity-item">
-                    <div>
-                        <p class="text-sm text-white font-medium">${f.descricao}</p>
-                        <p class="text-xs text-slate-500 mt-1">${f.dataLancamento || 'Sem data'}</p>
-                    </div>
-                    <span class="text-sm font-semibold ${f.tipo === 'receita' ? 'text-emerald-400' : 'text-red-400'}">
-                        ${f.tipo === 'receita' ? '+' : '-'} R$ ${f.valor.toFixed(2)}
-                    </span>
-                </div>
-            `).join('') || '<p class="text-sm text-slate-500">Nenhuma movimentação recente.</p>';
-        }
+    atualizarDashboard() {
+        // Mantido por compatibilidade. A home atual usa o endpoint consolidado da dashboard.
     }
 };
