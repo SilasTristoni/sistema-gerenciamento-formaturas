@@ -556,7 +556,8 @@ function setupModalEvents() {
                         identificador: data.identificador,
                         contato: data.desc,
                         turmaId: data.turmaId,
-                        perfil: data.perfil
+                        perfil: data.perfil,
+                        senha: data.senha
                     };
                     break;
                 case 'evento':
@@ -609,6 +610,10 @@ function validateFormData(data) {
 
     if (['aluno', 'evento', 'lancamento', 'votacao'].includes(data.kind) && !data.turmaId) {
         return 'Selecione uma turma.';
+    }
+
+    if (data.kind === 'aluno' && data.senha && data.senha.trim().length > 0 && data.senha.trim().length < 6) {
+        return 'A senha do aluno precisa ter pelo menos 6 caracteres.';
     }
 
     if (['evento', 'lancamento', 'votacao'].includes(data.kind) && !data.data) {

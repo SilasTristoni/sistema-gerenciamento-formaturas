@@ -75,12 +75,14 @@ export const modal = {
         const inputValor = document.getElementById('modalValor');
         const divPerfil = document.getElementById('divPerfil');
         const divIdentificador = document.getElementById('divIdentificador');
+        const divSenha = document.getElementById('divSenhaAluno');
 
         divTurma?.classList.remove('hidden');
         divDataValor?.classList.remove('hidden');
         inputValor?.parentElement?.classList.remove('hidden');
         divPerfil?.classList.add('hidden');
         divIdentificador?.classList.add('hidden');
+        divSenha?.classList.add('hidden');
 
         if (lblDesc) lblDesc.innerText = 'Descrição / Detalhes';
 
@@ -93,6 +95,7 @@ export const modal = {
             if (lblDesc) lblDesc.innerText = 'Contato';
             divPerfil?.classList.remove('hidden');
             divIdentificador?.classList.remove('hidden');
+            divSenha?.classList.remove('hidden');
         } else if (['evento', 'tarefa', 'votacao'].includes(kind)) {
             inputValor?.parentElement?.classList.add('hidden');
             if (kind === 'evento' && lblDesc) lblDesc.innerText = 'Local';
@@ -103,7 +106,7 @@ export const modal = {
     },
 
     resetFields() {
-        const ids = ['modalItemId', 'modalNome', 'modalData', 'modalValor', 'modalDescricao', 'modalTurmaSelect', 'modalIdentificador'];
+        const ids = ['modalItemId', 'modalNome', 'modalData', 'modalValor', 'modalDescricao', 'modalTurmaSelect', 'modalIdentificador', 'modalSenha'];
         ids.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
@@ -160,7 +163,8 @@ export const modal = {
             desc: document.getElementById('modalDescricao')?.value?.trim() || '',
             turmaId,
             perfil: document.getElementById('modalPerfil')?.value || 'ALUNO',
-            identificador: document.getElementById('modalIdentificador')?.value?.trim() || ''
+            identificador: document.getElementById('modalIdentificador')?.value?.trim() || '',
+            senha: document.getElementById('modalSenha')?.value || ''
         };
     }
 };
