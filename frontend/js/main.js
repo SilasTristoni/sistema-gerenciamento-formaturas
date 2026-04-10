@@ -539,7 +539,12 @@ function setupModalEvents() {
 
         if (data.kind === 'turma') {
             endpoint = '/turma';
-            payload = { nome: data.nome, curso: data.desc, instituicao: 'Senac' };
+            payload = {
+                nome: data.nome,
+                curso: data.desc,
+                instituicao: 'Senac',
+                metaArrecadacao: Number(data.valor || 0)
+            };
         } else {
             if (!data.turmaId) {
                 showToast('Selecione uma turma', 'error');
@@ -606,6 +611,13 @@ function validateFormData(data) {
 
     if (data.kind === 'turma' && !data.desc) {
         return 'Informe o curso da turma.';
+    }
+
+    if (data.kind === 'turma' && data.valor) {
+        const meta = Number(data.valor);
+        if (!Number.isFinite(meta) || meta < 0) {
+            return 'Informe uma meta valida para a turma.';
+        }
     }
 
     if (['aluno', 'evento', 'lancamento', 'votacao'].includes(data.kind) && !data.turmaId) {
@@ -868,7 +880,10 @@ window.editarRegistro = (kind, id) => {
     document.getElementById('modalNome') && (document.getElementById('modalNome').value = item.nome || item.descricao || item.titulo || '');
     if (kind !== 'turma') document.getElementById('modalTurmaSelect') && (document.getElementById('modalTurmaSelect').value = item.turma?.id || '');
 
-    if (kind === 'aluno') {
+    if (kind === 'turma') {
+        document.getElementById('modalDescricao') && (document.getElementById('modalDescricao').value = item.curso || '');
+        document.getElementById('modalValor') && (document.getElementById('modalValor').value = item.metaArrecadacao ?? '');
+    } else if (kind === 'aluno') {
         document.getElementById('modalDescricao') && (document.getElementById('modalDescricao').value = item.contato || '');
         document.getElementById('modalIdentificador') && (document.getElementById('modalIdentificador').value = item.identificador || '');
     } else if (kind === 'evento') {

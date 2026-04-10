@@ -29,7 +29,7 @@
 
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="min-h-screen bg-slate-950 text-slate-200 antialiased overflow-hidden">
+<body class="min-h-screen bg-slate-950 text-slate-200 antialiased overflow-x-hidden">
   <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.18),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(45,212,191,0.14),transparent_24%)]"></div>
   <div class="absolute -top-24 left-10 h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl"></div>
   <div class="absolute bottom-0 right-0 h-80 w-80 rounded-full bg-cyan-400/10 blur-3xl"></div>
@@ -82,7 +82,25 @@
     </section>
 
     <section class="flex items-center justify-center p-6 sm:p-8 xl:p-12">
-      <div class="w-full max-w-md rounded-[28px] border border-white/10 bg-white/[0.05] p-6 sm:p-8 shadow-2xl backdrop-blur-2xl">
+      <div class="w-full max-w-md space-y-4">
+        <div class="lg:hidden rounded-[28px] border border-emerald-400/15 bg-white/[0.05] p-5 shadow-2xl backdrop-blur-2xl">
+          <span class="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300">
+            <i class="ph ph-device-mobile"></i>
+            Acesso do aluno
+          </span>
+          <h1 class="mt-4 text-2xl font-extrabold tracking-tight text-white">Entre pelo celular e navegue por blocos.</h1>
+          <p class="mt-3 text-sm leading-6 text-slate-400">
+            Depois do login, a area do formando abre com menu hamburguer e secoes separadas para resumo, agenda, cadastro e votacoes.
+          </p>
+          <div class="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-300">
+            <div class="rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3">Resumo</div>
+            <div class="rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3">Agenda</div>
+            <div class="rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3">Cadastro</div>
+            <div class="rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3">Votacoes</div>
+          </div>
+        </div>
+
+        <div class="w-full rounded-[28px] border border-white/10 bg-white/[0.05] p-6 sm:p-8 shadow-2xl backdrop-blur-2xl">
         <div class="flex items-center justify-between mb-8">
           <div>
             <p class="text-sm font-medium text-emerald-300">Acesso ao sistema</p>
@@ -119,6 +137,7 @@
             Entrar no painel
           </button>
         </form>
+        </div>
       </div>
     </section>
   </main>

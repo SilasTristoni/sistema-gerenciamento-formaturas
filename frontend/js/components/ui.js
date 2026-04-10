@@ -16,6 +16,13 @@ function formatCurrency(value = 0) {
     return currencyFormatter.format(Number(value || 0));
 }
 
+function formatGoalProgress(meta = 0, arrecadado = 0) {
+    const normalizedMeta = Number(meta || 0);
+    const normalizedRaised = Number(arrecadado || 0);
+    if (normalizedMeta <= 0) return 'Meta nao definida';
+    return `${Math.round((normalizedRaised / normalizedMeta) * 100)}% da meta`;
+}
+
 function formatDate(value) {
     if (!value) return '---';
     const date = new Date(`${value}T00:00:00`);
@@ -68,13 +75,20 @@ export const ui = {
                 <td class="px-6 py-4 font-medium text-white">${escapeHtml(t.nome)}</td>
                 <td class="px-6 py-4">${escapeHtml(t.curso || '---')}</td>
                 <td class="px-6 py-4">${escapeHtml(String(t.quantidadeAlunos || 0))}</td>
-                <td class="px-6 py-4 text-emerald-400 font-semibold">${escapeHtml(formatCurrency(t.totalArrecadado || 0))}</td>
+                <td class="px-6 py-4">
+                    <div class="font-semibold text-white">${escapeHtml(formatCurrency(t.metaArrecadacao || 0))}</div>
+                    <div class="mt-1 text-xs text-slate-500">${(t.metaArrecadacao || 0) > 0 ? 'Objetivo financeiro' : 'Defina a meta da turma'}</div>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="text-emerald-400 font-semibold">${escapeHtml(formatCurrency(t.totalArrecadado || 0))}</div>
+                    <div class="mt-1 text-xs text-slate-500">${escapeHtml(formatGoalProgress(t.metaArrecadacao, t.totalArrecadado))}</div>
+                </td>
                 <td class="px-6 py-4 text-right flex justify-end gap-3">
                     <button onclick="editarRegistro('turma', ${t.id})" class="btn-admin text-primary-500 hover:text-primary-400" style="display:none;"><i class="ph ph-pencil-simple text-lg"></i></button>
                     <button onclick="excluirRegistro('turma', ${t.id})" class="btn-admin text-red-500 hover:text-red-400" style="display:none;"><i class="ph ph-trash text-lg"></i></button>
                 </td>
             </tr>
-        `).join('') : renderEmptyRow('Nenhuma turma cadastrada ainda.', 5);
+        `).join('') : renderEmptyRow('Nenhuma turma cadastrada ainda.', 6);
     },
 
     renderAlunos(alunos) {

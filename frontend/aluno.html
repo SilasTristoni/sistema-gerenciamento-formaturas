@@ -35,67 +35,184 @@
   <div id="toastContainer" class="fixed top-5 right-5 z-[60] flex flex-col gap-2 w-full max-w-xs pointer-events-none"></div>
 
   <main class="student-shell">
-    <header class="student-hero">
-      <div class="student-hero__copy">
+    <header class="student-topbar">
+      <div class="student-topbar__copy">
         <span class="student-pill">Area do formando</span>
-        <h1 class="student-hero__title">Tudo o que voce precisa acompanhar da sua turma</h1>
-        <p class="student-hero__text">
-          Consulte seus proximos eventos, confirme presenca e participe das votacoes da turma sem entrar na area administrativa.
-        </p>
-        <div class="student-profile">
-          <div class="student-avatar" id="studentAvatar">A</div>
-          <div>
-            <p class="student-profile__name" id="studentName">Carregando...</p>
-            <p class="student-profile__meta" id="studentTurma">Turma</p>
-            <p class="student-profile__meta" id="studentLogin">@usuario</p>
-          </div>
-        </div>
+        <strong id="studentMobileName" class="student-topbar__title">Carregando...</strong>
+        <p id="studentMobileMeta" class="student-topbar__text">Painel organizado para celular</p>
       </div>
-
-      <div class="student-hero__side">
-        <article class="student-highlight">
-          <span class="student-highlight__label">Proximo evento</span>
-          <strong id="nextEventName" class="student-highlight__title">Carregando...</strong>
-          <p id="nextEventDate" class="student-highlight__copy">Sem data definida</p>
-          <p id="nextEventLocation" class="student-highlight__copy">Local a definir</p>
-          <div class="student-highlight__footer">
-            <span class="student-status-badge" id="studentStatusBadge">pendente</span>
-            <strong id="nextEventCountdown">--</strong>
-          </div>
-        </article>
-
-        <div class="student-actions">
-          <button id="refreshBtn" class="btn-outline"><i class="ph ph-arrows-clockwise"></i> Atualizar</button>
-          <button id="logoutBtn" class="btn-outline student-logout"><i class="ph ph-sign-out"></i> Sair</button>
-        </div>
-      </div>
+      <button
+        id="studentMenuToggle"
+        type="button"
+        class="student-menu-toggle"
+        aria-label="Abrir menu de navegacao"
+        aria-controls="studentNavDrawer"
+        aria-expanded="false"
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
     </header>
 
-    <section class="student-metrics">
-      <article class="student-metric">
-        <span class="student-metric__label">Status financeiro</span>
-        <strong id="studentStatusText" class="student-metric__value">pendente</strong>
-        <small>Indicador atual do seu cadastro</small>
-      </article>
-      <article class="student-metric">
-        <span class="student-metric__label">Eventos da turma</span>
-        <strong id="summaryEvents" class="student-metric__value">0</strong>
-        <small>Total de compromissos cadastrados</small>
-      </article>
-      <article class="student-metric">
-        <span class="student-metric__label">Presencas respondidas</span>
-        <strong id="summaryPresence" class="student-metric__value">0</strong>
-        <small>Confirmacoes ja enviadas</small>
-      </article>
-      <article class="student-metric">
-        <span class="student-metric__label">Votacoes abertas</span>
-        <strong id="summaryVotesOpen" class="student-metric__value">0</strong>
-        <small>Enquetes esperando seu voto</small>
+    <div id="studentNavBackdrop" class="student-nav-backdrop" hidden></div>
+
+    <aside id="studentNavDrawer" class="student-nav-drawer" aria-hidden="true">
+      <div class="student-nav__head">
+        <div>
+          <span class="student-pill">Menu</span>
+          <h2 class="student-nav__title">Navegue pela sua area</h2>
+        </div>
+        <button id="studentMenuClose" type="button" class="student-menu-close" aria-label="Fechar menu">
+          <i class="ph ph-x"></i>
+        </button>
+      </div>
+      <p class="student-nav__text">No celular, o painel foi dividido em blocos para voce acessar cada area sem rolagem excessiva.</p>
+      <div class="student-nav__list" aria-label="Secoes da area do aluno">
+        <button type="button" class="student-nav-link is-active" data-student-section-target="resumo">
+          <i class="ph ph-squares-four"></i>
+          <span>Resumo</span>
+        </button>
+        <button type="button" class="student-nav-link" data-student-section-target="agenda">
+          <i class="ph ph-calendar-blank"></i>
+          <span>Agenda</span>
+        </button>
+        <button type="button" class="student-nav-link" data-student-section-target="cadastro">
+          <i class="ph ph-identification-card"></i>
+          <span>Cadastro</span>
+        </button>
+        <button type="button" class="student-nav-link" data-student-section-target="votacoes">
+          <i class="ph ph-check-square-offset"></i>
+          <span>Votacoes</span>
+        </button>
+      </div>
+    </aside>
+
+    <nav class="student-desktop-nav" aria-label="Secoes da area do aluno">
+      <button type="button" class="student-nav-link is-active" data-student-section-target="resumo">
+        <i class="ph ph-squares-four"></i>
+        <span>Resumo</span>
+      </button>
+      <button type="button" class="student-nav-link" data-student-section-target="agenda">
+        <i class="ph ph-calendar-blank"></i>
+        <span>Agenda</span>
+      </button>
+      <button type="button" class="student-nav-link" data-student-section-target="cadastro">
+        <i class="ph ph-identification-card"></i>
+        <span>Cadastro</span>
+      </button>
+      <button type="button" class="student-nav-link" data-student-section-target="votacoes">
+        <i class="ph ph-check-square-offset"></i>
+        <span>Votacoes</span>
+      </button>
+    </nav>
+
+    <section class="student-section is-active" data-student-section="resumo">
+      <header class="student-hero">
+        <div class="student-hero__copy">
+          <span class="student-pill">Area do formando</span>
+          <h1 class="student-hero__title">Tudo o que voce precisa acompanhar da sua turma</h1>
+          <p class="student-hero__text">
+            Consulte seus proximos eventos, confirme presenca e participe das votacoes da turma sem entrar na area administrativa.
+          </p>
+          <div class="student-profile">
+            <div class="student-avatar" id="studentAvatar">A</div>
+            <div>
+              <p class="student-profile__name" id="studentName">Carregando...</p>
+              <p class="student-profile__meta" id="studentTurma">Turma</p>
+              <p class="student-profile__meta" id="studentLogin">@usuario</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="student-hero__side">
+          <article class="student-highlight">
+            <span class="student-highlight__label">Proximo evento</span>
+            <strong id="nextEventName" class="student-highlight__title">Carregando...</strong>
+            <p id="nextEventDate" class="student-highlight__copy">Sem data definida</p>
+            <p id="nextEventLocation" class="student-highlight__copy">Local a definir</p>
+            <div class="student-highlight__footer">
+              <span class="student-status-badge" id="studentStatusBadge">pendente</span>
+              <strong id="nextEventCountdown">--</strong>
+            </div>
+          </article>
+
+          <div class="student-actions">
+            <button id="refreshBtn" class="btn-outline"><i class="ph ph-arrows-clockwise"></i> Atualizar</button>
+            <button id="logoutBtn" class="btn-outline student-logout"><i class="ph ph-sign-out"></i> Sair</button>
+          </div>
+        </div>
+      </header>
+
+      <section class="student-metrics">
+        <article class="student-metric">
+          <span class="student-metric__label">Status financeiro</span>
+          <strong id="studentStatusText" class="student-metric__value">pendente</strong>
+          <small>Indicador atual do seu cadastro</small>
+        </article>
+        <article class="student-metric">
+          <span class="student-metric__label">Eventos da turma</span>
+          <strong id="summaryEvents" class="student-metric__value">0</strong>
+          <small>Total de compromissos cadastrados</small>
+        </article>
+        <article class="student-metric">
+          <span class="student-metric__label">Presencas respondidas</span>
+          <strong id="summaryPresence" class="student-metric__value">0</strong>
+          <small>Confirmacoes ja enviadas</small>
+        </article>
+        <article class="student-metric">
+          <span class="student-metric__label">Votacoes abertas</span>
+          <strong id="summaryVotesOpen" class="student-metric__value">0</strong>
+          <small>Enquetes esperando seu voto</small>
+        </article>
+      </section>
+
+      <article class="student-card student-progress-card">
+        <div class="student-card__head">
+          <div>
+            <p class="student-card__eyebrow">Meta financeira</p>
+            <h2 class="student-card__title">Progresso da arrecadacao da turma</h2>
+          </div>
+          <span id="studentGoalBadge" class="student-chip">Meta em definicao</span>
+        </div>
+
+        <div class="student-goal-layout">
+          <div class="student-goal-visual">
+            <div class="student-goal-ring" role="img" aria-label="Progresso de arrecadacao da turma">
+              <svg class="student-goal-ring__svg" viewBox="0 0 120 120" aria-hidden="true">
+                <circle class="student-goal-ring__track" cx="60" cy="60" r="48"></circle>
+                <circle id="studentGoalProgressCircle" class="student-goal-ring__progress" cx="60" cy="60" r="48"></circle>
+              </svg>
+              <div class="student-goal-ring__center">
+                <strong id="studentGoalPercent">0%</strong>
+                <span>da meta</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="student-goal-copy">
+            <p id="studentGoalStatus" class="student-goal-status">Defina a meta da turma para acompanhar o objetivo financeiro.</p>
+            <div class="student-goal-stats">
+              <div class="student-goal-stat">
+                <span>Arrecadado</span>
+                <strong id="studentGoalRaised">R$ 0,00</strong>
+              </div>
+              <div class="student-goal-stat">
+                <span>Meta</span>
+                <strong id="studentGoalTarget">R$ 0,00</strong>
+              </div>
+              <div class="student-goal-stat">
+                <span>Falta para chegar</span>
+                <strong id="studentGoalRemaining">R$ 0,00</strong>
+              </div>
+            </div>
+          </div>
+        </div>
       </article>
     </section>
 
-    <section class="student-grid">
-      <article class="student-card student-card--wide">
+    <section class="student-section" data-student-section="agenda">
+      <article class="student-card">
         <div class="student-card__head">
           <div>
             <p class="student-card__eyebrow">Agenda</p>
@@ -105,7 +222,9 @@
         </div>
         <div id="eventList" class="student-stack"></div>
       </article>
+    </section>
 
+    <section class="student-section" data-student-section="cadastro">
       <article class="student-card">
         <div class="student-card__head">
           <div>
@@ -122,14 +241,16 @@
       </article>
     </section>
 
-    <section class="student-card">
-      <div class="student-card__head">
-        <div>
-          <p class="student-card__eyebrow">Decisoes da turma</p>
-          <h2 class="student-card__title">Votacoes e enquetes</h2>
+    <section class="student-section" data-student-section="votacoes">
+      <article class="student-card">
+        <div class="student-card__head">
+          <div>
+            <p class="student-card__eyebrow">Decisoes da turma</p>
+            <h2 class="student-card__title">Votacoes e enquetes</h2>
+          </div>
         </div>
-      </div>
-      <div id="voteList" class="student-vote-list"></div>
+        <div id="voteList" class="student-vote-list"></div>
+      </article>
     </section>
 
     <section class="screen-state hidden" id="loadingState">

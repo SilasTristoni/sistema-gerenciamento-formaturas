@@ -72,24 +72,33 @@ export const modal = {
         const lblDesc = document.getElementById('lblDescricao');
         const divTurma = document.getElementById('divTurmaSelect');
         const divDataValor = document.getElementById('divDataValor');
+        const divDataField = document.getElementById('divModalDataField');
+        const divValorField = document.getElementById('divModalValorField');
         const inputValor = document.getElementById('modalValor');
+        const lblValor = document.getElementById('modalValorLabel');
         const divPerfil = document.getElementById('divPerfil');
         const divIdentificador = document.getElementById('divIdentificador');
         const divSenha = document.getElementById('divSenhaAluno');
 
         divTurma?.classList.remove('hidden');
         divDataValor?.classList.remove('hidden');
-        inputValor?.parentElement?.classList.remove('hidden');
+        divDataField?.classList.remove('hidden');
+        divValorField?.classList.remove('hidden');
         divPerfil?.classList.add('hidden');
         divIdentificador?.classList.add('hidden');
         divSenha?.classList.add('hidden');
 
         if (lblDesc) lblDesc.innerText = 'Descrição / Detalhes';
 
+        if (lblValor) lblValor.innerText = 'Valor (R$)';
+        if (inputValor) inputValor.placeholder = '0.00';
+
         if (kind === 'turma') {
             divTurma?.classList.add('hidden');
-            divDataValor?.classList.add('hidden');
             if (lblDesc) lblDesc.innerText = 'Curso';
+            divDataField?.classList.add('hidden');
+            if (lblValor) lblValor.innerText = 'Meta da turma (R$)';
+            if (inputValor) inputValor.placeholder = 'Ex.: 30000.00';
         } else if (kind === 'aluno') {
             divDataValor?.classList.add('hidden');
             if (lblDesc) lblDesc.innerText = 'Contato';
@@ -97,7 +106,7 @@ export const modal = {
             divIdentificador?.classList.remove('hidden');
             divSenha?.classList.remove('hidden');
         } else if (['evento', 'tarefa', 'votacao'].includes(kind)) {
-            inputValor?.parentElement?.classList.add('hidden');
+            divValorField?.classList.add('hidden');
             if (kind === 'evento' && lblDesc) lblDesc.innerText = 'Local';
             if (kind === 'votacao' && lblDesc) lblDesc.innerText = 'Detalhes / Tema';
         } else if (kind === 'lancamento') {

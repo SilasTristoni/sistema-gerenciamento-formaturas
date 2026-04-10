@@ -7,6 +7,14 @@ const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
     month: '2-digit',
     year: 'numeric'
 });
+const currencyFormatter = new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+});
+
+const mobileViewport = window.matchMedia('(max-width: 720px)');
+let activeStudentSection = 'resumo';
+let menuHideTimer = null;
 
 function redirectToLogin() {
     window.location.href = './login.html';
@@ -44,6 +52,10 @@ function formatDaysRemaining(days) {
     return `Faltam ${days} dias`;
 }
 
+function formatCurrency(value) {
+    return currencyFormatter.format(Number(value || 0));
+}
+
 function normalizeStatus(status = '') {
     const normalized = String(status || '').toLowerCase();
     if (normalized === 'confirmado' || normalized === 'emdia' || normalized === 'aberta') return 'positive';
@@ -62,6 +74,132 @@ function renderEmpty(containerId, message) {
     const container = document.getElementById(containerId);
     if (!container) return;
     container.innerHTML = `<div class="student-empty">${escapeHtml(message)}</div>`;
+}
+
+function getStudentSections() {
+    return Array.from(document.querySelectorAll('[data-student-section]'));
+}
+
+function getStudentSectionButtons() {
+    return Array.from(document.querySelectorAll('[data-student-section-target]'));
+}
+
+function setStudentMenuState(isOpen) {
+    const toggle = document.getElementById('studentMenuToggle');
+    const drawer = document.getElementById('studentNavDrawer');
+    const backdrop = document.getElementById('studentNavBackdrop');
+    if (!toggle || !drawer || !backdrop) return;
+
+    if (menuHideTimer) {
+        window.clearTimeout(menuHideTimer);
+        menuHideTimer = null;
+    }
+
+    toggle.classList.toggle('is-open', isOpen);
+    toggle.setAttribute('aria-expanded', String(isOpen));
+    drawer.classList.toggle('is-open', isOpen);
+    drawer.setAttribute('aria-hidden', String(!isOpen));
+    document.body.classList.toggle('student-menu-open', isOpen);
+
+    if (isOpen) {
+        backdrop.hidden = false;
+        window.requestAnimationFrame(() => {
+            backdrop.classList.add('is-visible');
+        });
+        return;
+    }
+
+    backdrop.classList.remove('is-visible');
+    menuHideTimer = window.setTimeout(() => {
+        if (!drawer.classList.contains('is-open')) {
+            backdrop.hidden = true;
+        }
+    }, 220);
+}
+
+function openStudentMenu() {
+    if (!mobileViewport.matches) return;
+    setStudentMenuState(true);
+}
+
+function closeStudentMenu() {
+    setStudentMenuState(false);
+}
+
+function renderFinancialProgress(financeiro = {}) {
+    const valorArrecadado = Number(financeiro.valorArrecadado || 0);
+    const valorMeta = Number(financeiro.valorMeta || 0);
+    const percentualAtingido = valorMeta <= 0
+        ? 0
+        : Number(financeiro.percentualAtingido ?? ((valorArrecadado / valorMeta) * 100));
+    const percentualVisual = Math.max(0, Math.min(percentualAtingido, 100));
+    const valorRestante = valorMeta <= 0
+        ? 0
+        : Number(financeiro.valorRestante ?? Math.max(valorMeta - valorArrecadado, 0));
+
+    setText('studentGoalPercent', `${Math.round(percentualAtingido)}%`);
+    setText('studentGoalRaised', formatCurrency(valorArrecadado));
+    setText('studentGoalTarget', valorMeta > 0 ? formatCurrency(valorMeta) : 'Defina a meta');
+    setText('studentGoalRemaining', valorMeta > 0 ? formatCurrency(valorRestante) : '--');
+
+    const circle = document.getElementById('studentGoalProgressCircle');
+    if (circle) {
+        const radius = circle.r.baseVal.value;
+        const circumference = 2 * Math.PI * radius;
+        circle.style.strokeDasharray = `${circumference}`;
+        circle.style.strokeDashoffset = `${circumference * (1 - (percentualVisual / 100))}`;
+        circle.style.stroke = valorMeta <= 0 ? '#64748b' : percentualAtingido >= 100 ? '#2dd4bf' : '#34d399';
+    }
+
+    const badge = document.getElementById('studentGoalBadge');
+    const status = document.getElementById('studentGoalStatus');
+    if (!badge || !status) return;
+
+    if (valorMeta <= 0) {
+        badge.textContent = 'Sem meta';
+        badge.className = 'student-chip student-chip--neutral';
+        status.textContent = 'A comissao ainda nao definiu a meta financeira da turma.';
+        return;
+    }
+
+    if (percentualAtingido >= 100) {
+        badge.textContent = 'Meta batida';
+        badge.className = 'student-chip student-chip--success';
+        status.textContent = `A turma ja arrecadou ${formatCurrency(valorArrecadado)} e atingiu o objetivo financeiro.`;
+        return;
+    }
+
+    badge.textContent = percentualAtingido >= 60 ? 'Reta final' : 'Em andamento';
+    badge.className = percentualAtingido >= 60 ? 'student-chip student-chip--success' : 'student-chip student-chip--warning';
+    status.textContent = `Faltam ${formatCurrency(valorRestante)} para a turma atingir a meta definida.`;
+}
+
+function setActiveStudentSection(sectionId, { shouldScroll = true } = {}) {
+    const sections = getStudentSections();
+    const targetSection = sections.find((section) => section.dataset.studentSection === sectionId);
+    if (!targetSection) return;
+
+    activeStudentSection = sectionId;
+
+    sections.forEach((section) => {
+        section.classList.toggle('is-active', section.dataset.studentSection === sectionId);
+    });
+
+    getStudentSectionButtons().forEach((button) => {
+        button.classList.toggle('is-active', button.dataset.studentSectionTarget === sectionId);
+    });
+
+    if (mobileViewport.matches) {
+        closeStudentMenu();
+        if (shouldScroll) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        return;
+    }
+
+    if (shouldScroll) {
+        targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
 
 async function validateStudentSession() {
@@ -87,6 +225,7 @@ async function validateStudentSession() {
         });
 
         setText('studentName', me.nome || 'Aluno');
+        setText('studentMobileName', me.nome || 'Aluno');
         setText('studentLogin', `@${(me.login || me.email || 'usuario').replace('@gestaoform.local', '')}`);
         const avatar = document.getElementById('studentAvatar');
         if (avatar) avatar.textContent = (me.nome || 'A').charAt(0).toUpperCase();
@@ -102,9 +241,12 @@ async function validateStudentSession() {
 function renderProfile(painel) {
     const aluno = painel.aluno || {};
     const resumo = painel.resumo || {};
+    const financeiro = painel.financeiro || {};
     const proximoEvento = painel.proximoEvento || {};
+    const turmaResumo = `${aluno.turmaNome || 'Sem turma'} - ${aluno.curso || 'Curso nao informado'}`;
 
-    setText('studentTurma', `${aluno.turmaNome || 'Sem turma'} · ${aluno.curso || 'Curso nao informado'}`);
+    setText('studentTurma', turmaResumo);
+    setText('studentMobileMeta', turmaResumo);
     setText('studentStatusText', (aluno.statusFinanceiro || 'pendente').toUpperCase());
     setText('studentCourse', aluno.curso || 'Nao informado');
     setText('studentContact', aluno.contato || 'Nao informado');
@@ -120,6 +262,7 @@ function renderProfile(painel) {
     setText('nextEventDate', proximoEvento.data ? formatDate(proximoEvento.data) : 'Sem data definida');
     setText('nextEventLocation', proximoEvento.local || 'Local a definir');
     setText('nextEventCountdown', formatDaysRemaining(proximoEvento.diasRestantes));
+    renderFinancialProgress(financeiro);
 
     const badge = document.getElementById('studentStatusBadge');
     if (badge) {
@@ -138,7 +281,7 @@ function renderEvents(eventos = []) {
         return;
     }
 
-    container.innerHTML = eventos.map(evento => {
+    container.innerHTML = eventos.map((evento) => {
         const presenceStatus = evento.presencaStatus || 'pendente';
         const statusTone = normalizeStatus(presenceStatus);
         const disabled = evento.data && evento.diasRestantes < 0 ? 'disabled' : '';
@@ -149,7 +292,7 @@ function renderEvents(eventos = []) {
                     <div class="student-event-card__top">
                         <div>
                             <p class="student-event-card__title">${escapeHtml(evento.nome || 'Evento sem nome')}</p>
-                            <p class="student-event-card__meta">${escapeHtml(formatDate(evento.data))} · ${escapeHtml(evento.local || 'Local a definir')}</p>
+                            <p class="student-event-card__meta">${escapeHtml(formatDate(evento.data))} - ${escapeHtml(evento.local || 'Local a definir')}</p>
                         </div>
                         <span class="student-status-badge student-status-badge--${statusTone}">${escapeHtml(presenceStatus)}</span>
                     </div>
@@ -174,7 +317,7 @@ function renderVotes(votacoes = []) {
         return;
     }
 
-    container.innerHTML = votacoes.map(votacao => {
+    container.innerHTML = votacoes.map((votacao) => {
         const disabled = !votacao.aberta || votacao.jaVotou;
         const tone = normalizeStatus(votacao.status || (votacao.aberta ? 'aberta' : 'encerrada'));
 
@@ -183,7 +326,7 @@ function renderVotes(votacoes = []) {
                 <div class="student-vote-card__head">
                     <div>
                         <p class="student-vote-card__title">${escapeHtml(votacao.titulo || 'Votacao sem titulo')}</p>
-                        <p class="student-vote-card__meta">Prazo: ${escapeHtml(formatDate(votacao.dataFim))} · ${escapeHtml(formatDaysRemaining(votacao.diasRestantes))}</p>
+                        <p class="student-vote-card__meta">Prazo: ${escapeHtml(formatDate(votacao.dataFim))} - ${escapeHtml(formatDaysRemaining(votacao.diasRestantes))}</p>
                     </div>
                     <span class="student-status-badge student-status-badge--${tone}">${escapeHtml(votacao.aberta ? 'aberta' : 'encerrada')}</span>
                 </div>
@@ -191,7 +334,7 @@ function renderVotes(votacoes = []) {
                     ? `<div class="student-vote-card__result">Seu voto: <strong>${escapeHtml(votacao.opcaoSelecionadaNome || 'Opcao registrada')}</strong></div>`
                     : ''}
                 <div class="student-option-list">
-                    ${(votacao.opcoes || []).map(opcao => `
+                    ${(votacao.opcoes || []).map((opcao) => `
                         <button class="student-option-btn" data-voto-id="${votacao.id}" data-opcao-id="${opcao.id}" ${disabled ? 'disabled' : ''}>
                             <span>${escapeHtml(opcao.nome || 'Opcao')}</span>
                             <i class="ph ph-check-circle"></i>
@@ -263,13 +406,59 @@ document.addEventListener('click', (event) => {
     }
 });
 
+getStudentSectionButtons().forEach((button) => {
+    button.addEventListener('click', () => {
+        setActiveStudentSection(button.dataset.studentSectionTarget);
+    });
+});
+
+document.getElementById('studentMenuToggle')?.addEventListener('click', () => {
+    if (document.getElementById('studentNavDrawer')?.classList.contains('is-open')) {
+        closeStudentMenu();
+        return;
+    }
+
+    openStudentMenu();
+});
+
+document.getElementById('studentMenuClose')?.addEventListener('click', () => {
+    closeStudentMenu();
+});
+
+document.getElementById('studentNavBackdrop')?.addEventListener('click', () => {
+    closeStudentMenu();
+});
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+        closeStudentMenu();
+    }
+});
+
+const handleViewportChange = (event) => {
+    if (!event.matches) {
+        closeStudentMenu();
+    }
+
+    setActiveStudentSection(activeStudentSection, { shouldScroll: false });
+};
+
+if (typeof mobileViewport.addEventListener === 'function') {
+    mobileViewport.addEventListener('change', handleViewportChange);
+} else if (typeof mobileViewport.addListener === 'function') {
+    mobileViewport.addListener(handleViewportChange);
+}
+
 document.getElementById('refreshBtn')?.addEventListener('click', () => {
+    closeStudentMenu();
     loadStudentArea().catch(console.error);
 });
 
 document.getElementById('logoutBtn')?.addEventListener('click', () => {
+    closeStudentMenu();
     auth.clearSession();
     redirectToLogin();
 });
 
+setActiveStudentSection(activeStudentSection, { shouldScroll: false });
 loadStudentArea().catch(console.error);
