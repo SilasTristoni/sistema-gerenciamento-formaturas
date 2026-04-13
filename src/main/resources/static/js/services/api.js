@@ -1,0 +1,150 @@
+import { auth } from './auth.js';
+
+const API_URL = new URL('./api', window.location.href).toString().replace(/\/$/, '');
+const CADASTRO_URL = `${API_URL}/cadastro`;
+const AUTH_URL = `${API_URL}/auth`;
+const VOTACAO_URL = `${API_URL}/votacoes`;
+const CONTRIBUICOES_URL = `${API_URL}/contribuicoes`;
+
+function authHeaders(isJson = true) {
+    const token = auth.getToken();
+    const headers = {};
+
+    if (isJson) headers["Content-Type"] = "application/json";
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    return headers;
+}
+
+function jsonHeaders() {
+    return { "Content-Type": "application/json" };
+}
+
+async function parseResponse(response) {
+    if (response.status === 401) throw new Error("Sessão expirada");
+    if (response.status === 403) throw new Error("Acesso negado");
+
+    if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "Erro na requisição");
+    }
+
+    const contentType = response.headers.get("content-type") || "";
+    return contentType.includes("application/json") ? response.json() : response.text();
+}
+
+export const api = {
+    async login(login, senha) {
+        const response = await fetch(`${AUTH_URL}/login`, {
+            method: "POST",
+            headers: jsonHeaders(),
+            body: JSON.stringify({ login, senha })
+        });
+        return parseResponse(response);
+    },
+
+    async me() {
+        const response = await fetch(`${AUTH_URL}/me`, {
+            method: "GET",
+            headers: authHeaders(false)
+        });
+        return parseResponse(response);
+    },
+
+    async dashboardResumo(filters = {}) {
+        const params = new URLSearchParams();
+        if (filters.turmaId) params.set('turmaId', String(filters.turmaId));
+        if (filters.periodMonths) params.set('periodoMeses', String(filters.periodMonths));
+
+        const queryString = params.toString();
+        const response = await fetch(`${API_URL}/dashboard/resumo${queryString ? `?${queryString}` : ''}`, {
+            method: "GET",
+            headers: authHeaders(false)
+        });
+        return parseResponse(response);
+    },
+
+    async alunoPainel() {
+        const response = await fetch(`${API_URL}/aluno/painel`, {
+            method: "GET",
+            headers: authHeaders(false)
+        });
+        return parseResponse(response);
+    },
+
+    async contribuicoesResumo(filters = {}) {
+        const params = new URLSearchParams();
+        if (filters.turmaId) params.set('turmaId', String(filters.turmaId));
+        const queryString = params.toString();
+        const response = await fetch(`${CONTRIBUICOES_URL}/resumo${queryString ? `?${queryString}` : ''}`, {
+            method: "GET",
+            headers: authHeaders(false)
+        });
+        return parseResponse(response);
+    },
+
+    async registrarContribuicao(payload) {
+        const response = await fetch(CONTRIBUICOES_URL, {
+            method: "POST",
+            headers: authHeaders(true),
+            body: JSON.stringify(payload)
+        });
+        return parseResponse(response);
+    },
+
+    async buscar(endpoint) {
+        const response = await fetch(`${CADASTRO_URL}/${endpoint}`, {
+            method: "GET",
+            headers: authHeaders(false)
+        });
+        return parseResponse(response);
+    },
+
+    async salvar(endpoint, payload, method = "POST") {
+        const response = await fetch(`${CADASTRO_URL}${endpoint}`, {
+            method,
+            headers: authHeaders(true),
+            body: JSON.stringify(payload)
+        });
+        return parseResponse(response);
+    },
+
+    async deletar(endpoint) {
+        const response = await fetch(`${CADASTRO_URL}${endpoint}`, {
+            method: "DELETE",
+            headers: authHeaders(false)
+        });
+        return parseResponse(response);
+    },
+
+    async votar(votacaoId, opcaoId) {
+        const response = await fetch(`${VOTACAO_URL}/votar`, {
+            method: "POST",
+            headers: authHeaders(true),
+            body: JSON.stringify({ votacaoId, opcaoId })
+        });
+        return parseResponse(response);
+    },
+
+    async confirmarPresenca(eventoId, status) {
+        const response = await fetch(`${API_URL}/eventos/confirmar-presenca`, {
+            method: "POST",
+            headers: authHeaders(true),
+            body: JSON.stringify({ eventoId, status })
+        });
+        return parseResponse(response);
+    },
+
+    async importarAlunosCSV(file, turmaId) {
+        const formData = new FormData();
+        formData.append("arquivo", file);
+        formData.append("turmaId", turmaId);
+
+        const response = await fetch(`${CADASTRO_URL}/alunos/importar`, {
+            method: "POST",
+            headers: authHeaders(false),
+            body: formData
+        });
+        return parseResponse(response);
+    }
+};

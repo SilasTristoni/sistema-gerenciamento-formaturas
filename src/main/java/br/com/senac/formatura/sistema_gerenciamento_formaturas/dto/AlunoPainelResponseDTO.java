@@ -6,16 +6,16 @@ import java.util.List;
 public record AlunoPainelResponseDTO(
     PerfilAluno aluno,
     ResumoAluno resumo,
+    ProgressoFinanceiro financeiro,
     EventoAluno proximoEvento,
     List<EventoAluno> eventos,
     List<VotacaoAluno> votacoes
-) {
+    ) {
     public record PerfilAluno(
         Long alunoId,
         String nome,
         String identificador,
         String contato,
-        String statusFinanceiro,
         String turmaNome,
         String curso
     ) {}
@@ -26,6 +26,18 @@ public record AlunoPainelResponseDTO(
         long eventosPendentesConfirmacao,
         long votacoesAbertas,
         long votacoesRespondidas
+    ) {}
+
+    public record ProgressoFinanceiro(
+        double valorArrecadado,
+        double valorMeta,
+        double percentualAtingido,
+        double valorRestante,
+        boolean metaDefinida,
+        boolean metaAtingida,
+        double sugestaoContribuicaoMedia,
+        String titulo,
+        String descricao
     ) {}
 
     public record EventoAluno(

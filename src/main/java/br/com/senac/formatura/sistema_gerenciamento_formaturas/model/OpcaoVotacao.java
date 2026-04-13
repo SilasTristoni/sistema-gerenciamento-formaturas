@@ -20,13 +20,13 @@ public class OpcaoVotacao {
 
     @ManyToOne
     @JoinColumn(name = "votacao_id", nullable = false)
-    @JsonIgnore // <--- Essa anotação salva a sua API de travar!
+    @JsonIgnore
     private Votacao votacao;
 
     private String nomeFornecedor;
-    
+
     @Column(columnDefinition = "TEXT")
     private String detalhesProposta;
-    
+
     private Double valorProposta;
 }

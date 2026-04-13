@@ -1,6 +1,9 @@
 package br.com.senac.formatura.sistema_gerenciamento_formaturas.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -12,25 +15,32 @@ import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.Usuari
 @Component
 public class DataInitializer implements CommandLineRunner {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataInitializer.class);
+
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private PasswordEncoder passwordEncoder;
 
+    @Value("${app.bootstrap.create-default-admin:true}")
+    private boolean createDefaultAdmin;
+
+    @Value("${app.bootstrap.default-admin-email:admin@gestaoform.com}")
+    private String defaultAdminEmail;
+
+    @Value("${app.bootstrap.default-admin-password:admin123}")
+    private String defaultAdminPassword;
+
     @Override
-    public void run(String... args) throws Exception {
-        // Verifica se o banco está vazio de usuários
-        if (usuarioRepository.count() == 0) {
-            Usuario admin = new Usuario();
-            admin.setEmail("admin@gestaoform.com"); // Login padrão
-            admin.setSenha(passwordEncoder.encode("admin123")); // Senha padrão criptografada
-            admin.setPerfil(Perfil.ROLE_COMISSAO); // Nível de acesso máximo
-            
-            usuarioRepository.save(admin);
-            
-            System.out.println("==================================================");
-            System.out.println("🚀 USUÁRIO PADRÃO CRIADO COM SUCESSO!");
-            System.out.println("📧 Login: admin@gestaoform.com");
-            System.out.println("🔑 Senha: admin123");
-            System.out.println("==================================================");
+    public void run(String... args) {
+        if (!createDefaultAdmin || usuarioRepository.count() > 0) {
+            return;
         }
+
+        Usuario admin = new Usuario();
+        admin.setEmail(defaultAdminEmail);
+        admin.setSenha(passwordEncoder.encode(defaultAdminPassword));
+        admin.setPerfil(Perfil.ROLE_COMISSAO);
+
+        usuarioRepository.save(admin);
+        LOGGER.info("Usuario administrador inicial criado para {}", defaultAdminEmail);
     }
 }

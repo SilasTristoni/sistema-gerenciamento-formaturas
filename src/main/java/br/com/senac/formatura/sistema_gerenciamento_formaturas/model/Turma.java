@@ -14,6 +14,7 @@ import lombok.Data;
 import lombok.ToString;
 
 @Data
+@ToString(exclude = {"alunos", "eventos", "lancamentos"})
 @Entity
 public class Turma {
     @Id
@@ -22,14 +23,12 @@ public class Turma {
 
     private String nome;
     private String curso;
-    private String instituicao; // NOVO CAMPO
+    private String instituicao;
 
     @OneToMany(mappedBy = "turma", cascade = CascadeType.ALL)
     @JsonIgnore
-    @ToString.Exclude
     private List<Aluno> alunos;
 
-    // NOVO: A turma agora sabe quais eventos e contas são dela
     @OneToMany(mappedBy = "turma")
     @JsonIgnore
     private List<Evento> eventos;
@@ -39,6 +38,7 @@ public class Turma {
     private List<LancamentoFinanceiro> lancamentos;
 
     private Double totalArrecadado = 0.0;
+    private Double metaArrecadacao = 0.0;
     private String status = "emdia";
 
     public Integer getQuantidadeAlunos() {

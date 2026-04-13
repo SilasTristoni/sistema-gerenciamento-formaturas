@@ -8,8 +8,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.Data;
+import lombok.ToString;
 
 @Data
+@ToString(exclude = "turma")
 @Entity
 public class Aluno {
     @Id
@@ -26,7 +28,7 @@ public class Aluno {
     private Turma turma;
 
     private String contato;
-    private String status = "pendente";
+    private String status = "ativo";
 
     public String getNomeTurma() {
         return turma != null ? turma.getNome() : "";

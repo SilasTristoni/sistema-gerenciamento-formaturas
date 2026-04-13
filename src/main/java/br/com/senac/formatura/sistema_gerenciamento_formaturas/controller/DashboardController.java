@@ -82,9 +82,6 @@ public class DashboardController {
         double saldo = round(receitas - despesas);
 
         long totalAlunos = alunos.size();
-        long inadimplentes = alunos.stream()
-            .filter(aluno -> isInadimplente(aluno.getStatus()))
-            .count();
         long totalEventos = eventos.size();
         long totalVotacoes = votacoes.size();
         long votacoesAbertas = votacoes.stream()
@@ -109,13 +106,12 @@ public class DashboardController {
             round(despesas),
             totalAlunos,
             turmasEscopo.size(),
-            inadimplentes,
             totalEventos,
             totalVotacoes,
-            calculateHealthScore(saldo, inadimplentes, totalAlunos, proximoEvento, hoje)
+            calculateHealthScore(saldo, totalAlunos, proximoEvento, hoje)
         );
 
-        List<DashboardResumoDTO.AlertItem> alerts = buildAlerts(inadimplentes, totalAlunos, saldo, proximoEvento, hoje);
+        List<DashboardResumoDTO.AlertItem> alerts = buildAlerts(totalAlunos, saldo, proximoEvento, hoje);
         List<DashboardResumoDTO.MonthlyFinanceItem> monthlyFinancial = buildMonthlyFinancial(lancamentosPeriodo, periodMonths, hoje);
         List<DashboardResumoDTO.CategoryExpenseItem> expenseCategories = buildExpenseCategories(lancamentosPeriodo);
         List<DashboardResumoDTO.EventSnapshot> upcomingEvents = eventosOrdenados.stream()
@@ -133,9 +129,9 @@ public class DashboardController {
             .toList();
         List<DashboardResumoDTO.TurmaPerformanceItem> topTurmas = turmasEscopo.stream()
             .sorted(Comparator.comparing(
-                Turma::getTotalArrecadado,
-                Comparator.nullsLast(Comparator.reverseOrder())
-            ))
+                this::goalProgressForTurma,
+                Comparator.reverseOrder()
+            ).thenComparing(Turma::getTotalArrecadado, Comparator.nullsLast(Comparator.reverseOrder())))
             .limit(5)
             .map(this::toTurmaPerformanceItem)
             .toList();
@@ -146,9 +142,7 @@ public class DashboardController {
                 && evento.getDataEvento().getMonth() == hoje.getMonth())
             .count();
 
-        double percentualAdimplencia = totalAlunos == 0
-            ? 100.0
-            : round((double) (totalAlunos - inadimplentes) * 100 / totalAlunos);
+        double percentualAdimplencia = totalAlunos == 0 ? 100.0 : 100.0;
         double ticketMedioPorAluno = totalAlunos == 0 ? 0.0 : round(receitas / totalAlunos);
 
         DashboardResumoDTO.OperationalSnapshot operational = new DashboardResumoDTO.OperationalSnapshot(
@@ -157,6 +151,7 @@ public class DashboardController {
             votacoesAbertas,
             ticketMedioPorAluno
         );
+        DashboardResumoDTO.GoalProgressSnapshot goalProgress = buildGoalProgress(turmasEscopo, receitas);
 
         DashboardResumoDTO.FilterSnapshot filters = new DashboardResumoDTO.FilterSnapshot(
             turmaSelecionada != null ? turmaSelecionada.getId() : null,
@@ -168,6 +163,7 @@ public class DashboardController {
         );
 
         DashboardResumoDTO.ForecastSnapshot forecast = buildForecast(monthlyFinancial, saldo);
+        List<DashboardResumoDTO.NotificationItem> notifications = buildNotifications(goalProgress, proximoEvento, votacoesAbertas, hoje);
 
         return new DashboardResumoDTO(
             LocalDateTime.now(),
@@ -181,8 +177,111 @@ public class DashboardController {
             recentTransactions,
             topTurmas,
             operational,
+            goalProgress,
+            notifications,
             forecast
         );
+    }
+
+    private DashboardResumoDTO.GoalProgressSnapshot buildGoalProgress(List<Turma> turmasEscopo, double receitas) {
+        double valorMeta = round(turmasEscopo.stream()
+            .mapToDouble(turma -> safeDouble(turma.getMetaArrecadacao()))
+            .sum());
+        double valorArrecadado = round(Math.max(0.0, receitas));
+        boolean metaDefinida = valorMeta > 0;
+        double percentualAtingido = metaDefinida ? round((valorArrecadado / valorMeta) * 100.0) : 0.0;
+        double valorRestante = metaDefinida ? round(Math.max(0.0, valorMeta - valorArrecadado)) : 0.0;
+        boolean metaAtingida = metaDefinida && percentualAtingido >= 100.0;
+        long totalAlunos = turmasEscopo.stream()
+            .mapToLong(turma -> Math.max(turma.getQuantidadeAlunos(), 0))
+            .sum();
+        double sugestaoContribuicaoMedia = !metaDefinida || totalAlunos <= 0 ? 0.0 : round(valorRestante / totalAlunos);
+
+        String titulo;
+        String descricao;
+
+        if (!metaDefinida) {
+            titulo = "Meta ainda nao definida";
+            descricao = "Cadastre uma meta para a turma e acompanhe a arrecadacao em tempo real.";
+        } else if (metaAtingida) {
+            titulo = "Meta financeira atingida";
+            descricao = "A arrecadacao ja bateu o objetivo definido para este escopo.";
+        } else {
+            titulo = "Meta financeira em andamento";
+            descricao = "Faltam " + formatCurrency(valorRestante)
+                + " para bater a meta. Como referencia opcional, isso representa "
+                + formatCurrency(sugestaoContribuicaoMedia)
+                + " por participante.";
+        }
+
+        return new DashboardResumoDTO.GoalProgressSnapshot(
+            valorArrecadado,
+            valorMeta,
+            percentualAtingido,
+            valorRestante,
+            metaDefinida,
+            metaAtingida,
+            sugestaoContribuicaoMedia,
+            titulo,
+            descricao
+        );
+    }
+
+    private List<DashboardResumoDTO.NotificationItem> buildNotifications(
+        DashboardResumoDTO.GoalProgressSnapshot goalProgress,
+        Evento proximoEvento,
+        long votacoesAbertas,
+        LocalDate hoje
+    ) {
+        List<DashboardResumoDTO.NotificationItem> notifications = new ArrayList<>();
+
+        if (!goalProgress.metaDefinida()) {
+            notifications.add(new DashboardResumoDTO.NotificationItem(
+                "warning",
+                "Defina a meta financeira",
+                "Sem meta cadastrada, fica mais dificil orientar contribuicoes e previsao de caixa.",
+                "Atualizar turma"
+            ));
+        } else if (!goalProgress.metaAtingida() && goalProgress.percentualAtingido() >= 80) {
+            notifications.add(new DashboardResumoDTO.NotificationItem(
+                "success",
+                "Meta na reta final",
+                "A arrecadacao ja passou de 80% do objetivo. Vale reforcar a campanha de contribuicao da turma.",
+                "Ver turmas"
+            ));
+        }
+
+        if (proximoEvento != null && proximoEvento.getDataEvento() != null) {
+            long dias = ChronoUnit.DAYS.between(hoje, proximoEvento.getDataEvento());
+            if (dias >= 0 && dias <= 7) {
+                notifications.add(new DashboardResumoDTO.NotificationItem(
+                    "warning",
+                    "Evento muito proximo",
+                    "Revise presenca e caixa antes de " + firstNonBlank(proximoEvento.getNome(), "o evento") + ".",
+                    "Abrir agenda"
+                ));
+            }
+        }
+
+        if (votacoesAbertas > 0) {
+            notifications.add(new DashboardResumoDTO.NotificationItem(
+                "info",
+                "Votacoes abertas",
+                "Existem " + votacoesAbertas + " votacoes abertas aguardando engajamento da turma.",
+                "Acompanhar votacoes"
+            ));
+        }
+
+        if (notifications.isEmpty()) {
+            notifications.add(new DashboardResumoDTO.NotificationItem(
+                "success",
+                "Operacao sob controle",
+                "Meta, agenda e financeiro estao sem sinais criticos no momento.",
+                "Seguir monitorando"
+            ));
+        }
+
+        return notifications;
     }
 
     private List<DashboardResumoDTO.MonthlyFinanceItem> buildMonthlyFinancial(
@@ -270,7 +369,7 @@ public class DashboardController {
             recommendation = "A media recente indica folga de caixa. Considere antecipar reservas e negociar contratos.";
         } else if (averageNet < 0) {
             trend = "warning";
-            recommendation = "A media recente pressiona o caixa. Reforce cobrancas e segure novas despesas.";
+            recommendation = "A media recente pressiona o caixa. Reforce a campanha de contribuicoes e segure novas despesas.";
         } else {
             trend = "neutral";
             recommendation = "A operacao esta estavel, mas sem margem. Vale acompanhar entradas e saidas mais de perto.";
@@ -286,23 +385,14 @@ public class DashboardController {
         );
     }
 
-    private List<DashboardResumoDTO.AlertItem> buildAlerts(long inadimplentes, long totalAlunos, double saldo, Evento proximoEvento, LocalDate hoje) {
+    private List<DashboardResumoDTO.AlertItem> buildAlerts(long totalAlunos, double saldo, Evento proximoEvento, LocalDate hoje) {
         List<DashboardResumoDTO.AlertItem> alerts = new ArrayList<>();
-
-        if (totalAlunos > 0 && inadimplentes > 0) {
-            double percentual = round((double) inadimplentes * 100 / totalAlunos);
-            alerts.add(new DashboardResumoDTO.AlertItem(
-                percentual >= 30 ? "high" : "medium",
-                "Inadimplencia em acompanhamento",
-                "%s alunos estao pendentes ou atrasados (%s%% da base).".formatted(inadimplentes, percentual)
-            ));
-        }
 
         if (saldo < 0) {
             alerts.add(new DashboardResumoDTO.AlertItem(
                 "high",
                 "Saldo negativo",
-                "As despesas superam as receitas. Priorize cobranca e revisao de custos."
+                "As despesas superam as receitas. Reforce comunicacao sobre contribuicoes e revise custos."
             ));
         }
 
@@ -390,27 +480,28 @@ public class DashboardController {
     }
 
     private DashboardResumoDTO.TurmaPerformanceItem toTurmaPerformanceItem(Turma turma) {
+        double meta = round(safeDouble(turma.getMetaArrecadacao()));
+        double arrecadado = round(safeDouble(turma.getTotalArrecadado()));
+        double percentualMeta = meta <= 0 ? 0.0 : round((arrecadado / meta) * 100.0);
+        double valorRestanteMeta = meta <= 0 ? 0.0 : round(Math.max(0.0, meta - arrecadado));
         return new DashboardResumoDTO.TurmaPerformanceItem(
             turma.getId(),
             firstNonBlank(turma.getNome(), "Turma sem nome"),
             firstNonBlank(turma.getCurso(), "Curso nao informado"),
             turma.getQuantidadeAlunos(),
-            round(safeDouble(turma.getTotalArrecadado())),
+            meta,
+            arrecadado,
+            percentualMeta,
+            valorRestanteMeta,
             firstNonBlank(turma.getStatus(), "emdia")
         );
     }
 
-    private int calculateHealthScore(double saldo, long inadimplentes, long totalAlunos, Evento proximoEvento, LocalDate hoje) {
+    private int calculateHealthScore(double saldo, long totalAlunos, Evento proximoEvento, LocalDate hoje) {
         int score = 82;
 
         if (saldo < 0) score -= 28;
         else if (saldo == 0) score -= 10;
-
-        if (totalAlunos > 0) {
-            double percentualInadimplencia = (double) inadimplentes * 100 / totalAlunos;
-            if (percentualInadimplencia >= 30) score -= 22;
-            else if (percentualInadimplencia >= 15) score -= 12;
-        }
 
         if (proximoEvento == null || proximoEvento.getDataEvento() == null) {
             score -= 8;
@@ -423,9 +514,12 @@ public class DashboardController {
         return Math.max(0, Math.min(100, score));
     }
 
-    private boolean isInadimplente(String status) {
-        return "atrasado".equalsIgnoreCase(status) || "pendente".equalsIgnoreCase(status);
+    private double goalProgressForTurma(Turma turma) {
+        double meta = safeDouble(turma.getMetaArrecadacao());
+        if (meta <= 0) return 0.0;
+        return round((safeDouble(turma.getTotalArrecadado()) / meta) * 100.0);
     }
+
 
     private int normalizePeriod(Integer periodMonths) {
         if (periodMonths == null) return 6;
@@ -453,5 +547,9 @@ public class DashboardController {
             }
         }
         return "";
+    }
+
+    private String formatCurrency(double value) {
+        return "R$ %.2f".formatted(value).replace('.', ',');
     }
 }

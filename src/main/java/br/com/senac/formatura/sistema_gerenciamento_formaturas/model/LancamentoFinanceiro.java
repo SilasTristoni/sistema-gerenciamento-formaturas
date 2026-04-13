@@ -17,19 +17,19 @@ public class LancamentoFinanceiro {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // RELACIONAMENTO NOVO: Obrigatório (toda conta é de uma turma)
     @ManyToOne
     @JoinColumn(name = "turma_id", nullable = false)
     private Turma turma;
 
-    // RELACIONAMENTO NOVO: Opcional (pode ser pagamento de um aluno específico)
     @ManyToOne
-    @JoinColumn(name = "aluno_id", nullable = true)
+    @JoinColumn(name = "aluno_id")
     private Aluno aluno;
 
     private String descricao;
-    private String tipo; // receita, despesa
+    private String tipo;
+    private Boolean contribuicao = false;
+    private String apoiadorNome;
     private Double valor;
-    private LocalDate dataLancamento; // Renomeado para bater com SQL
+    private LocalDate dataLancamento;
     private String referencia;
 }

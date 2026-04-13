@@ -8,10 +8,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.dto.AlunoInputDTO;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.dto.EventoInputDTO;
@@ -46,10 +47,10 @@ import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.Usuari
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.VotacaoRepository;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.VotoRepository;
 
-@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/cadastro")
 public class CadastroController {
+    private static final String SENHA_PADRAO_ALUNO = "mudar123";
 
     @Autowired private TurmaRepository turmaRepo;
     @Autowired private AlunoRepository alunoRepo;
@@ -63,16 +64,25 @@ public class CadastroController {
     @Autowired private PasswordEncoder passwordEncoder;
 
     @GetMapping("/turmas")
-    public List<Turma> listarTurmas() { return turmaRepo.findAll(Sort.by(Sort.Order.asc("nome"))); }
+    public List<Turma> listarTurmas() {
+        List<Turma> turmas = turmaRepo.findAll(Sort.by(Sort.Order.asc("nome")));
+        turmas.forEach(this::syncTurmaTotalArrecadado);
+        return turmas;
+    }
 
     @PostMapping("/turma")
-    public Turma criarTurma(@RequestBody Turma turma) { return turmaRepo.save(turma); }
+    public Turma criarTurma(@RequestBody Turma turma) {
+        turma.setMetaArrecadacao(normalizeMoney(turma.getMetaArrecadacao()));
+        turma.setTotalArrecadado(normalizeMoney(turma.getTotalArrecadado()));
+        return turmaRepo.save(turma);
+    }
 
     @PutMapping("/turma/{id}")
     public Turma atualizarTurma(@PathVariable Long id, @RequestBody Turma dto) {
         Turma turma = turmaRepo.findById(id).orElseThrow();
         turma.setNome(dto.getNome());
         turma.setCurso(dto.getCurso());
+        turma.setMetaArrecadacao(normalizeMoney(dto.getMetaArrecadacao()));
         return turmaRepo.save(turma);
     }
 
@@ -104,7 +114,7 @@ public class CadastroController {
         Usuario usuario = new Usuario();
         usuario.setLogin(identificador);
         usuario.setEmail(emailContato);
-        usuario.setSenha(passwordEncoder.encode("mudar123"));
+        usuario.setSenha(passwordEncoder.encode(resolveSenhaCadastro(dto.senha())));
         usuario.setPerfil("COMISSAO".equalsIgnoreCase(dto.perfil()) ? Perfil.ROLE_COMISSAO : Perfil.ROLE_ALUNO);
         usuario.setAluno(alunoSalvo);
         usuarioRepo.save(usuario);
@@ -131,6 +141,9 @@ public class CadastroController {
             usuario.setLogin(identificador);
             usuario.setEmail(emailContato);
             usuario.setPerfil("COMISSAO".equalsIgnoreCase(dto.perfil()) ? Perfil.ROLE_COMISSAO : Perfil.ROLE_ALUNO);
+            if (dto.senha() != null && !dto.senha().isBlank()) {
+                usuario.setSenha(passwordEncoder.encode(validateProvidedPassword(dto.senha())));
+            }
             usuarioRepo.save(usuario);
         });
 
@@ -171,7 +184,7 @@ public class CadastroController {
                     Usuario usuario = new Usuario();
                     usuario.setLogin(identificador);
                     usuario.setEmail(resolveEmailContato(emailContato, identificador));
-                    usuario.setSenha(passwordEncoder.encode("mudar123"));
+                    usuario.setSenha(passwordEncoder.encode(SENHA_PADRAO_ALUNO));
                     usuario.setPerfil(Perfil.ROLE_ALUNO);
                     usuario.setAluno(alunoSalvo);
                     usuarioRepo.save(usuario);
@@ -236,29 +249,53 @@ public class CadastroController {
         lanc.setDescricao(normalizeText(dto.descricao()));
         lanc.setValor(dto.valor());
         lanc.setTipo(dto.tipo());
+        lanc.setContribuicao(Boolean.TRUE.equals(dto.contribuicao()));
+        lanc.setApoiadorNome(normalizeText(dto.apoiadorNome()));
         lanc.setDataLancamento(dto.data());
         lanc.setReferencia(normalizeText(dto.referencia()));
         lanc.setTurma(turma);
-        return lancamentoRepo.save(lanc);
+        if (dto.alunoId() != null) {
+            alunoRepo.findById(dto.alunoId()).ifPresent(lanc::setAluno);
+        }
+        LancamentoFinanceiro salvo = lancamentoRepo.save(lanc);
+        syncTurmaTotalArrecadado(turma);
+        return salvo;
     }
 
     @PutMapping("/lancamento/{id}")
     public LancamentoFinanceiro atualizarLancamento(@PathVariable Long id, @RequestBody LancamentoInputDTO dto) {
         LancamentoFinanceiro lanc = lancamentoRepo.findById(id).orElseThrow();
+        Long turmaAnteriorId = lanc.getTurma() != null ? lanc.getTurma().getId() : null;
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
         lanc.setDescricao(normalizeText(dto.descricao()));
         lanc.setValor(dto.valor());
         lanc.setTipo(dto.tipo());
+        lanc.setContribuicao(Boolean.TRUE.equals(dto.contribuicao()));
+        lanc.setApoiadorNome(normalizeText(dto.apoiadorNome()));
         lanc.setDataLancamento(dto.data());
         lanc.setReferencia(normalizeText(dto.referencia()));
         lanc.setTurma(turma);
-        return lancamentoRepo.save(lanc);
+        if (dto.alunoId() != null) {
+            alunoRepo.findById(dto.alunoId()).ifPresent(lanc::setAluno);
+        } else {
+            lanc.setAluno(null);
+        }
+        LancamentoFinanceiro salvo = lancamentoRepo.save(lanc);
+        syncTurmaTotalArrecadado(turma);
+        if (turmaAnteriorId != null && !turmaAnteriorId.equals(turma.getId())) {
+            syncTurmaTotalArrecadado(turmaAnteriorId);
+        }
+        return salvo;
     }
 
     @DeleteMapping("/lancamento/{id}")
     public ResponseEntity<?> deletarLancamento(@PathVariable Long id) {
         if(!lancamentoRepo.existsById(id)) return ResponseEntity.notFound().build();
+        Long turmaId = lancamentoRepo.findById(id)
+            .map(lancamento -> lancamento.getTurma() != null ? lancamento.getTurma().getId() : null)
+            .orElse(null);
         lancamentoRepo.deleteById(id);
+        syncTurmaTotalArrecadado(turmaId);
         return ResponseEntity.ok("Excluído com sucesso");
     }
 
@@ -372,6 +409,46 @@ public class CadastroController {
     private String resolveEmailContato(String contato, String identificador) {
         String email = normalizeText(contato);
         return email.isBlank() ? identificador + "@gestaoform.local" : email;
+    }
+
+    private void syncTurmaTotalArrecadado(Turma turma) {
+        if (turma == null || turma.getId() == null) return;
+        double totalAtualizado = normalizeMoney(lancamentoRepo.totalReceitasByTurmaId(turma.getId()));
+        if (Double.compare(normalizeMoney(turma.getTotalArrecadado()), totalAtualizado) == 0) return;
+        turma.setTotalArrecadado(totalAtualizado);
+        turmaRepo.save(turma);
+    }
+
+    private void syncTurmaTotalArrecadado(Long turmaId) {
+        if (turmaId == null) return;
+        turmaRepo.findById(turmaId).ifPresent(this::syncTurmaTotalArrecadado);
+    }
+
+    private double normalizeMoney(Double value) {
+        return roundMoney(Math.max(0.0, safeDouble(value)));
+    }
+
+    private double safeDouble(Double value) {
+        return value == null ? 0.0 : value;
+    }
+
+    private double roundMoney(double value) {
+        return Math.round(value * 100.0) / 100.0;
+    }
+
+    private String resolveSenhaCadastro(String senhaInformada) {
+        if (senhaInformada == null || senhaInformada.isBlank()) {
+            return SENHA_PADRAO_ALUNO;
+        }
+        return validateProvidedPassword(senhaInformada);
+    }
+
+    private String validateProvidedPassword(String senhaInformada) {
+        String senha = senhaInformada.trim();
+        if (senha.length() < 6) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A senha do aluno deve ter pelo menos 6 caracteres.");
+        }
+        return senha;
     }
 
     public record VotoInputRequest(Long votacaoId, Long opcaoId, Long alunoId) {}

@@ -16,8 +16,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
+import lombok.ToString;
 
 @Data
+@ToString(exclude = {"senha", "aluno"})
 @Entity
 @Table(name = "usuarios")
 public class Usuario implements UserDetails {

@@ -5,5 +5,6 @@ public record AlunoInputDTO(
     String identificador,
     String contato,
     Long turmaId,
-    String perfil
+    String perfil,
+    String senha
 ) {}

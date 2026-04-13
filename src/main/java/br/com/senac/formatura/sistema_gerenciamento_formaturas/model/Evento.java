@@ -17,13 +17,12 @@ public class Evento {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // RELACIONAMENTO NOVO
     @ManyToOne
     @JoinColumn(name = "turma_id", nullable = false)
     private Turma turma;
 
     private String nome;
-    private LocalDate dataEvento; // Renomeado para bater com o SQL (era 'data')
-    private String localEvento;   // Renomeado para bater com o SQL (era 'local')
+    private LocalDate dataEvento;
+    private String localEvento;
     private String status = "agendado";
 }

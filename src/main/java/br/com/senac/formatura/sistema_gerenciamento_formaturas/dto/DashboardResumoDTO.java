@@ -16,6 +16,8 @@ public record DashboardResumoDTO(
     List<TransactionSnapshot> recentTransactions,
     List<TurmaPerformanceItem> topTurmas,
     OperationalSnapshot operational,
+    GoalProgressSnapshot goalProgress,
+    List<NotificationItem> notifications,
     ForecastSnapshot forecast
 ) {
     public record FilterSnapshot(
@@ -31,7 +33,6 @@ public record DashboardResumoDTO(
         double totalDespesas,
         long totalAlunos,
         long totalTurmas,
-        long inadimplentes,
         long totalEventos,
         long totalVotacoes,
         int healthScore
@@ -80,8 +81,30 @@ public record DashboardResumoDTO(
         String nome,
         String curso,
         int quantidadeAlunos,
+        double metaArrecadacao,
         double totalArrecadado,
+        double percentualMeta,
+        double valorRestanteMeta,
         String status
+    ) {}
+
+    public record GoalProgressSnapshot(
+        double valorArrecadado,
+        double valorMeta,
+        double percentualAtingido,
+        double valorRestante,
+        boolean metaDefinida,
+        boolean metaAtingida,
+        double sugestaoContribuicaoMedia,
+        String titulo,
+        String descricao
+    ) {}
+
+    public record NotificationItem(
+        String level,
+        String title,
+        String description,
+        String actionLabel
     ) {}
 
     public record OperationalSnapshot(

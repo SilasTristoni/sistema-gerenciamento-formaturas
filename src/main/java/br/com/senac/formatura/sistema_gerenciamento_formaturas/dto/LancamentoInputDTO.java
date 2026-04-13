@@ -4,6 +4,8 @@ import java.time.LocalDate;
 public record LancamentoInputDTO(
     String descricao,
     String tipo,
+    Boolean contribuicao,
+    String apoiadorNome,
     Double valor,
     LocalDate data,
     String referencia,
