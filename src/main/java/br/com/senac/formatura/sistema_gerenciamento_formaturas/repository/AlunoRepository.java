@@ -8,4 +8,5 @@ import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Aluno;
 @Repository
 public interface AlunoRepository extends JpaRepository<Aluno, Long> {
     Aluno findByIdentificador(String identificador);
+    long countByTurmaId(Long turmaId);
 }

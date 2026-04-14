@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -70,6 +71,9 @@ public class DashboardController {
             votacao.getTurma() != null ? votacao.getTurma().getId() : null
         );
         List<LancamentoFinanceiro> lancamentosPeriodo = filterLancamentosByPeriod(lancamentos, periodMonths, hoje);
+        Map<Long, Long> quantidadeAlunosPorTurma = alunos.stream()
+            .filter(aluno -> aluno.getTurma() != null && aluno.getTurma().getId() != null)
+            .collect(Collectors.groupingBy(aluno -> aluno.getTurma().getId(), Collectors.counting()));
 
         double receitas = lancamentos.stream()
             .filter(item -> "receita".equalsIgnoreCase(item.getTipo()))
@@ -133,7 +137,7 @@ public class DashboardController {
                 Comparator.reverseOrder()
             ).thenComparing(Turma::getTotalArrecadado, Comparator.nullsLast(Comparator.reverseOrder())))
             .limit(5)
-            .map(this::toTurmaPerformanceItem)
+            .map(turma -> toTurmaPerformanceItem(turma, quantidadeAlunosPorTurma))
             .toList();
 
         long eventosNoMes = eventos.stream()
@@ -151,7 +155,7 @@ public class DashboardController {
             votacoesAbertas,
             ticketMedioPorAluno
         );
-        DashboardResumoDTO.GoalProgressSnapshot goalProgress = buildGoalProgress(turmasEscopo, receitas);
+        DashboardResumoDTO.GoalProgressSnapshot goalProgress = buildGoalProgress(turmasEscopo, receitas, quantidadeAlunosPorTurma);
 
         DashboardResumoDTO.FilterSnapshot filters = new DashboardResumoDTO.FilterSnapshot(
             turmaSelecionada != null ? turmaSelecionada.getId() : null,
@@ -183,7 +187,11 @@ public class DashboardController {
         );
     }
 
-    private DashboardResumoDTO.GoalProgressSnapshot buildGoalProgress(List<Turma> turmasEscopo, double receitas) {
+    private DashboardResumoDTO.GoalProgressSnapshot buildGoalProgress(
+        List<Turma> turmasEscopo,
+        double receitas,
+        Map<Long, Long> quantidadeAlunosPorTurma
+    ) {
         double valorMeta = round(turmasEscopo.stream()
             .mapToDouble(turma -> safeDouble(turma.getMetaArrecadacao()))
             .sum());
@@ -193,7 +201,7 @@ public class DashboardController {
         double valorRestante = metaDefinida ? round(Math.max(0.0, valorMeta - valorArrecadado)) : 0.0;
         boolean metaAtingida = metaDefinida && percentualAtingido >= 100.0;
         long totalAlunos = turmasEscopo.stream()
-            .mapToLong(turma -> Math.max(turma.getQuantidadeAlunos(), 0))
+            .mapToLong(turma -> Math.max(quantidadeAlunosPorTurma.getOrDefault(turma.getId(), 0L), 0L))
             .sum();
         double sugestaoContribuicaoMedia = !metaDefinida || totalAlunos <= 0 ? 0.0 : round(valorRestante / totalAlunos);
 
@@ -479,7 +487,7 @@ public class DashboardController {
         );
     }
 
-    private DashboardResumoDTO.TurmaPerformanceItem toTurmaPerformanceItem(Turma turma) {
+    private DashboardResumoDTO.TurmaPerformanceItem toTurmaPerformanceItem(Turma turma, Map<Long, Long> quantidadeAlunosPorTurma) {
         double meta = round(safeDouble(turma.getMetaArrecadacao()));
         double arrecadado = round(safeDouble(turma.getTotalArrecadado()));
         double percentualMeta = meta <= 0 ? 0.0 : round((arrecadado / meta) * 100.0);
@@ -488,7 +496,7 @@ public class DashboardController {
             turma.getId(),
             firstNonBlank(turma.getNome(), "Turma sem nome"),
             firstNonBlank(turma.getCurso(), "Curso nao informado"),
-            turma.getQuantidadeAlunos(),
+            quantidadeAlunosPorTurma.getOrDefault(turma.getId(), 0L).intValue(),
             meta,
             arrecadado,
             percentualMeta,

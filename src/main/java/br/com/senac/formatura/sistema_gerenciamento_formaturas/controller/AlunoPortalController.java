@@ -21,6 +21,7 @@ import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.PresencaEve
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Usuario;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Votacao;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Voto;
+import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.AlunoRepository;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.EventoRepository;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.LancamentoRepository;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.PresencaEventoRepository;
@@ -31,6 +32,7 @@ import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.VotoRe
 @RequestMapping("/api/aluno")
 public class AlunoPortalController {
 
+    private final AlunoRepository alunoRepository;
     private final EventoRepository eventoRepository;
     private final VotacaoRepository votacaoRepository;
     private final PresencaEventoRepository presencaRepository;
@@ -38,12 +40,14 @@ public class AlunoPortalController {
     private final LancamentoRepository lancamentoRepository;
 
     public AlunoPortalController(
+        AlunoRepository alunoRepository,
         EventoRepository eventoRepository,
         VotacaoRepository votacaoRepository,
         PresencaEventoRepository presencaRepository,
         VotoRepository votoRepository,
         LancamentoRepository lancamentoRepository
     ) {
+        this.alunoRepository = alunoRepository;
         this.eventoRepository = eventoRepository;
         this.votacaoRepository = votacaoRepository;
         this.presencaRepository = presencaRepository;
@@ -116,7 +120,7 @@ public class AlunoPortalController {
         double valorRestante = valorMeta <= 0 ? 0.0 : roundMoney(Math.max(0.0, valorMeta - valorArrecadado));
         boolean metaDefinida = valorMeta > 0;
         boolean metaAtingida = metaDefinida && percentualAtingido >= 100.0;
-        int quantidadeAlunos = aluno.getTurma() != null ? Math.max(aluno.getTurma().getQuantidadeAlunos(), 1) : 1;
+        int quantidadeAlunos = (int) Math.max(alunoRepository.countByTurmaId(turmaId), 1L);
         double sugestaoContribuicaoMedia = metaDefinida ? roundMoney(valorRestante / quantidadeAlunos) : 0.0;
         String tituloMeta;
         String descricaoMeta;
