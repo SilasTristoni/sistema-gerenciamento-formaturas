@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>GestãoForm - Entrar</title>
+  <title>GestaoForm - Entrar</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -29,7 +29,7 @@
 
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="min-h-screen bg-slate-950 text-slate-200 antialiased overflow-x-hidden">
+<body class="min-h-screen bg-slate-950 text-slate-200 antialiased overflow-x-hidden lg:overflow-hidden">
   <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.18),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(45,212,191,0.14),transparent_24%)]"></div>
   <div class="absolute -top-24 left-10 h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl"></div>
   <div class="absolute bottom-0 right-0 h-80 w-80 rounded-full bg-cyan-400/10 blur-3xl"></div>
@@ -37,13 +37,13 @@
   <div id="toastContainer" class="fixed top-5 right-5 z-[60] flex flex-col gap-2 w-full max-w-xs pointer-events-none"></div>
 
   <main class="relative z-10 min-h-screen grid lg:grid-cols-[1.1fr_.9fr]">
-    <section class="hidden lg:flex flex-col justify-between p-10 xl:p-14 border-r border-white/5">
+    <section class="hidden lg:flex flex-col justify-between p-10 xl:p-14 border-r border-white/5 overflow-y-auto">
       <div>
         <div class="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl shadow-glow">
           <div class="brand-mark brand-mark--sm" aria-hidden="true"></div>
           <div>
-            <p class="text-sm font-semibold text-white">GestãoForm</p>
-            <p class="text-xs text-slate-400">Plataforma para comissões e formandos</p>
+            <p class="text-sm font-semibold text-white">GestaoForm</p>
+            <p class="text-xs text-slate-400">Plataforma para comissoes e formandos</p>
           </div>
         </div>
       </div>
@@ -54,35 +54,69 @@
           Novo acesso simplificado
         </span>
         <h1 class="mt-5 text-4xl xl:text-5xl font-extrabold tracking-tight text-white leading-tight">
-          Organize a sua formatura com uma experiência mais moderna e simples.
+          Organize a sua formatura com uma experiencia mais moderna e simples.
         </h1>
         <p class="mt-5 text-base xl:text-lg text-slate-400 leading-8">
-          Centralize alunos, turmas, eventos, finanças e votações em um único painel elegante, rápido e fácil de usar.
+          Centralize alunos, turmas, eventos, financas e votacoes em um unico painel elegante, rapido e facil de usar.
         </p>
 
         <div class="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div class="rounded-2xl border border-white/8 bg-white/[0.04] p-4 backdrop-blur-xl">
             <p class="text-2xl font-bold text-white">Turmas</p>
-            <p class="text-sm text-slate-400 mt-1">Cadastro e gestão centralizada</p>
+            <p class="text-sm text-slate-400 mt-1">Cadastro e gestao centralizada</p>
           </div>
           <div class="rounded-2xl border border-white/8 bg-white/[0.04] p-4 backdrop-blur-xl">
             <p class="text-2xl font-bold text-white">Eventos</p>
-            <p class="text-sm text-slate-400 mt-1">Controle de cerimônias e encontros</p>
+            <p class="text-sm text-slate-400 mt-1">Controle de cerimonias e encontros</p>
           </div>
           <div class="rounded-2xl border border-white/8 bg-white/[0.04] p-4 backdrop-blur-xl">
-            <p class="text-2xl font-bold text-white">Votações</p>
-            <p class="text-sm text-slate-400 mt-1">Decisões da turma em tempo real</p>
+            <p class="text-2xl font-bold text-white">Votacoes</p>
+            <p class="text-sm text-slate-400 mt-1">Decisoes da turma em tempo real</p>
           </div>
+        </div>
+
+        <div class="login-visual-board mt-10" aria-label="Recursos do sistema em destaque">
+          <figure class="login-visual-card login-visual-card--primary">
+            <img src="./assets/images/hero-academico.png" alt="Planejamento academico e jornada de formatura" class="login-visual-image">
+            <figcaption class="login-visual-caption">
+              <span class="login-visual-chip">Jornada academica</span>
+              <strong>Mostre a evolucao da turma com uma entrada visual alinhada ao restante do produto.</strong>
+            </figcaption>
+          </figure>
+
+          <figure class="login-visual-card login-visual-card--secondary">
+            <img src="./assets/images/hero-financeiro.png" alt="Gestao de tarefas, financas e perfis da comissao" class="login-visual-image" loading="lazy">
+            <figcaption class="login-visual-inline-caption">Financeiro, tarefas e controle da comissao no mesmo ambiente.</figcaption>
+          </figure>
+
+          <figure class="login-visual-card login-visual-card--tertiary">
+            <img src="./assets/images/hero-organizacao.png" alt="Organizacao da agenda e acompanhamento das atividades" class="login-visual-image" loading="lazy">
+            <figcaption class="login-visual-inline-caption">Agenda e organizacao com leitura rapida logo na entrada.</figcaption>
+          </figure>
         </div>
       </div>
 
       <div class="text-xs text-slate-500">
-        Acesso da comissão: <span class="text-slate-300 font-medium">admin@gestaoform.com</span> / <span class="text-slate-300 font-medium">admin123</span>
+        Acesso da comissao: <span class="text-slate-300 font-medium">admin@gestaoform.com</span> / <span class="text-slate-300 font-medium">admin123</span>
       </div>
     </section>
 
     <section class="flex items-center justify-center p-6 sm:p-8 xl:p-12">
       <div class="w-full max-w-md space-y-4">
+        <div class="login-mobile-visual lg:hidden" aria-label="Resumo visual do sistema">
+          <figure class="login-mobile-card login-mobile-card--primary">
+            <img src="./assets/images/hero-academico.png" alt="Resumo visual do planejamento academico" class="login-mobile-image">
+          </figure>
+          <div class="login-mobile-grid">
+            <figure class="login-mobile-card">
+              <img src="./assets/images/hero-financeiro.png" alt="Resumo visual da gestao financeira" class="login-mobile-image" loading="lazy">
+            </figure>
+            <figure class="login-mobile-card">
+              <img src="./assets/images/hero-organizacao.png" alt="Resumo visual da organizacao da agenda" class="login-mobile-image" loading="lazy">
+            </figure>
+          </div>
+        </div>
+
         <div class="lg:hidden rounded-[28px] border border-emerald-400/15 bg-white/[0.05] p-5 shadow-2xl backdrop-blur-2xl">
           <span class="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300">
             <i class="ph ph-device-mobile"></i>
@@ -101,44 +135,45 @@
         </div>
 
         <div class="w-full rounded-[28px] border border-white/10 bg-white/[0.05] p-6 sm:p-8 shadow-2xl backdrop-blur-2xl">
-        <div class="flex items-center justify-between mb-8">
-          <div>
-            <p class="text-sm font-medium text-emerald-300">Acesso ao sistema</p>
-            <h2 class="mt-1 text-3xl font-bold text-white tracking-tight">Entrar</h2>
-          </div>
-          <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-teal-400 text-white shadow-glow">
-            <i class="ph ph-graduation-cap text-2xl"></i>
-          </div>
-        </div>
-
-        <div class="mb-6 rounded-2xl border border-emerald-400/15 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200">
-          Você pode entrar com seu <strong>identificador</strong> ou com o login já cadastrado no sistema.
-        </div>
-
-        <form id="loginForm" class="space-y-5">
-          <div>
-            <label class="block text-xs uppercase font-bold text-slate-400 mb-2 tracking-[.18em]">Identificador ou login</label>
-            <div class="relative">
-              <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500"><i class="ph ph-user"></i></span>
-              <input type="text" id="loginEmail" required class="w-full rounded-2xl border border-white/10 bg-slate-950/70 pl-11 pr-4 py-3.5 text-white placeholder-slate-600 outline-none transition-all focus:border-emerald-400/70 focus:ring-4 focus:ring-emerald-400/10" placeholder="ex.: admin@gestaoform.com ou silas.tristoni">
+          <div class="flex items-center justify-between mb-8">
+            <div>
+              <p class="text-sm font-medium text-emerald-300">Acesso ao sistema</p>
+              <h2 class="mt-1 text-3xl font-bold text-white tracking-tight">Entrar</h2>
+            </div>
+            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-teal-400 text-white shadow-glow">
+              <i class="ph ph-graduation-cap text-2xl"></i>
             </div>
           </div>
 
-          <div>
-            <label class="block text-xs uppercase font-bold text-slate-400 mb-2 tracking-[.18em]">Senha</label>
-            <div class="relative">
-              <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500"><i class="ph ph-password"></i></span>
-              <input type="password" id="loginSenha" required class="w-full rounded-2xl border border-white/10 bg-slate-950/70 pl-11 pr-4 py-3.5 text-white placeholder-slate-600 outline-none transition-all focus:border-emerald-400/70 focus:ring-4 focus:ring-emerald-400/10" placeholder="Digite sua senha">
-            </div>
+          <div class="mb-6 rounded-2xl border border-emerald-400/15 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200">
+            Voce pode entrar com seu <strong>identificador</strong> ou com o login ja cadastrado no sistema.
           </div>
 
-          <button type="submit" id="btnLogin" class="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary-600 via-primary-500 to-teal-400 px-4 py-3.5 text-base font-bold text-white shadow-glow transition-all hover:-translate-y-0.5 hover:brightness-110">
-            <i class="ph ph-sign-in"></i>
-            Entrar no painel
-          </button>
-        </form>
+          <form id="loginForm" class="space-y-5">
+            <div>
+              <label class="block text-xs uppercase font-bold text-slate-400 mb-2 tracking-[.18em]">Identificador ou login</label>
+              <div class="relative">
+                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500"><i class="ph ph-user"></i></span>
+                <input type="text" id="loginEmail" required class="w-full rounded-2xl border border-white/10 bg-slate-950/70 pl-11 pr-4 py-3.5 text-white placeholder-slate-600 outline-none transition-all focus:border-emerald-400/70 focus:ring-4 focus:ring-emerald-400/10" placeholder="ex.: admin@gestaoform.com ou silas.tristoni">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs uppercase font-bold text-slate-400 mb-2 tracking-[.18em]">Senha</label>
+              <div class="relative">
+                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500"><i class="ph ph-password"></i></span>
+                <input type="password" id="loginSenha" required class="w-full rounded-2xl border border-white/10 bg-slate-950/70 pl-11 pr-4 py-3.5 text-white placeholder-slate-600 outline-none transition-all focus:border-emerald-400/70 focus:ring-4 focus:ring-emerald-400/10" placeholder="Digite sua senha">
+              </div>
+            </div>
+
+            <button type="submit" id="btnLogin" class="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary-600 via-primary-500 to-teal-400 px-4 py-3.5 text-base font-bold text-white shadow-glow transition-all hover:-translate-y-0.5 hover:brightness-110">
+              <i class="ph ph-sign-in"></i>
+              Entrar no painel
+            </button>
+          </form>
         </div>
-        <div class="login-brand-showcase mt-8">
+
+        <div class="login-brand-showcase">
           <div class="login-brand-showcase__media" aria-hidden="true"></div>
           <div class="login-brand-showcase__copy">
             <span class="brand-tag">Pronto para personalizar</span>
@@ -175,7 +210,7 @@
                   window.location.href = destino;
               }, 500);
           } catch (err) {
-              showToast('Login inválido. Confira seu identificador e senha.', 'error');
+              showToast('Login invalido. Confira seu identificador e senha.', 'error');
               btn.innerHTML = '<i class="ph ph-sign-in"></i> Entrar no painel';
               btn.disabled = false;
           }

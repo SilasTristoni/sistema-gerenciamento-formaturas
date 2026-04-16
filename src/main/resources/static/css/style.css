@@ -263,6 +263,139 @@ table tbody tr:hover {
 .toast-enter { animation: slideInRight 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards; }
 .toast-exit { animation: fadeOut 0.3s ease forwards; }
 
+.login-visual-board {
+    display: grid;
+    grid-template-columns: minmax(0, 1.18fr) minmax(220px, 0.82fr);
+    grid-template-rows: minmax(200px, 1fr) minmax(160px, 0.85fr);
+    gap: 1rem;
+    width: min(100%, 760px);
+}
+
+.login-visual-card,
+.login-mobile-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.75rem;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: linear-gradient(180deg, rgba(15,23,42,0.9), rgba(15,23,42,0.72));
+    box-shadow: 0 22px 50px rgba(2, 6, 23, 0.35);
+}
+
+.login-visual-card::after,
+.login-mobile-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(7,10,24,0.02) 0%, rgba(7,10,24,0.42) 100%);
+    pointer-events: none;
+}
+
+.login-visual-card--primary {
+    grid-row: 1 / span 2;
+    min-height: 420px;
+}
+
+.login-visual-image,
+.login-mobile-image {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.login-visual-card--primary .login-visual-image {
+    object-position: center;
+}
+
+.login-visual-card--secondary .login-visual-image,
+.login-visual-card--tertiary .login-visual-image {
+    object-position: center top;
+}
+
+.login-visual-caption {
+    position: absolute;
+    left: 1.35rem;
+    right: 1.35rem;
+    bottom: 1.35rem;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.login-visual-chip {
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid rgba(110,231,183,0.22);
+    background: rgba(16,185,129,0.16);
+    color: #d1fae5;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+}
+
+.login-visual-caption strong,
+.login-visual-inline-caption {
+    color: #f8fafc;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    text-shadow: 0 8px 18px rgba(2, 6, 23, 0.55);
+}
+
+.login-visual-inline-caption {
+    position: absolute;
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 1;
+    font-weight: 600;
+}
+
+.login-mobile-visual {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.login-mobile-card--primary {
+    min-height: 180px;
+}
+
+.login-mobile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.login-mobile-grid .login-mobile-card {
+    min-height: 124px;
+}
+
+@media (max-width: 1279px) {
+    .login-visual-board {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: none;
+    }
+
+    .login-visual-card--primary {
+        min-height: 320px;
+    }
+}
+
+@media (max-width: 640px) {
+    .login-mobile-card--primary {
+        min-height: 150px;
+    }
+
+    .login-mobile-grid .login-mobile-card {
+        min-height: 105px;
+    }
+}
+
 .simple-hero {
     display: flex;
     justify-content: space-between;
