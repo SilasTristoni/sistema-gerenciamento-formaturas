@@ -13,6 +13,7 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
 });
 
 const mobileViewport = window.matchMedia('(max-width: 720px)');
+const ACTIVE_SECTION_STORAGE_KEY = 'gestaoform.aluno.activeSection';
 let activeStudentSection = 'resumo';
 let menuHideTimer = null;
 
@@ -61,6 +62,14 @@ function todayValue() {
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
     return `${now.getFullYear()}-${month}-${day}`;
+}
+
+function safeLocalStorage() {
+    try {
+        return window.localStorage;
+    } catch (error) {
+        return null;
+    }
 }
 
 function normalizeStatus(status = '') {
@@ -227,6 +236,7 @@ function setActiveStudentSection(sectionId, { shouldScroll = true } = {}) {
     if (!targetSection) return;
 
     activeStudentSection = sectionId;
+    safeLocalStorage()?.setItem(ACTIVE_SECTION_STORAGE_KEY, sectionId);
 
     sections.forEach((section) => {
         section.classList.toggle('is-active', section.dataset.studentSection === sectionId);
@@ -304,11 +314,14 @@ function renderProfile(painel) {
     setText('summaryVotesOpen', resumo.votacoesAbertas ?? 0);
     setText('summaryVotesDone', resumo.votacoesRespondidas ?? 0);
     setText('summaryPendingPresence', `${resumo.eventosPendentesConfirmacao ?? 0} pendentes`);
+    setText('studentQuickVotesOpen', `${resumo.votacoesAbertas ?? 0} abertas`);
+    setText('studentQuickPendingPresence', `${resumo.eventosPendentesConfirmacao ?? 0} aguardando`);
 
     setText('nextEventName', proximoEvento.nome || 'Nenhum evento agendado');
     setText('nextEventDate', proximoEvento.data ? formatDate(proximoEvento.data) : 'Sem data definida');
     setText('nextEventLocation', proximoEvento.local || 'Local a definir');
     setText('nextEventCountdown', formatDaysRemaining(proximoEvento.diasRestantes));
+    setText('studentQuickNextEvent', proximoEvento.nome || 'Sem evento');
     renderFinancialProgress(financeiro);
 
     const badge = document.getElementById('studentStatusBadge');
@@ -317,6 +330,12 @@ function renderProfile(painel) {
         badge.textContent = status;
         badge.className = `student-status-badge student-status-badge--${normalizeStatus(status)}`;
     }
+}
+
+function restoreStoredSection() {
+    const storedSection = safeLocalStorage()?.getItem(ACTIVE_SECTION_STORAGE_KEY);
+    if (!storedSection) return;
+    activeStudentSection = storedSection;
 }
 
 function renderEvents(eventos = []) {
@@ -580,5 +599,6 @@ document.getElementById('studentContributionForm')?.addEventListener('submit', (
     handleContributionSubmit(event).catch(console.error);
 });
 
+restoreStoredSection();
 setActiveStudentSection(activeStudentSection, { shouldScroll: false });
 loadStudentArea().catch(console.error);

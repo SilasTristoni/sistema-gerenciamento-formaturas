@@ -4,6 +4,7 @@ import { auth } from "./services/auth.js";
 let monthlyChart = null;
 let categoryChart = null;
 let filtersBound = false;
+let reportActionsBound = false;
 
 const DASHBOARD_FILTER_KEY = "gestaoform.dashboard.filters";
 const DEFAULT_FILTERS = {
@@ -443,6 +444,128 @@ function renderTurmas(turmas = []) {
   );
 }
 
+function formatPercent(value = 0) {
+  return `${Number(value || 0).toFixed(1).replace(".", ",")}%`;
+}
+
+function formatRunway(value = 0) {
+  const numericValue = Number(value || 0);
+  if (numericValue <= 0) return "Sem base";
+  return `${numericValue.toFixed(1).replace(".", ",")} meses`;
+}
+
+function downloadBlob(blob, filename) {
+  const url = window.URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.URL.revokeObjectURL(url);
+}
+
+function renderReportModule(report) {
+  const summary = report?.summary || {};
+
+  setText("reportCurrentBalance", formatCurrency(summary.saldoAtualEscopo));
+  setText("reportAverageNet", formatCurrency(summary.resultadoMedioMensal));
+  setText("reportContributionShare", formatPercent(summary.participacaoContribuicoesReceita));
+  setText("reportRunwayMonths", formatRunway(summary.coberturaCaixaMeses));
+
+  renderList(
+    "reportInsightsList",
+    report?.insights || [],
+    item => `
+      <article class="list-item">
+        <div class="item-main">
+          <p class="item-title">${escapeHtml(item.title || "Leitura")}</p>
+          <p class="item-subtitle">${escapeHtml(item.description || "")}</p>
+        </div>
+        <span class="insight-pill insight-pill--${escapeHtml(item.tone || "info")}">${escapeHtml(item.tone || "info")}</span>
+      </article>
+    `,
+    "Nenhum insight disponivel para o recorte atual."
+  );
+
+  renderList(
+    "reportMonthlyList",
+    report?.monthlyIndicators || [],
+    item => `
+      <article class="list-item">
+        <div class="item-main">
+          <p class="item-title">${escapeHtml(item.monthLabel || "--")}</p>
+          <p class="item-subtitle">
+            Receitas ${escapeHtml(formatCurrency(item.receitas))} | Despesas ${escapeHtml(formatCurrency(item.despesas))} | Contribuicoes ${escapeHtml(formatCurrency(item.contribuicoes))}
+          </p>
+        </div>
+        <div class="item-side">
+          <strong class="${Number(item.saldo || 0) >= 0 ? "money-positive" : "money-negative"}">${escapeHtml(formatCurrency(item.saldo))}</strong>
+        </div>
+      </article>
+    `,
+    "Sem indicadores mensais no periodo selecionado."
+  );
+
+  renderList(
+    "reportTopTurmasList",
+    report?.topTurmas || [],
+    item => `
+      <article class="list-item">
+        <div class="item-main">
+          <p class="item-title">${escapeHtml(item.nome || "Turma")}</p>
+          <p class="item-subtitle">${escapeHtml(item.curso || "Curso nao informado")} | ${escapeHtml(String(item.quantidadeAlunos || 0))} alunos | status ${escapeHtml(item.status || "emdia")}</p>
+        </div>
+        <div class="item-side">
+          <strong>${escapeHtml(formatCurrency(item.totalArrecadado))}</strong>
+          <p class="item-subtitle">${escapeHtml(formatPercent(item.percentualMeta))} da meta</p>
+        </div>
+      </article>
+    `,
+    "Nenhuma turma disponivel para este recorte."
+  );
+
+  renderList(
+    "reportTransactionsList",
+    report?.recentTransactions || [],
+    item => `
+      <article class="list-item">
+        <div class="item-main">
+          <p class="item-title">${escapeHtml(item.descricao || "Lancamento")}</p>
+          <p class="item-subtitle">
+            ${escapeHtml(formatDate(item.data))} | ${escapeHtml(item.turmaNome || "Sem turma")} | ${escapeHtml(item.contribuicao ? "contribuicao" : (item.tipo || "movimento"))}
+          </p>
+        </div>
+        <div class="item-side">
+          <strong class="${(item.tipo || "").toLowerCase() === "receita" ? "money-positive" : "money-negative"}">${escapeHtml(formatCurrency(item.valor))}</strong>
+          <p class="item-subtitle">${escapeHtml(item.referencia || item.apoiadorNome || "Sem referencia")}</p>
+        </div>
+      </article>
+    `,
+    "Nenhum lancamento encontrado no periodo."
+  );
+}
+
+function bindReportActions() {
+  if (reportActionsBound) return;
+
+  const bindAction = (id, resourcePath, successMessage) => {
+    document.getElementById(id)?.addEventListener("click", async () => {
+      try {
+        const { blob, filename } = await api.exportarRelatorioFinanceiro(resourcePath, getDashboardFilters());
+        downloadBlob(blob, filename);
+      } catch (error) {
+        window.alert(error.message || successMessage);
+      }
+    });
+  };
+
+  bindAction("exportReportPdfBtn", "resumo.pdf", "Nao foi possivel gerar o PDF.");
+  bindAction("exportReportSummaryCsvBtn", "resumo.csv", "Nao foi possivel gerar o CSV resumo.");
+  bindAction("exportReportTransactionsCsvBtn", "lancamentos.csv", "Nao foi possivel gerar o CSV detalhado.");
+  reportActionsBound = true;
+}
+
 async function loadDashboard() {
   showState({ loading: true, error: "" });
 
@@ -455,7 +578,11 @@ async function loadDashboard() {
     normalizeDashboardFiltersForTurmas(turmas);
     populateTurmaFilter(turmas);
     syncFilterInputs();
-    const dashboard = await api.dashboardResumo(getDashboardFilters());
+    const filters = getDashboardFilters();
+    const [dashboard, report] = await Promise.all([
+      api.dashboardResumo(filters),
+      api.relatorioFinanceiro(filters)
+    ]);
 
     renderOverview(dashboard);
     renderAlerts(dashboard.alerts);
@@ -463,6 +590,7 @@ async function loadDashboard() {
     renderTransactions(dashboard.recentTransactions);
     renderExpenses(dashboard.expenseCategories);
     renderTurmas(dashboard.topTurmas);
+    renderReportModule(report);
     renderCharts(dashboard.monthlyFinancial, dashboard.expenseCategories);
     showState({ loading: false, error: "" });
   } catch (error) {
@@ -482,4 +610,5 @@ document.getElementById("refreshBtn")?.addEventListener("click", () => {
 syncFilterInputs();
 bindNavigation();
 bindDashboardFilters();
+bindReportActions();
 loadDashboard().catch(console.error);

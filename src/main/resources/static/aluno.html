@@ -56,6 +56,21 @@
       </button>
     </header>
 
+    <section class="student-mobile-glance" aria-label="Resumo rapido do aluno">
+      <article class="student-mobile-stat">
+        <span>Proximo</span>
+        <strong id="studentQuickNextEvent">Sem evento</strong>
+      </article>
+      <article class="student-mobile-stat">
+        <span>Pendencias</span>
+        <strong id="studentQuickPendingPresence">0 aguardando</strong>
+      </article>
+      <article class="student-mobile-stat">
+        <span>Votacoes</span>
+        <strong id="studentQuickVotesOpen">0 abertas</strong>
+      </article>
+    </section>
+
     <div id="studentNavBackdrop" class="student-nav-backdrop" hidden></div>
 
     <aside id="studentNavDrawer" class="student-nav-drawer" aria-hidden="true">
@@ -334,6 +349,27 @@
         <p id="errorMessage">Tente novamente em alguns instantes.</p>
       </div>
     </section>
+
+    <nav class="student-bottom-dock" aria-label="Acesso rapido do aluno">
+      <div class="student-bottom-dock__nav">
+        <button type="button" class="student-bottom-dock__button is-active" data-student-section-target="resumo">
+          <i class="ph ph-squares-four"></i>
+          <span>Resumo</span>
+        </button>
+        <button type="button" class="student-bottom-dock__button" data-student-section-target="agenda">
+          <i class="ph ph-calendar-blank"></i>
+          <span>Agenda</span>
+        </button>
+        <button type="button" class="student-bottom-dock__button" data-student-section-target="cadastro">
+          <i class="ph ph-identification-card"></i>
+          <span>Cadastro</span>
+        </button>
+        <button type="button" class="student-bottom-dock__button" data-student-section-target="votacoes">
+          <i class="ph ph-check-square-offset"></i>
+          <span>Votacoes</span>
+        </button>
+      </div>
+    </nav>
   </main>
 
   <script type="module" src="./js/aluno.js"></script>

@@ -27,6 +27,7 @@
         <button class="nav-item active" data-tab-target="overview"><i class="ph ph-chart-pie-slice"></i> Visao geral</button>
         <button class="nav-item" data-tab-target="agenda"><i class="ph ph-calendar-check"></i> Agenda</button>
         <button class="nav-item" data-tab-target="finance"><i class="ph ph-bank"></i> Financeiro</button>
+        <button class="nav-item" data-tab-target="reports"><i class="ph ph-file-arrow-down"></i> Relatorios</button>
         <button class="nav-item" data-tab-target="turmas"><i class="ph ph-users-three"></i> Turmas</button>
       </nav>
 
@@ -257,6 +258,91 @@
               </div>
             </div>
             <div id="expenseList" class="stack-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="tab-reports" class="tab-panel">
+        <div class="content-grid">
+          <article class="feature-card feature-card--wide">
+            <div class="section-head">
+              <div>
+                <p class="section-kicker">Modulo estrategico</p>
+                <h3 class="section-title">Relatorios de fluxo financeiro e arrecadacao</h3>
+              </div>
+              <div class="report-actions">
+                <button class="shortcut-btn report-action-btn" id="exportReportPdfBtn"><i class="ph ph-file-pdf"></i> PDF executivo</button>
+                <button class="shortcut-btn report-action-btn" id="exportReportSummaryCsvBtn"><i class="ph ph-file-csv"></i> CSV resumo</button>
+                <button class="shortcut-btn report-action-btn" id="exportReportTransactionsCsvBtn"><i class="ph ph-files"></i> CSV lancamentos</button>
+              </div>
+            </div>
+
+            <div class="report-kpi-grid">
+              <article class="report-kpi-card">
+                <span class="metric-label">Saldo atual</span>
+                <strong class="metric-value" id="reportCurrentBalance">R$ 0,00</strong>
+                <small class="metric-foot">Escopo consolidado do filtro selecionado</small>
+              </article>
+              <article class="report-kpi-card">
+                <span class="metric-label">Resultado medio mensal</span>
+                <strong class="metric-value" id="reportAverageNet">R$ 0,00</strong>
+                <small class="metric-foot">Receitas menos despesas por mes</small>
+              </article>
+              <article class="report-kpi-card">
+                <span class="metric-label">Participacao da arrecadacao</span>
+                <strong class="metric-value" id="reportContributionShare">0%</strong>
+                <small class="metric-foot">Peso das contribuicoes nas receitas do periodo</small>
+              </article>
+              <article class="report-kpi-card">
+                <span class="metric-label">Cobertura de caixa</span>
+                <strong class="metric-value" id="reportRunwayMonths">0 meses</strong>
+                <small class="metric-foot">Folego estimado com base na media de despesas</small>
+              </article>
+            </div>
+          </article>
+
+          <article class="feature-card">
+            <div class="section-head">
+              <div>
+                <p class="section-kicker">Insights</p>
+                <h3 class="section-title">Leituras do periodo</h3>
+              </div>
+            </div>
+            <div id="reportInsightsList" class="stack-list"></div>
+          </article>
+        </div>
+
+        <div class="content-grid">
+          <article class="feature-card">
+            <div class="section-head">
+              <div>
+                <p class="section-kicker">Serie mensal</p>
+                <h3 class="section-title">Janela de indicadores</h3>
+              </div>
+            </div>
+            <div id="reportMonthlyList" class="stack-list"></div>
+          </article>
+
+          <article class="feature-card feature-card--wide">
+            <div class="section-head">
+              <div>
+                <p class="section-kicker">Melhores resultados</p>
+                <h3 class="section-title">Turmas com maior tracao financeira</h3>
+              </div>
+            </div>
+            <div id="reportTopTurmasList" class="stack-list"></div>
+          </article>
+        </div>
+
+        <div class="single-grid">
+          <article class="feature-card">
+            <div class="section-head">
+              <div>
+                <p class="section-kicker">Base de exportacao</p>
+                <h3 class="section-title">Lancamentos que entram no relatorio</h3>
+              </div>
+            </div>
+            <div id="reportTransactionsList" class="stack-list"></div>
           </article>
         </div>
       </section>

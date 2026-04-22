@@ -42,6 +42,7 @@ public class SecurityConfig {
                 req.requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll();
                 req.requestMatchers("/error").permitAll();
                 req.requestMatchers(HttpMethod.GET, "/api/dashboard/**").hasAuthority("ROLE_COMISSAO");
+                req.requestMatchers(HttpMethod.GET, "/api/relatorios/**").hasAuthority("ROLE_COMISSAO");
                 req.requestMatchers("/api/cadastro/**").hasAuthority("ROLE_COMISSAO");
                 req.requestMatchers(HttpMethod.GET, "/api/contribuicoes/**").authenticated();
                 req.requestMatchers(HttpMethod.POST, "/api/contribuicoes").authenticated();
