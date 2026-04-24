@@ -95,6 +95,23 @@ Componentes centrais:
 - `PresencaEventoController`
 - `VotacaoSeguraController`
 
+### 5. Modulo de contribuicoes
+
+Responsavel por registrar contribuicoes e consolidar o resumo por turma.
+
+Componente central:
+
+- `ContribuicaoController`
+
+### 6. Modulo de relatorios financeiros
+
+Responsavel por gerar relatorios financeiros filtrados e exportar arquivos.
+
+Componentes centrais:
+
+- `RelatorioFinanceiroController`
+- `RelatorioFinanceiroService`
+
 ## Fluxos tecnicos principais
 
 ### Fluxo 1. Login
@@ -126,6 +143,20 @@ Componentes centrais:
 2. O frontend envia dados para `/api/eventos/confirmar-presenca`.
 3. O backend valida turma e atualiza a presenca do aluno no evento.
 
+### Fluxo 5. Registro de contribuicao
+
+1. O frontend envia os dados para `/api/contribuicoes`.
+2. O backend resolve o escopo da turma conforme o perfil autenticado.
+3. O sistema persiste um `LancamentoFinanceiro` marcado como contribuicao.
+4. O total arrecadado da turma e recalculado.
+
+### Fluxo 6. Relatorio financeiro
+
+1. O frontend chama `/api/relatorios/financeiro`.
+2. O backend consolida lancamentos do escopo e periodo selecionados.
+3. `RelatorioFinanceiroService` monta o DTO de resumo e os arquivos de exportacao.
+4. O frontend exibe o resumo e pode solicitar PDF ou CSV.
+
 ## Organizacao fisica relevante do repositorio
 
 ```text
@@ -135,8 +166,7 @@ src/main/java/.../dto
 src/main/java/.../model
 src/main/java/.../repository
 src/main/java/.../service
-src/main/resources
-frontend/
+src/main/resources/static
 docs/
 ```
 

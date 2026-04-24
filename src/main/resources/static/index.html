@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Gestao de Formaturas | Central</title>
+  <title>Formaly | Central</title>
 
   <script>
     window.APP_CONFIG = { LOGIN_URL: "./login.html", MAIN_SCRIPT: "./js/main.js" };
@@ -45,19 +45,13 @@
     <aside class="hidden md:flex w-80 flex-col bg-dark-800/80 backdrop-blur-xl border-r border-white/5">
       <div class="px-6 pt-6 pb-5 border-b border-white/6">
         <div class="brand-sidebar">
-          <div class="brand-mark" aria-hidden="true"></div>
+          <div class="brand-mark brand-mark--icon" aria-hidden="true">
+            <i class="ph ph-graduation-cap"></i>
+          </div>
           <div>
-            <div class="text-white font-semibold text-lg leading-tight">GestaoForm</div>
+            <div class="text-white font-semibold text-lg leading-tight">Formaly</div>
             <div class="text-xs text-slate-500">Painel inteligente da comissao</div>
           </div>
-        </div>
-        <div class="brand-sidebar__card">
-          <div class="brand-sidebar__copy">
-            <span class="brand-tag">Identidade visual</span>
-            <strong>Sua marca pode entrar aqui</strong>
-            <p>Logo, foto da turma e imagem da campanha ficam prontas para encaixe em `assets/brand`.</p>
-          </div>
-          <div class="brand-sidebar__photo" aria-hidden="true"></div>
         </div>
       </div>
 
@@ -68,21 +62,27 @@
         <button onclick="navigate('eventos')" id="nav-eventos" class="nav-item"><i class="ph ph-calendar-check text-xl"></i> Eventos</button>
         <button onclick="navigate('financeiro')" id="nav-financeiro" class="nav-item"><i class="ph ph-currency-dollar text-xl"></i> Financeiro</button>
         <button onclick="navigate('contribuicoes')" id="nav-contribuicoes" class="nav-item"><i class="ph ph-gift text-xl"></i> Contribuicoes</button>
+        <button onclick="navigate('relatorios')" id="nav-relatorios" class="nav-item"><i class="ph ph-file-arrow-down text-xl"></i> Relatorios</button>
         <button onclick="navigate('votacao')" id="nav-votacao" class="nav-item"><i class="ph ph-chart-bar text-xl"></i> Enquetes</button>
       </nav>
 
-      <div class="m-3 mt-auto rounded-[22px] border border-white/8 bg-white/[0.04] p-4">
-        <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-2xl bg-slate-700 flex items-center justify-center text-white font-bold text-lg" id="userAvatar">U</div>
-          <div class="min-w-0">
-            <div class="text-sm text-white font-semibold truncate" id="userNameDisplay">Carregando...</div>
-            <div class="text-xs text-slate-500" id="userRoleDisplay">...</div>
-            <div class="text-xs text-emerald-300 truncate mt-1" id="userLoginDisplay">@...</div>
+      <div class="m-3 mt-auto space-y-3">
+        <div class="rounded-[22px] border border-white/8 bg-white/[0.04] p-4">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-slate-700 flex items-center justify-center text-white font-bold text-lg" id="userAvatar">U</div>
+            <div class="min-w-0">
+              <div class="text-sm text-white font-semibold truncate" id="userNameDisplay">Carregando...</div>
+              <div class="text-xs text-slate-500" id="userRoleDisplay">...</div>
+              <div class="text-xs text-emerald-300 truncate mt-1" id="userLoginDisplay">@...</div>
+            </div>
           </div>
+          <button onclick="logout()" class="mt-4 w-full text-left flex items-center justify-center gap-2 px-3 py-3 rounded-2xl text-red-400 border border-red-500/15 bg-red-500/5 hover:bg-red-500/10 transition-colors text-sm font-semibold">
+            <i class="ph ph-sign-out text-lg"></i> Sair do Sistema
+          </button>
         </div>
-        <button onclick="logout()" class="mt-4 w-full text-left flex items-center justify-center gap-2 px-3 py-3 rounded-2xl text-red-400 border border-red-500/15 bg-red-500/5 hover:bg-red-500/10 transition-colors text-sm font-semibold">
-          <i class="ph ph-sign-out text-lg"></i> Sair do Sistema
-        </button>
+        <div class="brand-wide-logo-card brand-wide-logo-card--footer">
+          <img src="./assets/brand/formaly-banner.png" alt="Banner da Formaly" class="brand-wide-logo brand-wide-logo--footer">
+        </div>
       </div>
     </aside>
 
@@ -92,7 +92,7 @@
           <button id="menuToggle" class="md:hidden text-slate-400 hover:text-white"><i class="ph ph-list text-2xl"></i></button>
           <div>
             <p class="text-xs uppercase tracking-[.2em] text-slate-500 font-bold">Painel central</p>
-            <h1 class="text-xl text-white font-bold">Gestao de Formaturas</h1>
+            <h1 class="text-xl text-white font-bold">Formaly</h1>
           </div>
         </div>
         <div class="flex items-center gap-3">
@@ -113,12 +113,6 @@
               <div class="simple-update">
                 <span class="simple-update__label">Atualizado</span>
                 <strong id="lastUpdate" class="simple-update__value">Agora</strong>
-              </div>
-              <div class="brand-hero-card" aria-hidden="true">
-                <div class="brand-hero-card__overlay">
-                  <span class="brand-tag">Campanha visual</span>
-                  <strong>Espaco para foto da formatura</strong>
-                </div>
               </div>
             </div>
           </div>
@@ -433,6 +427,103 @@
               </div>
               <div id="contributionTurmaList" class="simple-stack"></div>
             </article>
+          </div>
+        </section>
+
+        <section id="screen-relatorios" class="screen hidden">
+          <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-5">
+            <div>
+              <h2 class="text-2xl font-bold text-white">Relatorios Financeiros</h2>
+              <p class="text-sm text-slate-500 mt-1">Escolha os filtros e gere um resumo financeiro quando precisar.</p>
+            </div>
+            <div class="report-action-group">
+              <button type="button" id="generateReportBtn" onclick="generateReport()" class="btn btn-primary"><i class="ph ph-chart-line-up"></i> Gerar relatorio</button>
+              <button type="button" id="exportReportPdfBtn" onclick="exportReportFile('resumo.pdf')" class="btn-outline" disabled><i class="ph ph-file-pdf"></i> PDF</button>
+              <button type="button" id="exportReportSummaryCsvBtn" onclick="exportReportFile('resumo.csv')" class="btn-outline" disabled><i class="ph ph-file-csv"></i> CSV resumo</button>
+              <button type="button" id="exportReportTransactionsCsvBtn" onclick="exportReportFile('lancamentos.csv')" class="btn-outline" disabled><i class="ph ph-files"></i> CSV lancamentos</button>
+            </div>
+          </div>
+
+          <div class="mb-6 rounded-[24px] border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl">
+            <div class="grid gap-4 lg:grid-cols-[1.2fr_220px_220px]">
+              <div>
+                <p class="text-xs uppercase tracking-[0.22em] text-slate-500 font-semibold">Filtro do relatorio</p>
+                <p class="mt-2 text-base font-semibold text-white" id="reportScopeLabel">Visao consolidada de todas as turmas</p>
+                <p class="mt-1 text-sm text-slate-400" id="reportFilterHint">Selecione uma turma e o periodo para montar o relatorio sob demanda.</p>
+              </div>
+
+              <label class="block">
+                <span class="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Turma</span>
+                <select id="reportTurmaFilter" class="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition focus:border-emerald-400/70 focus:ring-4 focus:ring-emerald-400/10">
+                  <option value="">Todas as turmas</option>
+                </select>
+              </label>
+
+              <label class="block">
+                <span class="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Periodo</span>
+                <select id="reportPeriodFilter" class="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition focus:border-emerald-400/70 focus:ring-4 focus:ring-emerald-400/10">
+                  <option value="3">Ultimos 3 meses</option>
+                  <option value="6">Ultimos 6 meses</option>
+                  <option value="12">Ultimos 12 meses</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div id="reportEmptyState" class="simple-panel">
+            <div class="simple-panel__head">
+              <div>
+                <p class="simple-kicker">Relatorio sob demanda</p>
+                <h3 class="simple-panel__title">Nenhum relatorio gerado ainda</h3>
+              </div>
+            </div>
+            <p class="text-sm text-slate-400">Use os filtros acima e clique em <strong class="text-white">Gerar relatorio</strong> para montar o resumo financeiro e liberar as exportacoes.</p>
+          </div>
+
+          <div id="reportResultPanel" hidden>
+            <div class="report-kpi-grid">
+              <article class="simple-card simple-card--money">
+                <span class="simple-card__label">Saldo atual</span>
+                <strong id="reportCurrentBalance" class="simple-card__value">R$ 0,00</strong>
+                <small id="reportGeneratedAt">Aguardando geracao</small>
+              </article>
+              <article class="simple-card simple-card--event">
+                <span class="simple-card__label">Receitas do periodo</span>
+                <strong id="reportPeriodRevenue" class="simple-card__value">R$ 0,00</strong>
+                <small id="reportAverageNet">Resultado medio R$ 0,00</small>
+              </article>
+              <article class="simple-card simple-card--attention">
+                <span class="simple-card__label">Despesas do periodo</span>
+                <strong id="reportPeriodExpenses" class="simple-card__value">R$ 0,00</strong>
+                <small id="reportRunwayMonths">Cobertura Sem base</small>
+              </article>
+              <article class="simple-card">
+                <span class="simple-card__label">Contribuicoes no periodo</span>
+                <strong id="reportPeriodContributions" class="simple-card__value">R$ 0,00</strong>
+                <small id="reportContributionShare">Participacao 0%</small>
+              </article>
+            </div>
+
+            <div class="simple-panel mt-6">
+              <div class="simple-panel__head">
+                <div>
+                  <p class="simple-kicker">Resumo gerado</p>
+                  <h3 class="simple-panel__title">Visao rapida</h3>
+                </div>
+                <p class="text-sm text-slate-400">Resumo simples para consulta rapida e exportacao.</p>
+              </div>
+              <div id="reportSummaryList" class="simple-stack"></div>
+            </div>
+
+            <div class="simple-panel mt-6">
+              <div class="simple-panel__head">
+                <div>
+                  <p class="simple-kicker">Observacoes</p>
+                  <h3 class="simple-panel__title">Principais insights</h3>
+                </div>
+              </div>
+              <div id="reportInsightsList" class="simple-stack"></div>
+            </div>
           </div>
         </section>
 

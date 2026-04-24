@@ -8,6 +8,7 @@ CREATE TABLE turma (
     curso VARCHAR(255),
     instituicao VARCHAR(255),
     total_arrecadado DECIMAL(12,2) DEFAULT 0.00,
+    meta_arrecadacao DECIMAL(12,2) DEFAULT 0.00,
     status VARCHAR(50) DEFAULT 'emdia'
 );
 
@@ -17,7 +18,7 @@ CREATE TABLE aluno (
     nome VARCHAR(255) NOT NULL,
     identificador VARCHAR(255) UNIQUE,
     contato VARCHAR(255),
-    status VARCHAR(50) DEFAULT 'pendente',
+    status VARCHAR(50) DEFAULT 'ativo',
     CONSTRAINT fk_aluno_turma
         FOREIGN KEY (turma_id) REFERENCES turma(id)
 );
@@ -61,6 +62,8 @@ CREATE TABLE lancamento_financeiro (
     aluno_id BIGINT NULL,
     descricao VARCHAR(255),
     tipo VARCHAR(50),
+    contribuicao BOOLEAN DEFAULT FALSE,
+    apoiador_nome VARCHAR(255),
     valor DECIMAL(12,2),
     data_lancamento DATE,
     referencia VARCHAR(255),
@@ -123,6 +126,7 @@ CREATE TABLE voto (
 CREATE INDEX idx_aluno_turma ON aluno(turma_id);
 CREATE INDEX idx_evento_turma ON evento(turma_id);
 CREATE INDEX idx_lancamento_turma ON lancamento_financeiro(turma_id);
+CREATE INDEX idx_lancamento_contribuicao ON lancamento_financeiro(contribuicao);
 CREATE INDEX idx_tarefa_turma ON tarefa(turma_id);
 CREATE INDEX idx_votacao_turma ON votacao(turma_id);
 CREATE INDEX idx_opcao_votacao ON opcao_votacao(votacao_id);

@@ -63,11 +63,24 @@
 | DELETE | `/api/cadastro/votacao/{id}` |
 | POST | `/api/cadastro/votacao/{id}/opcao` |
 
-## Endpoints de dashboard e portal do aluno
+## Endpoints analiticos e do portal
+
+### Dashboard, contribuicoes e relatorios
 
 | Metodo | Rota | Objetivo | Acesso |
 | --- | --- | --- | --- |
 | GET | `/api/dashboard/resumo` | Dashboard consolidada | Comissao |
+| GET | `/api/contribuicoes/resumo` | Resumo de contribuicoes | Autenticado |
+| POST | `/api/contribuicoes` | Registrar contribuicao | Autenticado |
+| GET | `/api/relatorios/financeiro` | Gerar relatorio financeiro | Comissao |
+| GET | `/api/relatorios/financeiro/export/resumo.csv` | Exportar resumo CSV | Comissao |
+| GET | `/api/relatorios/financeiro/export/lancamentos.csv` | Exportar lancamentos CSV | Comissao |
+| GET | `/api/relatorios/financeiro/export/resumo.pdf` | Exportar resumo PDF | Comissao |
+
+### Portal do aluno
+
+| Metodo | Rota | Objetivo | Acesso |
+| --- | --- | --- | --- |
 | GET | `/api/aluno/painel` | Portal do aluno | Aluno |
 | POST | `/api/eventos/confirmar-presenca` | Confirmar presenca | Aluno |
 | POST | `/api/votacoes/votar` | Registrar voto seguro | Aluno |
@@ -87,6 +100,34 @@ Exemplo:
 
 ```http
 GET /api/dashboard/resumo?turmaId=3&periodoMeses=6
+Authorization: Bearer <token>
+```
+
+### Contribuicoes
+
+`GET /api/contribuicoes/resumo`
+
+Query params suportados:
+
+- `turmaId`
+
+Observacao:
+
+- quando o usuario e aluno, o backend ignora turma externa e usa a propria turma.
+
+### Relatorio financeiro
+
+`GET /api/relatorios/financeiro`
+
+Query params suportados:
+
+- `turmaId`
+- `periodoMeses`
+
+Exemplo:
+
+```http
+GET /api/relatorios/financeiro?turmaId=3&periodoMeses=6
 Authorization: Bearer <token>
 ```
 
@@ -134,6 +175,21 @@ Authorization: Bearer <token>
   "data": "2026-08-05",
   "referencia": "Contrato buffet",
   "turmaId": 1
+}
+```
+
+### Registro de contribuicao
+
+```json
+{
+  "titulo": "Apoio para a turma",
+  "valor": 150.00,
+  "data": "2026-08-10",
+  "mensagem": "Contribuicao para ajudar na meta",
+  "turmaId": 1,
+  "alunoId": 3,
+  "apoiadorNome": "Familia do aluno",
+  "anonima": false
 }
 ```
 
@@ -234,11 +290,48 @@ sequenceDiagram
     D-->>F: DTO consolidado da dashboard
 ```
 
+## Fluxo de contribuicao
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario autenticado
+    participant F as Frontend
+    participant C as ContribuicaoController
+    participant TR as TurmaRepository
+    participant LR as LancamentoRepository
+
+    U->>F: informa os dados da contribuicao
+    F->>C: POST /api/contribuicoes
+    C->>TR: resolver turma do escopo
+    C->>LR: salvar lancamento financeiro
+    C-->>F: contribuicao registrada
+```
+
+## Fluxo de relatorio financeiro
+
+```mermaid
+sequenceDiagram
+    participant F as Frontend
+    participant C as RelatorioFinanceiroController
+    participant S as RelatorioFinanceiroService
+    participant LR as LancamentoRepository
+    participant TR as TurmaRepository
+
+    F->>C: GET /api/relatorios/financeiro
+    C->>S: gerar relatorio
+    S->>TR: resolver escopo
+    S->>LR: consolidar lancamentos
+    S-->>C: RelatorioFinanceiroDTO
+    C-->>F: resumo do relatorio
+```
+
 ## Regras criticas reforcadas pela API
 
 - somente comissao acessa `/api/cadastro/**`;
 - somente comissao acessa `/api/dashboard/**`;
+- somente comissao acessa `/api/relatorios/**`;
 - somente aluno acessa `/api/aluno/**`;
 - somente aluno pode votar e confirmar presenca;
+- contribuicoes respeitam o escopo da turma do usuario autenticado;
 - voto e validado contra turma e prazo;
 - presenca e validada contra turma do evento.

@@ -5,6 +5,7 @@ classDiagram
         +String curso
         +String instituicao
         +Double totalArrecadado
+        +Double metaArrecadacao
         +String status
         +Integer getQuantidadeAlunos()
     }
@@ -44,6 +45,8 @@ classDiagram
         +Long id
         +String descricao
         +String tipo
+        +Boolean contribuicao
+        +String apoiadorNome
         +Double valor
         +LocalDate dataLancamento
         +String referencia
@@ -82,21 +85,21 @@ classDiagram
         ROLE_ALUNO
     }
 
-    Turma "1" --> "*" Aluno
-    Turma "1" --> "*" Evento
-    Turma "1" --> "*" LancamentoFinanceiro
-    Turma "1" --> "*" Votacao
-    Turma "1" --> "*" Tarefa
+    Turma "1" --> "*" Aluno : possui
+    Turma "1" --> "*" Evento : agenda
+    Turma "1" --> "*" LancamentoFinanceiro : consolida
+    Turma "1" --> "*" Votacao : promove
+    Turma "1" --> "*" Tarefa : organiza
 
-    Aluno "1" --> "0..1" Usuario
-    Aluno "1" --> "*" Voto
-    Aluno "1" --> "*" PresencaEvento
+    Aluno "1" --> "0..1" Usuario : credencial
+    Aluno "1" --> "*" Voto : registra
+    Aluno "1" --> "*" PresencaEvento : responde
     Aluno "0..1" --> "*" Tarefa : responsavel
     Aluno "0..1" --> "*" LancamentoFinanceiro : referencia opcional
 
-    Evento "1" --> "*" PresencaEvento
-    Votacao "1" --> "*" OpcaoVotacao
-    Votacao "1" --> "*" Voto
-    OpcaoVotacao "1" --> "*" Voto
+    Evento "1" --> "*" PresencaEvento : recebe
+    Votacao "1" --> "*" OpcaoVotacao : contem
+    Votacao "1" --> "*" Voto : recebe
+    OpcaoVotacao "1" --> "*" Voto : escolhida em
 
     Usuario --> Perfil
