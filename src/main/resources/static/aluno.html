@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Formaly | Area do formando</title>
+  <title>Formaly | Área do formando</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
@@ -37,7 +37,7 @@
   <main class="student-shell">
     <header class="student-topbar">
       <div class="student-topbar__copy">
-        <span class="student-pill">Area do formando</span>
+        <span class="student-pill">Área do formando</span>
         <strong id="studentMobileName" class="student-topbar__title">Carregando...</strong>
         <p id="studentMobileMeta" class="student-topbar__text">Painel organizado para celular</p>
       </div>
@@ -58,16 +58,16 @@
 
     <section class="student-mobile-glance" aria-label="Resumo rapido do aluno">
       <article class="student-mobile-stat">
-        <span>Proximo</span>
+        <span>Próximo</span>
         <strong id="studentQuickNextEvent">Sem evento</strong>
       </article>
       <article class="student-mobile-stat">
-        <span>Pendencias</span>
-        <strong id="studentQuickPendingPresence">0 aguardando</strong>
+        <span>Pendências</span>
+        <strong id="studentQuickPendingPresence">0 Aguardando</strong>
       </article>
       <article class="student-mobile-stat">
-        <span>Votacoes</span>
-        <strong id="studentQuickVotesOpen">0 abertas</strong>
+        <span>Votações</span>
+        <strong id="studentQuickVotesOpen">0 Abertas</strong>
       </article>
     </section>
 
@@ -77,13 +77,13 @@
       <div class="student-nav__head">
         <div>
           <span class="student-pill">Menu</span>
-          <h2 class="student-nav__title">Navegue pela sua area</h2>
+          <h2 class="student-nav__title">Navegue pela sua área</h2>
         </div>
         <button id="studentMenuClose" type="button" class="student-menu-close" aria-label="Fechar menu">
           <i class="ph ph-x"></i>
         </button>
       </div>
-      <p class="student-nav__text">No celular, o painel foi dividido em blocos para voce acessar cada area sem rolagem excessiva.</p>
+      <p class="student-nav__text">No celular, o painel foi dividido em blocos para você acessar cada área sem rolagem excessiva.</p>
       <div class="student-nav__list" aria-label="Secoes da area do aluno">
         <button type="button" class="student-nav-link is-active" data-student-section-target="resumo">
           <i class="ph ph-squares-four"></i>
@@ -99,7 +99,7 @@
         </button>
         <button type="button" class="student-nav-link" data-student-section-target="votacoes">
           <i class="ph ph-check-square-offset"></i>
-          <span>Votacoes</span>
+          <span>Votações</span>
         </button>
       </div>
     </aside>
@@ -119,23 +119,23 @@
       </button>
       <button type="button" class="student-nav-link" data-student-section-target="votacoes">
         <i class="ph ph-check-square-offset"></i>
-        <span>Votacoes</span>
+        <span>Votações</span>
       </button>
     </nav>
 
     <section class="student-section is-active" data-student-section="resumo">
       <header class="student-hero">
         <div class="student-hero__copy">
-          <span class="student-pill">Area do formando</span>
-          <h1 class="student-hero__title">Tudo o que voce precisa acompanhar da sua turma</h1>
+          <span class="student-pill">Área do formando</span>
+          <h1 class="student-hero__title">Tudo o que você precisa acompanhar da sua turma</h1>
           <p class="student-hero__text">
-            Consulte seus proximos eventos, confirme presenca e participe das votacoes da turma sem entrar na area administrativa.
+            Consulte seus próximos eventos, confirme presença e participe das votações da turma sem entrar na área administrativa.
           </p>
           <div class="student-brand-banner" aria-hidden="true">
             <div class="student-brand-banner__visual"></div>
             <div class="student-brand-banner__copy">
               <span class="brand-tag">Sua identidade</span>
-              <strong>Espaco para a foto da turma</strong>
+              <strong>Espaço para a foto da turma</strong>
               <p>Ideal para capa da campanha, imagem do curso ou foto oficial da formatura.</p>
             </div>
           </div>
@@ -144,7 +144,7 @@
             <div>
               <p class="student-profile__name" id="studentName">Carregando...</p>
               <p class="student-profile__meta" id="studentTurma">Turma</p>
-              <p class="student-profile__meta" id="studentLogin">@usuario</p>
+              <p class="student-profile__meta" id="studentLogin">@usuário</p>
             </div>
           </div>
         </div>
@@ -152,12 +152,12 @@
         <div class="student-hero__side">
           <div class="student-brand-mark" aria-hidden="true"></div>
           <article class="student-highlight">
-            <span class="student-highlight__label">Proximo evento</span>
+            <span class="student-highlight__label">Próximo evento</span>
             <strong id="nextEventName" class="student-highlight__title">Carregando...</strong>
             <p id="nextEventDate" class="student-highlight__copy">Sem data definida</p>
             <p id="nextEventLocation" class="student-highlight__copy">Local a definir</p>
             <div class="student-highlight__footer">
-              <span class="student-status-badge" id="studentStatusBadge">agenda</span>
+              <span class="student-status-badge" id="studentStatusBadge">Agenda</span>
               <strong id="nextEventCountdown">--</strong>
             </div>
           </article>
@@ -181,12 +181,12 @@
           <small>Total de compromissos cadastrados</small>
         </article>
         <article class="student-metric">
-          <span class="student-metric__label">Presencas respondidas</span>
+          <span class="student-metric__label">Presenças respondidas</span>
           <strong id="summaryPresence" class="student-metric__value">0</strong>
-          <small>Confirmacoes ja enviadas</small>
+          <small>Confirmações ja enviadas</small>
         </article>
         <article class="student-metric">
-          <span class="student-metric__label">Votacoes abertas</span>
+          <span class="student-metric__label">Votações abertas</span>
           <strong id="summaryVotesOpen" class="student-metric__value">0</strong>
           <small>Enquetes esperando seu voto</small>
         </article>
@@ -196,9 +196,9 @@
         <div class="student-card__head">
           <div>
             <p class="student-card__eyebrow">Meta financeira</p>
-            <h2 class="student-card__title">Progresso da arrecadacao da turma</h2>
+            <h2 class="student-card__title">Progresso da arrecadação da turma</h2>
           </div>
-          <span id="studentGoalBadge" class="student-chip">Meta em definicao</span>
+          <span id="studentGoalBadge" class="student-chip">Meta em definição</span>
         </div>
 
         <div class="student-goal-layout">
@@ -241,7 +241,7 @@
       <article class="student-card">
         <div class="student-card__head">
           <div>
-            <p class="student-card__eyebrow">Contribuicoes</p>
+            <p class="student-card__eyebrow">Contribuições</p>
             <h2 class="student-card__title">Apoie a meta da sua turma</h2>
           </div>
           <span id="studentContributionScope" class="student-chip student-chip--neutral">Campanha da turma</span>
@@ -251,7 +251,7 @@
           <article class="student-metric">
             <span class="student-metric__label">Total contribuido</span>
             <strong id="studentContributionTotal" class="student-metric__value">R$ 0,00</strong>
-            <small id="studentContributionCount">0 apoios registrados</small>
+            <small id="studentContributionCount">0 Apoios registrados</small>
           </article>
           <article class="student-metric">
             <span class="student-metric__label">Ticket medio</span>
@@ -263,7 +263,7 @@
         <div class="student-card__head">
           <div>
             <p class="student-card__eyebrow">Registrar apoio</p>
-            <h3 class="student-card__title">Nova contribuicao</h3>
+            <h3 class="student-card__title">Nova contribuição</h3>
           </div>
         </div>
 
@@ -277,15 +277,15 @@
           <textarea id="studentContributionMessage" rows="3" class="form-input" placeholder="Mensagem opcional"></textarea>
           <label class="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/40 px-4 py-3 text-sm text-slate-300">
             <input id="studentContributionAnonymous" type="checkbox" class="h-4 w-4 rounded border-white/20 bg-slate-900 text-emerald-500 focus:ring-emerald-500" />
-            <span>Registrar como contribuicao anonima</span>
+            <span>Registrar como contribuição anônima</span>
           </label>
-          <button type="submit" class="btn btn-primary justify-center"><i class="ph ph-gift"></i> Enviar contribuicao</button>
+          <button type="submit" class="btn btn-primary justify-center"><i class="ph ph-gift"></i> Enviar contribuição</button>
         </form>
 
         <div class="student-card__head">
           <div>
-            <p class="student-card__eyebrow">Historico recente</p>
-            <h3 class="student-card__title">Ultimos apoios registrados</h3>
+            <p class="student-card__eyebrow">Histórico recente</p>
+            <h3 class="student-card__title">Últimos apoios registrados</h3>
           </div>
         </div>
         <div id="studentContributionRecentList" class="student-stack"></div>
@@ -299,7 +299,7 @@
             <p class="student-card__eyebrow">Agenda</p>
             <h2 class="student-card__title">Eventos da sua turma</h2>
           </div>
-          <span class="student-chip" id="summaryPendingPresence">0 pendentes</span>
+          <span class="student-chip" id="summaryPendingPresence">0 Pendentes</span>
         </div>
         <div id="eventList" class="student-stack"></div>
       </article>
@@ -310,14 +310,14 @@
         <div class="student-card__head">
           <div>
             <p class="student-card__eyebrow">Seu cadastro</p>
-            <h2 class="student-card__title">Informacoes rapidas</h2>
+            <h2 class="student-card__title">Informações rápidas</h2>
           </div>
         </div>
         <div class="student-detail-list">
           <div class="student-detail-row"><span>Curso</span><strong id="studentCourse">---</strong></div>
           <div class="student-detail-row"><span>Contato</span><strong id="studentContact">---</strong></div>
           <div class="student-detail-row"><span>Identificador</span><strong id="studentIdentifier">---</strong></div>
-          <div class="student-detail-row"><span>Votacoes respondidas</span><strong id="summaryVotesDone">0</strong></div>
+          <div class="student-detail-row"><span>Votações respondidas</span><strong id="summaryVotesDone">0</strong></div>
         </div>
       </article>
     </section>
@@ -326,8 +326,8 @@
       <article class="student-card">
         <div class="student-card__head">
           <div>
-            <p class="student-card__eyebrow">Decisoes da turma</p>
-            <h2 class="student-card__title">Votacoes e enquetes</h2>
+            <p class="student-card__eyebrow">Decisões da turma</p>
+            <h2 class="student-card__title">Votações e enquetes</h2>
           </div>
         </div>
         <div id="voteList" class="student-vote-list"></div>
@@ -337,15 +337,15 @@
     <section class="screen-state hidden" id="loadingState">
       <div class="state-card">
         <div class="spinner"></div>
-        <strong>Atualizando sua area</strong>
-        <p>Carregando eventos, votacoes e confirmacoes.</p>
+        <strong>Atualizando sua área</strong>
+        <p>Carregando eventos, votações e confirmações.</p>
       </div>
     </section>
 
     <section class="screen-state hidden" id="errorState">
       <div class="state-card">
         <i class="ph ph-warning-octagon"></i>
-        <strong>Falha ao carregar sua area</strong>
+        <strong>Falha ao carregar sua área</strong>
         <p id="errorMessage">Tente novamente em alguns instantes.</p>
       </div>
     </section>
@@ -366,7 +366,7 @@
         </button>
         <button type="button" class="student-bottom-dock__button" data-student-section-target="votacoes">
           <i class="ph ph-check-square-offset"></i>
-          <span>Votacoes</span>
+          <span>Votações</span>
         </button>
       </div>
     </nav>
