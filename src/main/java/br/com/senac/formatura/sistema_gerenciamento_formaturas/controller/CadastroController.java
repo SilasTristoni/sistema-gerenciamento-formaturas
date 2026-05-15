@@ -72,7 +72,7 @@ public class CadastroController {
 
     @PostMapping("/turma")
     public Turma criarTurma(@RequestBody Turma turma) {
-        turma.setMetaArrecadacao(normalizeMoney(turma.getMetaArrecadacao()));
+        turma.setMetaArrecadacao(normalizePositiveMoney(turma.getMetaArrecadacao()));
         turma.setTotalArrecadado(normalizeMoney(turma.getTotalArrecadado()));
         return turmaRepo.save(turma);
     }
@@ -82,7 +82,8 @@ public class CadastroController {
         Turma turma = turmaRepo.findById(id).orElseThrow();
         turma.setNome(dto.getNome());
         turma.setCurso(dto.getCurso());
-        turma.setMetaArrecadacao(normalizeMoney(dto.getMetaArrecadacao()));
+        turma.setMetaArrecadacao(normalizePositiveMoney(dto.getMetaArrecadacao()));
+        syncTurmaTotalArrecadado(turma);
         return turmaRepo.save(turma);
     }
 
@@ -413,7 +414,7 @@ public class CadastroController {
 
     private void syncTurmaTotalArrecadado(Turma turma) {
         if (turma == null || turma.getId() == null) return;
-        double totalAtualizado = normalizeMoney(lancamentoRepo.totalReceitasByTurmaId(turma.getId()));
+        double totalAtualizado = normalizeMoney(lancamentoRepo.totalSaldoByTurmaId(turma.getId()));
         if (Double.compare(normalizeMoney(turma.getTotalArrecadado()), totalAtualizado) == 0) return;
         turma.setTotalArrecadado(totalAtualizado);
         turmaRepo.save(turma);
@@ -424,8 +425,12 @@ public class CadastroController {
         turmaRepo.findById(turmaId).ifPresent(this::syncTurmaTotalArrecadado);
     }
 
-    private double normalizeMoney(Double value) {
+    private double normalizePositiveMoney(Double value) {
         return roundMoney(Math.max(0.0, safeDouble(value)));
+    }
+
+    private double normalizeMoney(Double value) {
+        return roundMoney(safeDouble(value));
     }
 
     private double safeDouble(Double value) {
