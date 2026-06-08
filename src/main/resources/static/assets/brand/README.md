@@ -9,7 +9,7 @@ Coloque aqui os arquivos abaixo para personalizar o sistema sem alterar o codigo
 - `campaign-cover.jpg`
   Imagem principal da campanha ou da formatura.
 - `student-cover.jpg`
-  Foto usada na area do formando.
+  Foto usada na área do formando.
 
 Recomendacoes:
 
@@ -18,4 +18,4 @@ Recomendacoes:
 - `campaign-cover.jpg`: 1600x1000
 - `student-cover.jpg`: 1600x1000
 
-Se um arquivo nao existir, o sistema usa um layout visual de fallback.
+Se um arquivo não existir, o sistema usa um layout visual de fallback.

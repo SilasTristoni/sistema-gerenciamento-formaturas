@@ -162,8 +162,8 @@ public class DashboardController {
             turmaSelecionada != null ? firstNonBlank(turmaSelecionada.getNome(), "Turma selecionada") : "Todas as turmas",
             periodMonths,
             turmaSelecionada != null
-                ? "Visao focada na turma " + firstNonBlank(turmaSelecionada.getNome(), "selecionada")
-                : "Visao consolidada de todas as turmas"
+                ? "Visão focada na turma " + firstNonBlank(turmaSelecionada.getNome(), "selecionada")
+                : "Visão consolidada de todas as turmas"
         );
 
         DashboardResumoDTO.ForecastSnapshot forecast = buildForecast(monthlyFinancial, saldo);
@@ -209,15 +209,15 @@ public class DashboardController {
         String descricao;
 
         if (!metaDefinida) {
-            titulo = "Meta ainda nao definida";
-            descricao = "Cadastre uma meta para a turma e acompanhe a arrecadacao em tempo real.";
+            titulo = "Meta ainda não definida";
+            descricao = "Cadastre uma meta para a turma e acompanhe a arrecadação em tempo real.";
         } else if (metaAtingida) {
             titulo = "Meta financeira atingida";
-            descricao = "A arrecadacao ja bateu o objetivo definido para este escopo.";
+            descricao = "A arrecadação já bateu o objetivo definido para este escopo.";
         } else {
             titulo = "Meta financeira em andamento";
             descricao = "Faltam " + formatCurrency(valorRestante)
-                + " para bater a meta. Como referencia opcional, isso representa "
+                + " para bater a meta. Como referência opcional, isso representa "
                 + formatCurrency(sugestaoContribuicaoMedia)
                 + " por participante.";
         }
@@ -247,14 +247,14 @@ public class DashboardController {
             notifications.add(new DashboardResumoDTO.NotificationItem(
                 "warning",
                 "Defina a meta financeira",
-                "Sem meta cadastrada, fica mais dificil orientar contribuicoes e previsao de caixa.",
+                "Sem meta cadastrada, fica mais difícil orientar contribuições e previsão de caixa.",
                 "Atualizar turma"
             ));
         } else if (!goalProgress.metaAtingida() && goalProgress.percentualAtingido() >= 80) {
             notifications.add(new DashboardResumoDTO.NotificationItem(
                 "success",
                 "Meta na reta final",
-                "A arrecadacao ja passou de 80% do objetivo. Vale reforcar a campanha de contribuicao da turma.",
+                "A arrecadação já passou de 80% do objetivo. Vale reforçar a campanha de contribuição da turma.",
                 "Ver turmas"
             ));
         }
@@ -264,8 +264,8 @@ public class DashboardController {
             if (dias >= 0 && dias <= 7) {
                 notifications.add(new DashboardResumoDTO.NotificationItem(
                     "warning",
-                    "Evento muito proximo",
-                    "Revise presenca e caixa antes de " + firstNonBlank(proximoEvento.getNome(), "o evento") + ".",
+                    "Evento muito próximo",
+                    "Revise presença e caixa antes de " + firstNonBlank(proximoEvento.getNome(), "o evento") + ".",
                     "Abrir agenda"
                 ));
             }
@@ -274,17 +274,17 @@ public class DashboardController {
         if (votacoesAbertas > 0) {
             notifications.add(new DashboardResumoDTO.NotificationItem(
                 "info",
-                "Votacoes abertas",
-                "Existem " + votacoesAbertas + " votacoes abertas aguardando engajamento da turma.",
-                "Acompanhar votacoes"
+                "Votações abertas",
+                "Existem " + votacoesAbertas + " votações abertas aguardando engajamento da turma.",
+                "Acompanhar votações"
             ));
         }
 
         if (notifications.isEmpty()) {
             notifications.add(new DashboardResumoDTO.NotificationItem(
                 "success",
-                "Operacao sob controle",
-                "Meta, agenda e financeiro estao sem sinais criticos no momento.",
+                "Operação sob controle",
+                "Meta, agenda e financeiro estão sem sinais críticos no momento.",
                 "Seguir monitorando"
             ));
         }
@@ -374,13 +374,13 @@ public class DashboardController {
 
         if (averageNet > 0) {
             trend = "positive";
-            recommendation = "A media recente indica folga de caixa. Considere antecipar reservas e negociar contratos.";
+            recommendation = "A média recente indica folga de caixa. Considere antecipar reservas e negociar contratos.";
         } else if (averageNet < 0) {
             trend = "warning";
-            recommendation = "A media recente pressiona o caixa. Reforce a campanha de contribuicoes e segure novas despesas.";
+            recommendation = "A média recente pressiona o caixa. Reforce a campanha de contribuições e segure novas despesas.";
         } else {
             trend = "neutral";
-            recommendation = "A operacao esta estavel, mas sem margem. Vale acompanhar entradas e saidas mais de perto.";
+            recommendation = "A operação está estável, mas sem margem. Vale acompanhar entradas e saídas mais de perto.";
         }
 
         return new DashboardResumoDTO.ForecastSnapshot(
@@ -400,22 +400,22 @@ public class DashboardController {
             alerts.add(new DashboardResumoDTO.AlertItem(
                 "high",
                 "Saldo negativo",
-                "As despesas superam as receitas. Reforce comunicacao sobre contribuicoes e revise custos."
+                "As despesas superam as receitas. Reforce comunicação sobre contribuições e revise custos."
             ));
         }
 
         if (proximoEvento == null) {
             alerts.add(new DashboardResumoDTO.AlertItem(
                 "medium",
-                "Agenda sem proximo evento",
-                "Cadastre os proximos marcos da formatura para dar previsibilidade ao time."
+                "Agenda sem próximo evento",
+                "Cadastre os próximos marcos da formatura para dar previsibilidade ao time."
             ));
         } else if (proximoEvento.getDataEvento() != null) {
             long dias = ChronoUnit.DAYS.between(hoje, proximoEvento.getDataEvento());
             if (dias >= 0 && dias <= 15) {
                 alerts.add(new DashboardResumoDTO.AlertItem(
                     dias <= 7 ? "high" : "medium",
-                    "Evento proximo",
+                    "Evento próximo",
                     "O evento %s acontece em %s dias.".formatted(proximoEvento.getNome(), dias)
                 ));
             }
@@ -424,8 +424,8 @@ public class DashboardController {
         if (alerts.isEmpty()) {
             alerts.add(new DashboardResumoDTO.AlertItem(
                 "low",
-                "Operacao estavel",
-                "Sem alertas criticos no momento. Continue monitorando caixa e agenda."
+                "Operação estável",
+                "Sem alertas críticos no momento. Continue monitorando caixa e agenda."
             ));
         }
 
@@ -456,7 +456,7 @@ public class DashboardController {
         return turmas.stream()
             .filter(turma -> turmaId.equals(turma.getId()))
             .findFirst()
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Turma nao encontrada."));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Turma não encontrada."));
     }
 
     private DashboardResumoDTO.EventSnapshot toEventSnapshot(Evento evento, LocalDate hoje) {
@@ -478,11 +478,11 @@ public class DashboardController {
     private DashboardResumoDTO.TransactionSnapshot toTransactionSnapshot(LancamentoFinanceiro lancamento) {
         return new DashboardResumoDTO.TransactionSnapshot(
             lancamento.getId(),
-            firstNonBlank(lancamento.getDescricao(), "Lancamento sem descricao"),
+            firstNonBlank(lancamento.getDescricao(), "Lançamento sem descrição"),
             firstNonBlank(lancamento.getTipo(), "despesa"),
             round(safeDouble(lancamento.getValor())),
             lancamento.getDataLancamento(),
-            firstNonBlank(lancamento.getReferencia(), "Sem referencia"),
+            firstNonBlank(lancamento.getReferencia(), "Sem referência"),
             lancamento.getTurma() != null ? firstNonBlank(lancamento.getTurma().getNome(), "Sem turma") : "Sem turma"
         );
     }
@@ -495,7 +495,7 @@ public class DashboardController {
         return new DashboardResumoDTO.TurmaPerformanceItem(
             turma.getId(),
             firstNonBlank(turma.getNome(), "Turma sem nome"),
-            firstNonBlank(turma.getCurso(), "Curso nao informado"),
+            firstNonBlank(turma.getCurso(), "Curso não informado"),
             quantidadeAlunosPorTurma.getOrDefault(turma.getId(), 0L).intValue(),
             meta,
             arrecadado,

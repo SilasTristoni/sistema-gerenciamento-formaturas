@@ -19,7 +19,7 @@ function formatCurrency(value = 0) {
 function formatGoalProgress(meta = 0, arrecadado = 0) {
     const normalizedMeta = Number(meta || 0);
     const normalizedRaised = Number(arrecadado || 0);
-    if (normalizedMeta <= 0) return 'Meta nao definida';
+    if (normalizedMeta <= 0) return 'Meta não definida';
     return `${Math.round((normalizedRaised / normalizedMeta) * 100)}% da meta`;
 }
 
@@ -30,6 +30,22 @@ function goalBar(percentual = 0) {
             <div class="goal-table-progress__bar" style="width:${visual}%;"></div>
         </div>
     `;
+}
+
+function formatPercent(value = 0) {
+    return `${Number(value || 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`;
+}
+
+function formatVoteCount(value = 0) {
+    const total = Number(value || 0);
+    return `${total} ${total === 1 ? 'voto' : 'votos'}`;
+}
+
+function voteResultLabel(votacao = {}) {
+    const status = String(votacao.status || '').toLowerCase();
+    const deadline = votacao.dataFim ? new Date(`${votacao.dataFim}T23:59:59`) : null;
+    const encerrada = status === 'encerrada' || (deadline && deadline < new Date());
+    return encerrada ? 'Resultado final' : 'Resultado parcial';
 }
 
 function formatDate(value) {
@@ -158,7 +174,7 @@ export const ui = {
                     <button onclick="excluirRegistro('lancamento', ${f.id})" class="btn-admin text-red-500 hover:text-red-400" style="display:none;"><i class="ph ph-trash text-lg"></i></button>
                 </td>
             </tr>
-        `).join('') : renderEmptyRow('Nenhum lancamento financeiro cadastrado ainda.', 5);
+        `).join('') : renderEmptyRow('Nenhum lançamento financeiro cadastrado ainda.', 5);
     },
 
     renderVotacoes(votacoes) {
@@ -166,41 +182,63 @@ export const ui = {
         if (!container) return;
 
         const ordered = sortByDateAsc(votacoes, 'dataFim');
-        container.innerHTML = ordered.length ? ordered.map(v => `
-            <div class="bg-dark-800 p-5 rounded-[22px] border border-white/8 shadow-lg relative group overflow-hidden">
-                <div class="absolute inset-0 bg-gradient-to-br from-white/[0.04] to-transparent pointer-events-none"></div>
-                <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onclick="editarRegistro('votacao', ${v.id})" class="btn-admin text-primary-500 hover:text-primary-400" style="display:none;"><i class="ph ph-pencil-simple text-lg"></i></button>
-                    <button onclick="excluirRegistro('votacao', ${v.id})" class="btn-admin text-red-500 hover:text-red-400" style="display:none;"><i class="ph ph-trash text-lg"></i></button>
-                </div>
-                <div class="relative flex justify-between items-center mb-4 pr-16 gap-3">
-                    <h3 class="font-bold text-white text-lg leading-tight">${escapeHtml(v.titulo)}</h3>
-                    <span class="text-xs bg-dark-700 px-2.5 py-1 rounded-full text-slate-300 whitespace-nowrap">Ate ${escapeHtml(formatDate(v.dataFim))}</span>
-                </div>
-                <div class="relative flex items-center justify-between gap-3 text-xs text-slate-400">
-                    ${statusBadge(v.status || 'aberta')}
-                    <span>${escapeHtml(v.turma?.nome || 'Sem turma')}</span>
-                </div>
-                <p class="relative mt-3 text-sm text-slate-400">A comissao organiza as opcoes aqui. A votacao em si acontece no portal do aluno.</p>
-                <div class="relative space-y-2.5 mt-4">
-                    ${(v.opcoes || []).length ? (v.opcoes || []).map(o => `
-                        <div class="rounded-2xl border border-white/8 bg-dark-900/90 p-3.5">
-                            <div class="flex items-center justify-between gap-3">
-                                <span class="text-slate-200 font-medium">${escapeHtml(o.nomeFornecedor || 'Opcao sem nome')}</span>
-                                ${o.valorProposta != null ? `<strong class="text-emerald-300">${escapeHtml(formatCurrency(o.valorProposta))}</strong>` : ''}
-                            </div>
-                            ${o.detalhesProposta ? `<p class="mt-2 text-sm text-slate-400">${escapeHtml(o.detalhesProposta)}</p>` : ''}
+        container.innerHTML = ordered.length ? ordered.map(v => {
+            const totalVotos = Number(v.totalVotos || 0);
+            const resultado = voteResultLabel(v);
+
+            return `
+                <div class="bg-dark-800 p-5 rounded-[22px] border border-white/8 shadow-lg relative group overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-br from-white/[0.04] to-transparent pointer-events-none"></div>
+                    <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="editarRegistro('votacao', ${v.id})" class="btn-admin text-primary-500 hover:text-primary-400" style="display:none;"><i class="ph ph-pencil-simple text-lg"></i></button>
+                        <button onclick="excluirRegistro('votacao', ${v.id})" class="btn-admin text-red-500 hover:text-red-400" style="display:none;"><i class="ph ph-trash text-lg"></i></button>
+                    </div>
+                    <div class="relative flex justify-between items-center mb-4 pr-16 gap-3">
+                        <h3 class="font-bold text-white text-lg leading-tight">${escapeHtml(v.titulo)}</h3>
+                        <span class="text-xs bg-dark-700 px-2.5 py-1 rounded-full text-slate-300 whitespace-nowrap">Até ${escapeHtml(formatDate(v.dataFim))}</span>
+                    </div>
+                    <div class="relative flex items-center justify-between gap-3 text-xs text-slate-400">
+                        ${statusBadge(v.status || 'aberta')}
+                        <span>${escapeHtml(v.turma?.nome || 'Sem turma')}</span>
+                    </div>
+                    <div class="relative vote-result-summary">
+                        <div class="vote-result-summary__head">
+                            <span>${escapeHtml(resultado)}</span>
+                            <span>${escapeHtml(formatVoteCount(totalVotos))}</span>
                         </div>
-                    `).join('') : '<div class="rounded-2xl border border-dashed border-white/10 bg-dark-900/70 p-4 text-sm text-slate-500">Nenhuma opcao cadastrada ainda.</div>'}
+                    </div>
+                    <div class="relative space-y-2.5 mt-4">
+                        ${(v.opcoes || []).length ? (v.opcoes || []).map(o => {
+                            const votos = Number(o.votos || 0);
+                            const percentual = Number(o.percentual || 0);
+
+                            return `
+                                <div class="rounded-2xl border border-white/8 bg-dark-900/90 p-3.5">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <span class="text-slate-200 font-medium">${escapeHtml(o.nomeFornecedor || 'Opção sem nome')}</span>
+                                        ${o.valorProposta != null ? `<strong class="text-emerald-300">${escapeHtml(formatCurrency(o.valorProposta))}</strong>` : ''}
+                                    </div>
+                                    ${o.detalhesProposta ? `<p class="mt-2 text-sm text-slate-400">${escapeHtml(o.detalhesProposta)}</p>` : ''}
+                                    <div class="vote-result-option">
+                                        <div class="vote-result-option__top">
+                                            <span>${escapeHtml(formatVoteCount(votos))}</span>
+                                            <strong>${escapeHtml(formatPercent(percentual))}</strong>
+                                        </div>
+                                        ${goalBar(percentual)}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('') : '<div class="rounded-2xl border border-dashed border-white/10 bg-dark-900/70 p-4 text-sm text-slate-500">Nenhuma opção cadastrada ainda.</div>'}
+                    </div>
+                    <div class="relative mt-4 flex items-center justify-between gap-3 text-sm">
+                        <span class="text-slate-500">${escapeHtml(String((v.opcoes || []).length))} opções cadastradas</span>
+                        <button onclick="adicionarOpcaoUI(${v.id})" class="btn-admin text-sm font-medium text-primary-400 hover:text-primary-300 flex items-center gap-1 transition-colors" style="display:none;">
+                            <i class="ph ph-plus-bold"></i> Adicionar opção
+                        </button>
+                    </div>
                 </div>
-                <div class="relative mt-4 flex items-center justify-between gap-3 text-sm">
-                    <span class="text-slate-500">${escapeHtml(String((v.opcoes || []).length))} opcoes cadastradas</span>
-                    <button onclick="adicionarOpcaoUI(${v.id})" class="btn-admin text-sm font-medium text-primary-400 hover:text-primary-300 flex items-center gap-1 transition-colors" style="display:none;">
-                        <i class="ph ph-plus-bold"></i> Adicionar opcao
-                    </button>
-                </div>
-            </div>
-        `).join('') : '<div class="text-sm text-slate-500">Nenhuma votacao cadastrada ainda.</div>';
+            `;
+        }).join('') : '<div class="text-sm text-slate-500">Nenhuma votação cadastrada ainda.</div>';
     },
 
     atualizarDashboard() {

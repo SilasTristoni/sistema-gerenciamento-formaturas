@@ -30,7 +30,7 @@ public class AutenticacaoService implements UserDetailsService {
         }
 
         if (usuario == null) {
-            throw new UsernameNotFoundException("Usuario nao encontrado: " + username);
+            throw new UsernameNotFoundException("Usuário não encontrado: " + username);
         }
 
         if (usuario instanceof Usuario usuarioEntidade

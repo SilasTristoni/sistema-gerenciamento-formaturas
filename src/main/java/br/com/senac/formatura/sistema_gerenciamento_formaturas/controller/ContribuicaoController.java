@@ -91,7 +91,7 @@ public class ContribuicaoController {
     ) {
         Scope scope = resolveScope(usuario, input.turmaId());
         Turma turma = turmaRepository.findById(scope.turmaId())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Turma nao encontrada."));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Turma não encontrada."));
 
         Aluno aluno = null;
         if (usuario.getPerfil() == Perfil.ROLE_ALUNO) {
@@ -107,7 +107,7 @@ public class ContribuicaoController {
         lancamento.setContribuicao(true);
         lancamento.setValor(round(Math.max(0.0, safe(input.valor()))));
         lancamento.setDataLancamento(input.data());
-        lancamento.setDescricao(normalize(input.titulo(), "Contribuicao para a meta"));
+        lancamento.setDescricao(normalize(input.titulo(), "Contribuição para a meta"));
         lancamento.setReferencia(normalize(input.mensagem(), ""));
         lancamento.setApoiadorNome(resolveApoiadorNome(usuario, input, aluno));
 
@@ -115,12 +115,12 @@ public class ContribuicaoController {
         turma.setTotalArrecadado(round(safe(lancamentoRepository.totalReceitasByTurmaId(turma.getId()))));
         turmaRepository.save(turma);
 
-        return ResponseEntity.ok("Contribuicao registrada com sucesso.");
+        return ResponseEntity.ok("Contribuição registrada com sucesso.");
     }
 
     private Scope resolveScope(Usuario usuario, Long turmaId) {
         if (usuario == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario nao autenticado.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não autenticado.");
         }
 
         if (usuario.getPerfil() == Perfil.ROLE_ALUNO) {
@@ -128,21 +128,21 @@ public class ContribuicaoController {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Aluno sem turma vinculada.");
             }
             Long alunoTurmaId = usuario.getAluno().getTurma().getId();
-            return new Scope(alunoTurmaId, "Contribuicoes da sua turma");
+            return new Scope(alunoTurmaId, "Contribuições da sua turma");
         }
 
         if (turmaId != null) {
             Turma turma = turmaRepository.findById(turmaId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Turma nao encontrada."));
-            return new Scope(turma.getId(), "Contribuicoes da turma " + normalize(turma.getNome(), "selecionada"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Turma não encontrada."));
+            return new Scope(turma.getId(), "Contribuições da turma " + normalize(turma.getNome(), "selecionada"));
         }
 
-        return new Scope(null, "Contribuicoes de todas as turmas");
+        return new Scope(null, "Contribuições de todas as turmas");
     }
 
     private String resolveApoiadorNome(Usuario usuario, ContribuicaoInputDTO input, Aluno aluno) {
         if (Boolean.TRUE.equals(input.anonima())) {
-            return "Contribuicao anonima";
+            return "Contribuição anônima";
         }
         if (input.apoiadorNome() != null && !input.apoiadorNome().isBlank()) {
             return input.apoiadorNome().trim();
@@ -159,7 +159,7 @@ public class ContribuicaoController {
     private ContribuicaoResumoDTO.ContribuicaoItem toItem(LancamentoFinanceiro lancamento) {
         return new ContribuicaoResumoDTO.ContribuicaoItem(
             lancamento.getId(),
-            normalize(lancamento.getDescricao(), "Contribuicao"),
+            normalize(lancamento.getDescricao(), "Contribuição"),
             round(safe(lancamento.getValor())),
             lancamento.getDataLancamento(),
             lancamento.getTurma() != null ? lancamento.getTurma().getId() : null,

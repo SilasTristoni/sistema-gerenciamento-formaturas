@@ -19,6 +19,8 @@
     --brand-logo-wide: url("../assets/brand/logo-wide.png");
     --brand-campaign-cover: url("../assets/brand/campaign-cover.jpg");
     --brand-student-cover: url("../assets/brand/student-cover.jpg");
+    --visual-dashboard-identity: url("../assets/images/formatura-dashboard-identidade.png");
+    --visual-dashboard-banner: url("../assets/images/formatura-banner-horizontal.png");
 }
 
 html {
@@ -263,139 +265,6 @@ table tbody tr:hover {
 .toast-enter { animation: slideInRight 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards; }
 .toast-exit { animation: fadeOut 0.3s ease forwards; }
 
-.login-visual-board {
-    display: grid;
-    grid-template-columns: minmax(0, 1.18fr) minmax(220px, 0.82fr);
-    grid-template-rows: minmax(200px, 1fr) minmax(160px, 0.85fr);
-    gap: 1rem;
-    width: min(100%, 760px);
-}
-
-.login-visual-card,
-.login-mobile-card {
-    position: relative;
-    overflow: hidden;
-    border-radius: 1.75rem;
-    border: 1px solid rgba(255,255,255,0.1);
-    background: linear-gradient(180deg, rgba(15,23,42,0.9), rgba(15,23,42,0.72));
-    box-shadow: 0 22px 50px rgba(2, 6, 23, 0.35);
-}
-
-.login-visual-card::after,
-.login-mobile-card::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(7,10,24,0.02) 0%, rgba(7,10,24,0.42) 100%);
-    pointer-events: none;
-}
-
-.login-visual-card--primary {
-    grid-row: 1 / span 2;
-    min-height: 420px;
-}
-
-.login-visual-image,
-.login-mobile-image {
-    width: 100%;
-    height: 100%;
-    display: block;
-    object-fit: cover;
-}
-
-.login-visual-card--primary .login-visual-image {
-    object-position: center;
-}
-
-.login-visual-card--secondary .login-visual-image,
-.login-visual-card--tertiary .login-visual-image {
-    object-position: center top;
-}
-
-.login-visual-caption {
-    position: absolute;
-    left: 1.35rem;
-    right: 1.35rem;
-    bottom: 1.35rem;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 0.65rem;
-}
-
-.login-visual-chip {
-    width: fit-content;
-    display: inline-flex;
-    align-items: center;
-    padding: 0.45rem 0.8rem;
-    border-radius: 999px;
-    border: 1px solid rgba(110,231,183,0.22);
-    background: rgba(16,185,129,0.16);
-    color: #d1fae5;
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-}
-
-.login-visual-caption strong,
-.login-visual-inline-caption {
-    color: #f8fafc;
-    font-size: 0.95rem;
-    line-height: 1.5;
-    text-shadow: 0 8px 18px rgba(2, 6, 23, 0.55);
-}
-
-.login-visual-inline-caption {
-    position: absolute;
-    left: 1rem;
-    right: 1rem;
-    bottom: 1rem;
-    z-index: 1;
-    font-weight: 600;
-}
-
-.login-mobile-visual {
-    display: flex;
-    flex-direction: column;
-    gap: 0.85rem;
-}
-
-.login-mobile-card--primary {
-    min-height: 180px;
-}
-
-.login-mobile-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.85rem;
-}
-
-.login-mobile-grid .login-mobile-card {
-    min-height: 124px;
-}
-
-@media (max-width: 1279px) {
-    .login-visual-board {
-        grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: none;
-    }
-
-    .login-visual-card--primary {
-        min-height: 320px;
-    }
-}
-
-@media (max-width: 640px) {
-    .login-mobile-card--primary {
-        min-height: 150px;
-    }
-
-    .login-mobile-grid .login-mobile-card {
-        min-height: 105px;
-    }
-}
-
 .simple-hero {
     display: flex;
     justify-content: space-between;
@@ -412,7 +281,8 @@ table tbody tr:hover {
 .simple-hero__media {
     display: grid;
     gap: 0.9rem;
-    min-width: min(340px, 100%);
+    align-content: start;
+    min-width: min(220px, 100%);
 }
 
 .simple-kicker,
@@ -483,12 +353,21 @@ table tbody tr:hover {
 .brand-mark,
 .student-topbar__brand,
 .student-brand-mark {
-    background-image: var(--brand-logo-mark), linear-gradient(135deg, var(--primary-600), #2dd4bf);
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain, cover;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--primary-600), #2dd4bf);
     border: 1px solid rgba(255,255,255,0.08);
     box-shadow: var(--shadow-glow);
+    color: #ecfdf5;
+    font-size: 1.45rem;
+}
+
+.brand-mark i,
+.student-topbar__brand i,
+.student-brand-mark i {
+    display: block;
+    line-height: 1;
 }
 
 .brand-mark {
@@ -520,11 +399,14 @@ table tbody tr:hover {
 
 .brand-sidebar__card {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 92px;
+    grid-template-columns: minmax(0, 1fr);
     gap: 0.9rem;
     margin-top: 1rem;
     padding: 0.9rem;
     border-radius: 1.35rem;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.025)),
+        rgba(255,255,255,0.04);
 }
 
 .brand-sidebar__copy strong,
@@ -560,8 +442,14 @@ table tbody tr:hover {
 }
 
 .brand-sidebar__photo {
-    min-height: 100%;
+    min-height: 132px;
     border-radius: 1rem;
+    background-image:
+        linear-gradient(180deg, rgba(2, 6, 23, 0.08), rgba(2, 6, 23, 0.34)),
+        var(--visual-dashboard-identity);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
 }
 
 .brand-hero-card {
@@ -625,6 +513,32 @@ table tbody tr:hover {
 
 .login-brand-showcase__copy {
     align-self: center;
+}
+
+.dashboard-visual-banner {
+    position: relative;
+    min-height: 180px;
+    margin-top: 1rem;
+    overflow: hidden;
+    border-radius: 1.5rem;
+    border: 1px solid rgba(52, 211, 153, 0.14);
+    background-image:
+        linear-gradient(90deg, rgba(2, 6, 23, 0.18), rgba(2, 6, 23, 0.42)),
+        var(--visual-dashboard-banner);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    box-shadow: var(--shadow-soft);
+}
+
+.dashboard-visual-banner::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.05), transparent 42%),
+        radial-gradient(circle at 82% 28%, rgba(45, 212, 191, 0.22), transparent 32%);
+    pointer-events: none;
 }
 
 .simple-update__label {
@@ -1823,6 +1737,75 @@ body.student-menu-open {
     cursor: not-allowed;
 }
 
+.vote-result-summary {
+    margin-top: 1rem;
+}
+
+.vote-result-summary__head,
+.student-vote-result__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    color: var(--text-soft);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.vote-result-option {
+    display: grid;
+    gap: 0.4rem;
+    margin-top: 0.85rem;
+}
+
+.vote-result-option__top,
+.student-vote-result__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    color: var(--text-soft);
+    font-size: 0.86rem;
+}
+
+.vote-result-option__top strong,
+.student-vote-result__top strong {
+    color: white;
+}
+
+.student-vote-result {
+    margin-top: 1rem;
+    border-top: 1px solid var(--border-soft);
+    padding-top: 1rem;
+}
+
+.student-vote-result__list {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 0.8rem;
+}
+
+.student-vote-result__item {
+    display: grid;
+    gap: 0.4rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.03);
+    padding: 0.8rem;
+}
+
+.student-vote-result__item.is-selected {
+    border-color: rgba(52, 211, 153, 0.36);
+    background: rgba(52, 211, 153, 0.08);
+}
+
+.student-vote-result__item small {
+    color: var(--text-soft);
+    font-size: 0.78rem;
+}
+
 .student-status-badge {
     display: inline-flex;
     align-items: center;
@@ -2011,6 +1994,11 @@ body.student-menu-open {
     .student-brand-banner,
     .login-brand-showcase {
         grid-template-columns: 1fr;
+    }
+
+    .dashboard-visual-banner {
+        min-height: 128px;
+        border-radius: 1.1rem;
     }
 
     .student-actions,

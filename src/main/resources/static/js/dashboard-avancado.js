@@ -278,8 +278,8 @@ async function validateSession() {
       return null;
     }
 
-    setText("userName", me.nome || "Usuario");
-    setText("userRole", me.perfil === "ROLE_COMISSAO" ? "Comissao" : "Formando(a)");
+    setText("userName", me.nome || "Usuário");
+    setText("userRole", me.perfil === "ROLE_COMISSAO" ? "Comissão" : "Formando(a)");
     const avatar = document.getElementById("userAvatar");
     if (avatar) avatar.textContent = (me.nome || "U").charAt(0).toUpperCase();
     auth.saveSession({ token, perfil: me.perfil, nome: me.nome, login: me.login || me.email || "usuario" });
@@ -292,10 +292,10 @@ async function validateSession() {
 }
 
 function renderFilterSummary(filters = {}, forecast = {}) {
-  setText("dashboardScopeLabel", filters.scopeLabel || "Visao consolidada de todas as turmas");
+  setText("dashboardScopeLabel", filters.scopeLabel || "Visão consolidada de todas as turmas");
   setText(
     "dashboardFilterHint",
-    `${filters.turmaNome || "Todas as turmas"} | Janela de ${filters.periodMonths || DEFAULT_FILTERS.periodMonths} meses | Tendencia ${forecast.trend || "neutral"}`
+    `${filters.turmaNome || "Todas as turmas"} | Janela de ${filters.periodMonths || DEFAULT_FILTERS.periodMonths} meses | Tendência ${forecast.trend || "neutral"}`
   );
 }
 
@@ -332,7 +332,7 @@ function renderOverview(data) {
   setText("financeVotacoes", overview.totalVotacoes ?? 0);
   setText("financeProjectedBalance", formatCurrency(forecast.projectedNextBalance));
   setText("financeAverageNet", formatCurrency(forecast.averageNet));
-  setText("forecastRecommendation", forecast.recommendation || "Sem previsao calculada ainda.");
+  setText("forecastRecommendation", forecast.recommendation || "Sem previsão calculada ainda.");
 
   renderFilterSummary(data.filters, forecast);
 }
@@ -379,7 +379,7 @@ function renderEvents(events = []) {
         <span class="status-badge">${escapeHtml(item.status || "agendado")}</span>
       </article>
     `,
-    "Nenhum evento disponivel na agenda."
+    "Nenhum evento disponível na agenda."
   );
 }
 
@@ -390,8 +390,8 @@ function renderTransactions(transactions = []) {
     item => `
       <article class="list-item">
         <div class="item-main">
-          <p class="item-title">${escapeHtml(item.descricao || "Lancamento")}</p>
-          <p class="item-subtitle">${escapeHtml(formatDate(item.data))} | ${escapeHtml(item.referencia || "Sem referencia")} | ${escapeHtml(item.turmaNome || "Sem turma")}</p>
+          <p class="item-title">${escapeHtml(item.descricao || "Lançamento")}</p>
+          <p class="item-subtitle">${escapeHtml(formatDate(item.data))} | ${escapeHtml(item.referencia || "Sem referência")} | ${escapeHtml(item.turmaNome || "Sem turma")}</p>
         </div>
         <div class="item-side">
           <strong class="${(item.tipo || "").toLowerCase() === "receita" ? "money-positive" : "money-negative"}">
@@ -400,7 +400,7 @@ function renderTransactions(transactions = []) {
         </div>
       </article>
     `,
-    "Nenhum lancamento recente."
+    "Nenhum lançamento recente."
   );
 }
 
@@ -431,7 +431,7 @@ function renderTurmas(turmas = []) {
       <article class="list-item">
         <div class="item-main">
           <p class="item-title">${escapeHtml(item.nome || "Turma sem nome")}</p>
-          <p class="item-subtitle">${escapeHtml(item.curso || "Curso nao informado")} | ${escapeHtml(String(item.quantidadeAlunos || 0))} alunos</p>
+          <p class="item-subtitle">${escapeHtml(item.curso || "Curso não informado")} | ${escapeHtml(String(item.quantidadeAlunos || 0))} alunos</p>
         </div>
         <div class="item-side">
           <strong>${escapeHtml(formatCurrency(item.totalArrecadado))}</strong>
@@ -439,7 +439,7 @@ function renderTurmas(turmas = []) {
         </div>
       </article>
     `,
-    "Nenhuma turma disponivel."
+    "Nenhuma turma disponível."
   );
 }
 
@@ -466,7 +466,7 @@ async function loadDashboard() {
     renderCharts(dashboard.monthlyFinancial, dashboard.expenseCategories);
     showState({ loading: false, error: "" });
   } catch (error) {
-    showState({ loading: false, error: error.message || "Nao foi possivel carregar os dados." });
+    showState({ loading: false, error: error.message || "Não foi possível carregar os dados." });
   }
 }
 

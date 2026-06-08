@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>GestaoForm | Central de comando</title>
+  <title>Formaly | Central de comando</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -16,15 +16,15 @@
   <div class="app-shell">
     <aside class="sidebar">
       <div class="brand-card">
-        <div class="brand-icon">GF</div>
+        <div class="brand-icon"><i class="ph ph-graduation-cap"></i></div>
         <div>
-          <p class="brand-kicker">GestaoForm</p>
+          <p class="brand-kicker">Formaly</p>
           <h1 class="brand-title">Central de comando</h1>
         </div>
       </div>
 
       <nav class="nav-group">
-        <button class="nav-item active" data-tab-target="overview"><i class="ph ph-chart-pie-slice"></i> Visao geral</button>
+        <button class="nav-item active" data-tab-target="overview"><i class="ph ph-chart-pie-slice"></i> Visão geral</button>
         <button class="nav-item" data-tab-target="agenda"><i class="ph ph-calendar-check"></i> Agenda</button>
         <button class="nav-item" data-tab-target="finance"><i class="ph ph-bank"></i> Financeiro</button>
         <button class="nav-item" data-tab-target="turmas"><i class="ph ph-users-three"></i> Turmas</button>
@@ -34,7 +34,7 @@
         <p class="block-label">Atalhos</p>
         <button class="shortcut-btn" id="refreshBtn"><i class="ph ph-arrows-clockwise"></i> Atualizar painel</button>
         <button class="shortcut-btn" id="scrollAlertsBtn"><i class="ph ph-siren"></i> Ver alertas</button>
-        <a class="shortcut-btn" href="./index.html"><i class="ph ph-browser"></i> Abrir modulo completo</a>
+        <a class="shortcut-btn" href="./index.html"><i class="ph ph-browser"></i> Abrir módulo completo</a>
       </section>
 
       <section class="sidebar-block user-block">
@@ -45,19 +45,19 @@
         </div>
       </section>
 
-      <button class="logout-btn" id="logoutBtn"><i class="ph ph-sign-out"></i> Encerrar sessao</button>
+      <button class="logout-btn" id="logoutBtn"><i class="ph ph-sign-out"></i> Encerrar sessão</button>
     </aside>
 
     <main class="main-content">
       <header class="hero">
         <div>
-          <p class="eyebrow">Painel estrategico</p>
-          <h2 class="hero-title">Gestao de formaturas com visao operacional e financeira</h2>
-          <p class="hero-copy">Acompanhe caixa, agenda, meta e performance das turmas em uma unica leitura.</p>
+          <p class="eyebrow">Painel estratégico</p>
+          <h2 class="hero-title">Gestão de formaturas com visão operacional e financeira</h2>
+          <p class="hero-copy">Acompanhe caixa, agenda, meta e performance das turmas em uma única leitura.</p>
         </div>
         <div class="hero-side">
           <div class="health-card">
-            <span class="health-label">Saude da operacao</span>
+            <span class="health-label">Saúde da operação</span>
             <strong class="health-score" id="healthScore">0</strong>
             <small id="lastUpdate">Atualizando...</small>
           </div>
@@ -68,8 +68,8 @@
         <div class="grid gap-4 lg:grid-cols-[1.2fr_220px_1fr]">
           <div>
             <p class="text-xs uppercase tracking-[0.22em] text-slate-500 font-semibold">Filtro do painel</p>
-            <p class="mt-2 text-lg font-semibold text-white" id="dashboardScopeLabel">Visao consolidada de todas as turmas</p>
-            <p class="mt-1 text-sm text-slate-400" id="dashboardFilterHint">Escolha uma turma e a janela de analise para focar as decisoes.</p>
+            <p class="mt-2 text-lg font-semibold text-white" id="dashboardScopeLabel">Visão consolidada de todas as turmas</p>
+            <p class="mt-1 text-sm text-slate-400" id="dashboardFilterHint">Escolha uma turma e a janela de análise para focar as decisões.</p>
           </div>
 
           <label class="block">
@@ -80,11 +80,11 @@
           </label>
 
           <label class="block">
-            <span class="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Periodo</span>
+            <span class="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Período</span>
             <select id="dashboardPeriodFilter" class="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition focus:border-emerald-400/70 focus:ring-4 focus:ring-emerald-400/10">
-              <option value="3">Ultimos 3 meses</option>
-              <option value="6">Ultimos 6 meses</option>
-              <option value="12">Ultimos 12 meses</option>
+              <option value="3">Últimos 3 meses</option>
+              <option value="6">Últimos 6 meses</option>
+              <option value="12">Últimos 12 meses</option>
             </select>
           </label>
         </div>
@@ -104,7 +104,7 @@
         <article class="metric-card accent-expense">
           <span class="metric-label">Despesas</span>
           <strong class="metric-value" id="statDespesas">R$ 0,00</strong>
-          <small class="metric-foot">Saidas acumuladas</small>
+          <small class="metric-foot">Saídas acumuladas</small>
         </article>
         <article class="metric-card accent-risk">
           <span class="metric-label">Turmas ativas</span>
@@ -119,7 +119,7 @@
             <div class="section-head">
               <div>
                 <p class="section-kicker">Radar operacional</p>
-                <h3 class="section-title">Proximo marco da formatura</h3>
+                <h3 class="section-title">Próximo marco da formatura</h3>
               </div>
               <span class="pill" id="nextEventStatus">Planejamento</span>
             </div>
@@ -140,15 +140,15 @@
                 <strong id="opsEngajamento">0%</strong>
               </div>
               <div class="ops-card">
-                <span>Eventos no mes</span>
+                <span>Eventos no mês</span>
                 <strong id="opsEventosMes">0</strong>
               </div>
               <div class="ops-card">
-                <span>Votacoes abertas</span>
+                <span>Votações abertas</span>
                 <strong id="opsVotacoes">0</strong>
               </div>
               <div class="ops-card">
-                <span>Ticket medio por aluno</span>
+                <span>Ticket médio por aluno</span>
                 <strong id="opsTicketMedio">R$ 0,00</strong>
               </div>
             </div>
@@ -169,8 +169,8 @@
           <article class="feature-card feature-card--wide">
             <div class="section-head">
               <div>
-                <p class="section-kicker">Analise financeira</p>
-                <h3 class="section-title">Receitas, despesas e saldo por mes</h3>
+                <p class="section-kicker">Análise financeira</p>
+                <h3 class="section-title">Receitas, despesas e saldo por mês</h3>
               </div>
             </div>
             <div class="chart-shell">
@@ -196,7 +196,7 @@
             <div class="section-head">
               <div>
                 <p class="section-kicker">Agenda</p>
-                <h3 class="section-title">Proximos eventos</h3>
+                <h3 class="section-title">Próximos eventos</h3>
               </div>
             </div>
             <div id="agendaPreviewList" class="stack-list"></div>
@@ -206,7 +206,7 @@
             <div class="section-head">
               <div>
                 <p class="section-kicker">Fluxo recente</p>
-                <h3 class="section-title">Ultimos lancamentos financeiros</h3>
+                <h3 class="section-title">Últimos lançamentos financeiros</h3>
               </div>
             </div>
             <div id="recentTransactions" class="stack-list"></div>
@@ -242,17 +242,17 @@
               <div class="summary-row"><span>Saldo total</span><strong id="financeSaldo">R$ 0,00</strong></div>
               <div class="summary-row"><span>Total de receitas</span><strong id="financeReceitas">R$ 0,00</strong></div>
               <div class="summary-row"><span>Total de despesas</span><strong id="financeDespesas">R$ 0,00</strong></div>
-              <div class="summary-row"><span>Total de votacoes</span><strong id="financeVotacoes">0</strong></div>
+              <div class="summary-row"><span>Total de votações</span><strong id="financeVotacoes">0</strong></div>
               <div class="summary-row"><span>Saldo projetado</span><strong id="financeProjectedBalance">R$ 0,00</strong></div>
-              <div class="summary-row"><span>Media mensal</span><strong id="financeAverageNet">R$ 0,00</strong></div>
+              <div class="summary-row"><span>Média mensal</span><strong id="financeAverageNet">R$ 0,00</strong></div>
             </div>
-            <p class="mt-5 text-sm text-slate-400" id="forecastRecommendation">Sem previsao calculada ainda.</p>
+            <p class="mt-5 text-sm text-slate-400" id="forecastRecommendation">Sem previsão calculada ainda.</p>
           </article>
 
           <article class="feature-card feature-card--wide">
             <div class="section-head">
               <div>
-                <p class="section-kicker">Categorias criticas</p>
+                <p class="section-kicker">Categorias críticas</p>
                 <h3 class="section-title">Maiores centros de custo</h3>
               </div>
             </div>

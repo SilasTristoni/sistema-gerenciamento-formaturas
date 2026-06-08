@@ -105,7 +105,7 @@ class SistemaGerenciamentoFormaturasApplicationTests {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.summary.totalContribuicoes").value(200.0))
             .andExpect(jsonPath("$.summary.quantidadeContribuicoes").value(1))
-            .andExpect(jsonPath("$.summary.scopeLabel").value("Contribuicoes da sua turma"))
+            .andExpect(jsonPath("$.summary.scopeLabel").value("Contribuições da sua turma"))
             .andExpect(jsonPath("$.turmas.length()").value(1))
             .andExpect(jsonPath("$.turmas[0].turmaNome").value("Marketing"));
     }
@@ -119,10 +119,10 @@ class SistemaGerenciamentoFormaturasApplicationTests {
                 .header("Authorization", bearer(aluno))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"titulo":"Contribuicao espontanea","valor":180.0,"data":"%s","mensagem":"Apoio para a meta","anonima":true}
+                    {"titulo":"Contribuição espontânea","valor":180.0,"data":"%s","mensagem":"Apoio para a meta","anonima":true}
                     """.formatted(LocalDate.now())))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$").value("Contribuicao registrada com sucesso."));
+            .andExpect(jsonPath("$").value("Contribuição registrada com sucesso."));
 
         Turma turmaAtualizada = turmaRepository.findById(turma.getId()).orElseThrow();
         LancamentoFinanceiro contribuicao = lancamentoRepository.findByTurmaIdAndContribuicaoTrueOrderByDataLancamentoDescIdDesc(turma.getId())
@@ -131,7 +131,7 @@ class SistemaGerenciamentoFormaturasApplicationTests {
             .orElseThrow();
 
         org.junit.jupiter.api.Assertions.assertEquals(180.0, turmaAtualizada.getTotalArrecadado());
-        org.junit.jupiter.api.Assertions.assertEquals("Contribuicao anonima", contribuicao.getApoiadorNome());
+        org.junit.jupiter.api.Assertions.assertEquals("Contribuição anônima", contribuicao.getApoiadorNome());
         org.junit.jupiter.api.Assertions.assertTrue(Boolean.TRUE.equals(contribuicao.getContribuicao()));
     }
 
@@ -214,7 +214,7 @@ class SistemaGerenciamentoFormaturasApplicationTests {
         lancamento.setValor(valor);
         lancamento.setDataLancamento(LocalDate.now());
         lancamento.setContribuicao(true);
-        lancamento.setApoiadorNome(anonima ? "Contribuicao anonima" : apoiadorNome);
+        lancamento.setApoiadorNome(anonima ? "Contribuição anônima" : apoiadorNome);
         LancamentoFinanceiro salvo = lancamentoRepository.save(lancamento);
         turma.setTotalArrecadado((turma.getTotalArrecadado() == null ? 0.0 : turma.getTotalArrecadado()) + valor);
         turmaRepository.save(turma);
