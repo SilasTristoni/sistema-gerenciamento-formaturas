@@ -5,18 +5,23 @@ import { ui } from './components/ui.js';
 import { modal } from './components/modal.js';
 import { showToast } from './components/toast.js';
 
-let db = { turmas: [], alunos: [], eventos: [], financeiro: [], votacoes: [], dashboard: null, contribuicoes: null };
+let db = { turmas: [], alunos: [], eventos: [], financeiro: [], votacoes: [], dashboard: null, contribuicoes: null, relatorio: null };
 let usuarioLogado = null;
 let monthlyChart = null;
 const LAST_TURMA_KEY = 'gestaoform.lastTurmaId';
 const DASHBOARD_FILTER_KEY = 'gestaoform.dashboard.filters';
 const CONTRIBUTION_FILTER_KEY = 'gestaoform.contribuicoes.filters';
+const REPORT_FILTER_KEY = 'gestaoform.relatorios.filters';
 const DEFAULT_DASHBOARD_FILTERS = {
     turmaId: '',
     periodMonths: '6'
 };
 const DEFAULT_CONTRIBUTION_FILTERS = {
     turmaId: ''
+};
+const DEFAULT_REPORT_FILTERS = {
+    turmaId: '',
+    periodMonths: '6'
 };
 const agendaState = {
     currentMonth: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
@@ -63,12 +68,12 @@ async function verificarSessao() {
             login: usuarioLogado.login || usuarioLogado.email
         });
 
-        const nome = usuarioLogado.nome || 'Usuario';
+        const nome = usuarioLogado.nome || 'Usuário';
         const login = usuarioLogado.login || usuarioLogado.email || 'usuario';
 
         if (document.getElementById('userNameDisplay')) document.getElementById('userNameDisplay').innerText = nome;
         if (document.getElementById('userAvatar')) document.getElementById('userAvatar').innerText = nome.charAt(0).toUpperCase();
-        if (document.getElementById('userRoleDisplay')) document.getElementById('userRoleDisplay').innerText = usuarioLogado.perfil === 'ROLE_COMISSAO' ? 'Comissao' : 'Formando(a)';
+        if (document.getElementById('userRoleDisplay')) document.getElementById('userRoleDisplay').innerText = usuarioLogado.perfil === 'ROLE_COMISSAO' ? 'Comissão' : 'Formando(a)';
         if (document.getElementById('userLoginDisplay')) document.getElementById('userLoginDisplay').innerText = '@' + login.replace('@gestaoform.local', '');
 
         await carregarDados();
@@ -89,13 +94,17 @@ export async function carregarDados() {
     try {
         syncMainDashboardFilterInputs();
         syncContributionFilterInputs();
+        syncReportFilterInputs();
         const turmas = await api.buscar('turmas');
         normalizeDashboardFiltersForTurmas(turmas);
         normalizeContributionFiltersForTurmas(turmas);
+        normalizeReportFiltersForTurmas(turmas);
         populateMainDashboardTurmaFilter(turmas);
         populateContributionTurmaFilter(turmas);
+        populateReportTurmaFilter(turmas);
         syncMainDashboardFilterInputs();
         syncContributionFilterInputs();
+        syncReportFilterInputs();
 
         const [alunos, financeiro, eventos, votacoes, dashboard, contribuicoes] = await Promise.all([
             api.buscar('alunos'),
@@ -106,7 +115,7 @@ export async function carregarDados() {
             api.contribuicoesResumo(getContributionFilterPayload())
         ]);
 
-        db = { turmas, alunos, financeiro, eventos, votacoes, dashboard, contribuicoes };
+        db = { ...db, turmas, alunos, financeiro, eventos, votacoes, dashboard, contribuicoes };
 
         ui.renderTurmas(db.turmas);
         ui.renderAlunos(db.alunos);
@@ -116,6 +125,7 @@ export async function carregarDados() {
         renderIntegratedDashboard(db.dashboard);
         renderAgendaModule(db.eventos, db.turmas);
         renderContributions(db.contribuicoes);
+        renderReportModule(db.relatorio);
 
         document.querySelectorAll('.btn-admin').forEach(btn => {
             btn.style.display = usuarioLogado?.perfil === 'ROLE_COMISSAO' ? 'inline-flex' : 'none';
@@ -185,6 +195,22 @@ function writeContributionFilters(filters) {
     localStorage.setItem(CONTRIBUTION_FILTER_KEY, JSON.stringify(filters));
 }
 
+function readReportFilters() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(REPORT_FILTER_KEY) || '{}');
+        return {
+            turmaId: saved.turmaId || DEFAULT_REPORT_FILTERS.turmaId,
+            periodMonths: saved.periodMonths || DEFAULT_REPORT_FILTERS.periodMonths
+        };
+    } catch (error) {
+        return { ...DEFAULT_REPORT_FILTERS };
+    }
+}
+
+function writeReportFilters(filters) {
+    localStorage.setItem(REPORT_FILTER_KEY, JSON.stringify(filters));
+}
+
 function getDashboardFilterPayload() {
     const filters = readDashboardFilters();
     return {
@@ -197,6 +223,14 @@ function getContributionFilterPayload() {
     const filters = readContributionFilters();
     return {
         turmaId: filters.turmaId ? Number(filters.turmaId) : undefined
+    };
+}
+
+function getReportFilterPayload() {
+    const filters = readReportFilters();
+    return {
+        turmaId: filters.turmaId ? Number(filters.turmaId) : undefined,
+        periodMonths: Number(filters.periodMonths || DEFAULT_REPORT_FILTERS.periodMonths)
     };
 }
 
@@ -213,6 +247,15 @@ function syncContributionFilterInputs() {
     const filters = readContributionFilters();
     const turmaSelect = document.getElementById('contributionTurmaFilter');
     if (turmaSelect) turmaSelect.value = filters.turmaId;
+}
+
+function syncReportFilterInputs() {
+    const filters = readReportFilters();
+    const turmaSelect = document.getElementById('reportTurmaFilter');
+    const periodSelect = document.getElementById('reportPeriodFilter');
+
+    if (turmaSelect) turmaSelect.value = filters.turmaId;
+    if (periodSelect) periodSelect.value = filters.periodMonths;
 }
 
 function parseLocalDate(value) {
@@ -337,11 +380,11 @@ function renderIntegratedDashboard(dashboard) {
     setText('nextEventCountdown', nextEvent.diasRestantes >= 0 ? `${nextEvent.diasRestantes} dias` : 'sem data');
     renderGoalProgress(goalProgress);
     setText('mainForecastBalance', formatCurrency(forecast.projectedNextBalance));
-    setText('mainForecastHint', forecast.recommendation || 'Sem previsao calculada ainda.');
-    setText('mainDashboardScopeLabel', dashboard.filters?.scopeLabel || 'Visao consolidada de todas as turmas');
+    setText('mainForecastHint', forecast.recommendation || 'Sem previsão calculada ainda.');
+    setText('mainDashboardScopeLabel', dashboard.filters?.scopeLabel || 'Visão consolidada de todas as turmas');
     setText(
         'mainDashboardFilterHint',
-        `${dashboard.filters?.turmaNome || 'Todas as turmas'} | Janela de ${dashboard.filters?.periodMonths || DEFAULT_DASHBOARD_FILTERS.periodMonths} meses | Tendencia ${forecast.trend || 'neutral'}`
+        `${dashboard.filters?.turmaNome || 'Todas as turmas'} | Janela de ${dashboard.filters?.periodMonths || DEFAULT_DASHBOARD_FILTERS.periodMonths} meses | Tendência ${forecast.trend || 'neutral'}`
     );
     setText('financeStatus', overview.saldoTotal >= 0
         ? 'Estamos acompanhando o caixa da turma.'
@@ -357,14 +400,14 @@ function renderIntegratedDashboard(dashboard) {
     renderSimpleList('notificationsList', dashboard.notifications, item => `
         <article class="simple-item simple-item--notification">
             <div class="simple-item__main">
-                <p class="simple-item__title">${escapeHtml(item.title || 'Acao recomendada')}</p>
+                <p class="simple-item__title">${escapeHtml(item.title || 'Ação recomendada')}</p>
                 <p class="simple-item__subtitle">${escapeHtml(item.description || '')}</p>
             </div>
             <div class="simple-item__side">
                 <button type="button" onclick="${resolveNotificationAction(item)}" class="simple-pill simple-pill--${escapeHtml(item.level || 'info')}">${escapeHtml(item.actionLabel || 'Acompanhar')}</button>
             </div>
         </article>
-    `, 'Nenhuma acao critica no momento.');
+    `, 'Nenhuma ação crítica no momento.');
 
     renderSimpleList('agendaPreviewList', dashboard.upcomingEvents, item => `
         <article class="simple-item">
@@ -378,20 +421,20 @@ function renderIntegratedDashboard(dashboard) {
     renderSimpleList('recentTransactions', dashboard.recentTransactions, item => `
         <article class="simple-item">
             <div class="simple-item__main">
-                <p class="simple-item__title">${escapeHtml(item.descricao || 'Lancamento')}</p>
-                <p class="simple-item__subtitle">${escapeHtml(formatDate(item.data))} | ${escapeHtml(item.referencia || 'Sem referencia')} | ${escapeHtml(item.turmaNome || 'Sem turma')}</p>
+                <p class="simple-item__title">${escapeHtml(item.descricao || 'Lançamento')}</p>
+                <p class="simple-item__subtitle">${escapeHtml(formatDate(item.data))} | ${escapeHtml(item.referencia || 'Sem referência')} | ${escapeHtml(item.turmaNome || 'Sem turma')}</p>
             </div>
             <div class="simple-item__side">
                 <strong class="${(item.tipo || '').toLowerCase() === 'receita' ? 'money-positive' : 'money-negative'}">${(item.tipo || '').toLowerCase() === 'receita' ? '+' : '-'} ${escapeHtml(formatCurrency(item.valor))}</strong>
             </div>
         </article>
-    `, 'Nenhum lancamento recente.');
+    `, 'Nenhum lançamento recente.');
 
     renderSimpleList('goalRankingList', dashboard.topTurmas, item => `
         <article class="simple-item simple-item--goal">
             <div class="simple-item__main">
                 <p class="simple-item__title">${escapeHtml(item.nome || 'Turma')}</p>
-                <p class="simple-item__subtitle">${escapeHtml(item.curso || 'Curso nao informado')} | ${escapeHtml(formatCurrency(item.totalArrecadado || 0))} de ${escapeHtml(formatCurrency(item.metaArrecadacao || 0))}</p>
+                <p class="simple-item__subtitle">${escapeHtml(item.curso || 'Curso não informado')} | ${escapeHtml(formatCurrency(item.totalArrecadado || 0))} de ${escapeHtml(formatCurrency(item.metaArrecadacao || 0))}</p>
                 <div class="goal-table-progress mt-3">
                     <div class="goal-table-progress__bar" style="width:${Math.max(0, Math.min(Number(item.percentualMeta || 0), 100))}%;"></div>
                 </div>
@@ -401,7 +444,7 @@ function renderIntegratedDashboard(dashboard) {
                 <small class="block mt-1 text-slate-500">${item.metaArrecadacao > 0 ? escapeHtml(formatCurrency(item.valorRestanteMeta || 0)) + ' restantes' : 'sem meta'}</small>
             </div>
         </article>
-    `, 'Cadastre metas nas turmas para comparar o progresso por arrecadacao.');
+    `, 'Cadastre metas nas turmas para comparar o progresso por arrecadação.');
 
     renderDashboardCharts(dashboard.monthlyFinancial, []);
 }
@@ -415,8 +458,8 @@ function renderGoalProgress(goalProgress = {}) {
     const metaDefinida = Boolean(goalProgress.metaDefinida);
     const metaAtingida = Boolean(goalProgress.metaAtingida);
 
-    setText('goalProgressTitle', goalProgress.titulo || 'Meta ainda nao definida');
-    setText('goalProgressDescription', goalProgress.descricao || 'Cadastre uma meta para visualizar o progresso da arrecadacao.');
+    setText('goalProgressTitle', goalProgress.titulo || 'Meta ainda não definida');
+    setText('goalProgressDescription', goalProgress.descricao || 'Cadastre uma meta para visualizar o progresso da arrecadação.');
     setText('goalProgressPercent', `${Math.round(percentualAtingido)}%`);
     setText('goalProgressRaised', formatCurrency(valorArrecadado));
     setText('goalProgressTarget', metaDefinida ? formatCurrency(valorMeta) : 'Defina uma meta');
@@ -511,22 +554,42 @@ function normalizeContributionFiltersForTurmas(turmas = []) {
     }
 }
 
+function populateReportTurmaFilter(turmas = []) {
+    const select = document.getElementById('reportTurmaFilter');
+    if (!select) return;
+
+    const currentValue = readReportFilters().turmaId;
+    select.innerHTML = `
+        <option value="">Todas as turmas</option>
+        ${turmas.map(turma => `<option value="${turma.id}">${escapeHtml(turma.nome || 'Turma')}</option>`).join('')}
+    `;
+    select.value = turmas.some(turma => String(turma.id) === currentValue) ? currentValue : '';
+}
+
+function normalizeReportFiltersForTurmas(turmas = []) {
+    const filters = readReportFilters();
+    if (filters.turmaId && !turmas.some(turma => String(turma.id) === filters.turmaId)) {
+        filters.turmaId = '';
+        writeReportFilters(filters);
+    }
+}
+
 function renderContributions(contribuicoes) {
     const summary = contribuicoes?.summary || {};
     const recentes = contribuicoes?.recentes || [];
     const turmas = contribuicoes?.turmas || [];
 
     setText('contributionTotal', formatCurrency(summary.totalContribuicoes || 0));
-    setText('contributionScopeLabel', summary.scopeLabel || 'Contribuicoes de todas as turmas');
+    setText('contributionScopeLabel', summary.scopeLabel || 'Contribuições de todas as turmas');
     setText('contributionCount', summary.quantidadeContribuicoes ?? 0);
-    setText('contributionAverage', `Ticket medio ${formatCurrency(summary.ticketMedio || 0)}`);
+    setText('contributionAverage', `Ticket médio ${formatCurrency(summary.ticketMedio || 0)}`);
     setText('contributionRemaining', formatCurrency(summary.metaRestante || 0));
     setText('contributionProgressLabel', `${Math.round(Number(summary.percentualMeta || 0))}% da meta atingida`);
 
     renderSimpleList('contributionRecentList', recentes, item => `
         <article class="simple-item">
             <div class="simple-item__main">
-                <p class="simple-item__title">${escapeHtml(item.titulo || 'Contribuicao')}</p>
+                <p class="simple-item__title">${escapeHtml(item.titulo || 'Contribuição')}</p>
                 <p class="simple-item__subtitle">${escapeHtml(formatDate(item.data))} | ${escapeHtml(item.turmaNome || 'Sem turma')} | ${escapeHtml(item.apoiadorNome || 'Apoiador da turma')}</p>
                 <p class="simple-item__subtitle">${escapeHtml(item.mensagem || 'Sem mensagem adicional')}</p>
             </div>
@@ -534,7 +597,7 @@ function renderContributions(contribuicoes) {
                 <strong class="money-positive">+ ${escapeHtml(formatCurrency(item.valor || 0))}</strong>
             </div>
         </article>
-    `, 'Nenhuma contribuicao registrada ainda.');
+    `, 'Nenhuma contribuição registrada ainda.');
 
     renderSimpleList('contributionTurmaList', turmas, item => `
         <article class="simple-item simple-item--goal">
@@ -551,6 +614,104 @@ function renderContributions(contribuicoes) {
             </div>
         </article>
     `, 'Nenhuma turma encontrada para este filtro.');
+}
+
+function formatRunway(value = 0) {
+    const numericValue = Number(value || 0);
+    if (numericValue <= 0) return 'Sem base';
+    return `${numericValue.toFixed(1).replace('.', ',')} meses`;
+}
+
+function renderReportModule(report) {
+    const emptyState = document.getElementById('reportEmptyState');
+    const resultPanel = document.getElementById('reportResultPanel');
+    const exportButtons = [
+        document.getElementById('exportReportPdfBtn'),
+        document.getElementById('exportReportSummaryCsvBtn'),
+        document.getElementById('exportReportTransactionsCsvBtn')
+    ];
+    const currentFilters = readReportFilters();
+    const summary = report?.summary || {};
+    const filters = report?.filters || {};
+
+    if (!report) {
+        if (emptyState) emptyState.hidden = false;
+        if (resultPanel) resultPanel.hidden = true;
+        exportButtons.forEach(button => button && (button.disabled = true));
+        setText('reportScopeLabel', currentFilters.turmaId ? 'Relatorio preparado para turma selecionada' : 'Visao consolidada de todas as turmas');
+        setText(
+            'reportFilterHint',
+            `${currentFilters.turmaId ? 'Filtro por turma ativo' : 'Todas as turmas'} | Janela de ${currentFilters.periodMonths || DEFAULT_REPORT_FILTERS.periodMonths} meses | Clique em gerar relatorio`
+        );
+        return;
+    }
+
+    if (emptyState) emptyState.hidden = true;
+    if (resultPanel) resultPanel.hidden = false;
+    exportButtons.forEach(button => button && (button.disabled = false));
+
+    setText('reportCurrentBalance', formatCurrency(summary.saldoAtualEscopo || 0));
+    setText('reportGeneratedAt', report.generatedAt ? `Gerado em ${new Date(report.generatedAt).toLocaleString('pt-BR')}` : 'Gerado agora');
+    setText('reportPeriodRevenue', formatCurrency(summary.receitasPeriodo || 0));
+    setText('reportAverageNet', `Resultado medio ${formatCurrency(summary.resultadoMedioMensal || 0)}`);
+    setText('reportPeriodExpenses', formatCurrency(summary.despesasPeriodo || 0));
+    setText('reportRunwayMonths', `Cobertura ${formatRunway(summary.coberturaCaixaMeses || 0)}`);
+    setText('reportPeriodContributions', formatCurrency(summary.totalContribuicoesPeriodo || 0));
+    setText('reportContributionShare', `Participacao ${formatPercent(summary.participacaoContribuicoesReceita || 0)}`);
+    setText('reportScopeLabel', filters.scopeLabel || 'Visao consolidada de todas as turmas');
+    setText(
+        'reportFilterHint',
+        `${filters.turmaNome || 'Todas as turmas'} | Janela de ${filters.periodMonths || DEFAULT_REPORT_FILTERS.periodMonths} meses | ${summary.totalLancamentosPeriodo || 0} lancamentos no recorte`
+    );
+
+    renderSimpleList('reportSummaryList', [
+        {
+            title: 'Escopo selecionado',
+            description: filters.scopeLabel || 'Visao consolidada de todas as turmas'
+        },
+        {
+            title: 'Periodo analisado',
+            description: `${filters.periodMonths || DEFAULT_REPORT_FILTERS.periodMonths} meses`
+        },
+        {
+            title: 'Lancamentos considerados',
+            description: `${summary.totalLancamentosPeriodo || 0} registros no recorte`
+        },
+        {
+            title: 'Contribuicoes registradas',
+            description: `${formatCurrency(summary.totalContribuicoesPeriodo || 0)} no periodo`
+        }
+    ], item => `
+        <article class="simple-item">
+            <div class="simple-item__main">
+                <p class="simple-item__title">${escapeHtml(item.title || 'Resumo')}</p>
+                <p class="simple-item__subtitle">${escapeHtml(item.description || '')}</p>
+            </div>
+        </article>
+    `, 'Nenhum resumo disponivel.');
+
+    renderSimpleList('reportInsightsList', report?.insights || [], item => `
+        <article class="simple-item">
+            <div class="simple-item__main">
+                <p class="simple-item__title">${escapeHtml(item.title || 'Leitura')}</p>
+                <p class="simple-item__subtitle">${escapeHtml(item.description || '')}</p>
+            </div>
+            <div class="simple-item__side">
+                <span class="simple-pill simple-pill--${escapeHtml(item.tone || 'info')}">${escapeHtml(item.tone || 'info')}</span>
+            </div>
+        </article>
+    `, 'Nenhum insight disponivel para o recorte atual.');
+}
+
+function downloadBlob(blob, filename) {
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.URL.revokeObjectURL(url);
 }
 
 function renderAgendaModule(eventos = [], turmas = []) {
@@ -646,7 +807,7 @@ function renderAgendaUpcoming(eventos = []) {
                 <span class="agenda-item__badge">${escapeHtml(evento.status || 'agendado')}</span>
             </article>
         `).join('')
-        : '<div class="simple-empty">Nenhum proximo evento cadastrado.</div>';
+        : '<div class="simple-empty">Nenhum próximo evento cadastrado.</div>';
 }
 
 function setupModalEvents() {
@@ -726,7 +887,7 @@ function setupModalEvents() {
                     payload = { titulo: data.nome, dataFim: data.data, turmaId: data.turmaId };
                     break;
                 default:
-                    showToast('Tipo nao implementado', 'error');
+                    showToast('Tipo não implementado', 'error');
                     btn.innerText = originalText;
                     btn.disabled = false;
                     return;
@@ -738,7 +899,7 @@ function setupModalEvents() {
 
         try {
             if (data.kind === 'contribuicao') {
-                if (data.id) throw new Error('Edicao de contribuicao ainda nao esta disponivel.');
+                if (data.id) throw new Error('Edição de contribuição ainda não está disponível.');
                 await api.registrarContribuicao(payload);
             } else {
                 await api.salvar(finalEndpoint, payload, method);
@@ -767,7 +928,7 @@ function validateFormData(data) {
     if (data.kind === 'turma' && data.valor) {
         const meta = Number(data.valor);
         if (!Number.isFinite(meta) || meta < 0) {
-            return 'Informe uma meta valida para a turma.';
+            return 'Informe uma meta válida para a turma.';
         }
     }
 
@@ -786,14 +947,14 @@ function validateFormData(data) {
     if (data.kind === 'lancamento') {
         const valor = Number(data.valor);
         if (!Number.isFinite(valor) || valor === 0) {
-            return 'Informe um valor diferente de zero para o lancamento.';
+            return 'Informe um valor diferente de zero para o lançamento.';
         }
     }
 
     if (data.kind === 'contribuicao') {
         const valor = Number(data.valor);
         if (!Number.isFinite(valor) || valor <= 0) {
-            return 'Informe um valor positivo para a contribuicao.';
+            return 'Informe um valor positivo para a contribuição.';
         }
     }
 
@@ -821,6 +982,7 @@ function setupNavigation() {
 function setupDashboardFilterControls() {
     syncMainDashboardFilterInputs();
     syncContributionFilterInputs();
+    syncReportFilterInputs();
 
     document.getElementById('mainDashboardTurmaFilter')?.addEventListener('change', event => {
         const filters = readDashboardFilters();
@@ -842,7 +1004,61 @@ function setupDashboardFilterControls() {
         writeContributionFilters(filters);
         carregarDados().catch(console.error);
     });
+
+    document.getElementById('reportTurmaFilter')?.addEventListener('change', event => {
+        const filters = readReportFilters();
+        filters.turmaId = event.target.value || '';
+        writeReportFilters(filters);
+        db.relatorio = null;
+        renderReportModule(null);
+    });
+
+    document.getElementById('reportPeriodFilter')?.addEventListener('change', event => {
+        const filters = readReportFilters();
+        filters.periodMonths = event.target.value || DEFAULT_REPORT_FILTERS.periodMonths;
+        writeReportFilters(filters);
+        db.relatorio = null;
+        renderReportModule(null);
+    });
 }
+
+window.generateReport = async () => {
+    const button = document.getElementById('generateReportBtn');
+    const originalLabel = button?.innerHTML;
+
+    try {
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = '<i class="ph ph-spinner-gap animate-spin"></i> Gerando...';
+        }
+
+        const report = await api.relatorioFinanceiro(getReportFilterPayload());
+        db.relatorio = report;
+        renderReportModule(report);
+        showToast('Relatorio gerado com sucesso!', 'success');
+    } catch (error) {
+        showToast(error.message || 'Erro ao gerar relatorio', 'error');
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.innerHTML = originalLabel || 'Gerar relatorio';
+        }
+    }
+};
+
+window.exportReportFile = async (resourcePath) => {
+    try {
+        if (!db.relatorio) {
+            showToast('Gere o relatorio antes de exportar.', 'error');
+            return;
+        }
+        const { blob, filename } = await api.exportarRelatorioFinanceiro(resourcePath, getReportFilterPayload());
+        downloadBlob(blob, filename);
+        showToast('Relatorio exportado com sucesso!', 'success');
+    } catch (error) {
+        showToast(error.message || 'Erro ao exportar relatorio', 'error');
+    }
+};
 
 window.mudarMesAgenda = (delta) => {
     agendaState.currentMonth = new Date(agendaState.currentMonth.getFullYear(), agendaState.currentMonth.getMonth() + delta, 1);
@@ -870,7 +1086,7 @@ window.salvarEventoRapido = async () => {
     const turmaId = document.getElementById('agendaQuickTurma')?.value || '';
 
     if (!agendaState.selectedDate) {
-        showToast('Selecione uma data no calendario.', 'error');
+        showToast('Selecione uma data no calendário.', 'error');
         return;
     }
 
@@ -940,14 +1156,14 @@ window.votar = async (votacaoId, opcaoId) => {
 };
 
 window.adicionarOpcaoUI = async (votacaoId) => {
-    const nome = prompt('Nome da opcao (Ex: Banda X):');
+    const nome = prompt('Nome da opção (Ex: Banda X):');
     if (!nome) return;
     try {
         await api.salvar(`/votacao/${votacaoId}/opcao`, { nome }, 'POST');
-        showToast('Opcao adicionada!', 'success');
+        showToast('Opção adicionada!', 'success');
         await carregarDados();
     } catch (err) {
-        showToast(err.message || 'Erro ao adicionar opcao', 'error');
+        showToast(err.message || 'Erro ao adicionar opção', 'error');
     }
 };
 
@@ -970,7 +1186,7 @@ window.importarAlunosCSV = async (event) => {
     try {
         showToast('Lendo o arquivo...', 'success');
         const resposta = await api.importarAlunosCSV(file, parseInt(turmaIdStr, 10));
-        showToast(resposta || 'Importacao concluida!', 'success');
+        showToast(resposta || 'Importação concluída!', 'success');
         await carregarDados();
     } catch (err) {
         showToast(err.message || 'Erro ao comunicar com o servidor', 'error');
@@ -1009,7 +1225,7 @@ window.confirmarExclusaoAcao = async () => {
     const { kind, id } = registroParaExcluir;
     try {
         await api.deletar(`/${kind}/${id}`);
-        showToast('Registro excluido com sucesso!', 'success');
+        showToast('Registro excluído com sucesso!', 'success');
         window.fecharConfirmacao();
         await carregarDados();
     } catch (err) {
@@ -1039,8 +1255,8 @@ window.editarRegistro = (kind, id) => {
             turma: 'Editar turma',
             aluno: 'Editar aluno',
             evento: 'Editar evento',
-            lancamento: 'Editar lancamento',
-            votacao: 'Editar votacao'
+            lancamento: 'Editar lançamento',
+            votacao: 'Editar votação'
         };
         modalTitle.textContent = labels[kind] || 'Editar cadastro';
     }
@@ -1048,17 +1264,17 @@ window.editarRegistro = (kind, id) => {
         const labels = {
             turma: 'Atualize os dados da turma e da meta',
             aluno: 'Revise acesso, contato e perfil do aluno',
-            evento: 'Ajuste data, local e informacoes do evento',
-            lancamento: 'Corrija valores ou referencia do movimento',
-            votacao: 'Atualize o tema ou o prazo da votacao'
+            evento: 'Ajuste data, local e informações do evento',
+            lancamento: 'Corrija valores ou referência do movimento',
+            votacao: 'Atualize o tema ou o prazo da votação'
         };
         modalLead.textContent = labels[kind] || 'Revise os dados do cadastro';
     }
     if (modalHelp) {
-        modalHelp.textContent = 'As alteracoes serao aplicadas imediatamente ao painel e ao portal do aluno.';
+        modalHelp.textContent = 'As alterações serão aplicadas imediatamente ao painel e ao portal do aluno.';
     }
     if (modalSubmitButton) {
-        modalSubmitButton.textContent = 'Salvar alteracoes';
+        modalSubmitButton.textContent = 'Salvar alterações';
     }
     document.getElementById('modalItemId') && (document.getElementById('modalItemId').value = item.id);
     document.getElementById('modalCategoria') && (document.getElementById('modalCategoria').value = kind);

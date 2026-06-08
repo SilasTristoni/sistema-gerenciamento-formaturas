@@ -5,6 +5,7 @@ erDiagram
         VARCHAR curso
         VARCHAR instituicao
         DECIMAL total_arrecadado
+        DECIMAL meta_arrecadacao
         VARCHAR status
     }
 
@@ -48,6 +49,8 @@ erDiagram
         BIGINT aluno_id FK
         VARCHAR descricao
         VARCHAR tipo
+        BOOLEAN contribuicao
+        VARCHAR apoiador_nome
         DECIMAL valor
         DATE data_lancamento
         VARCHAR referencia

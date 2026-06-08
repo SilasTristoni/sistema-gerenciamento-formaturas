@@ -3,22 +3,22 @@ const MODAL_LABELS = {
     turma: 'Nova turma',
     aluno: 'Novo aluno',
     evento: 'Novo evento',
-    lancamento: 'Novo lancamento',
-    contribuicao: 'Nova contribuicao',
-    votacao: 'Nova votacao'
+    lancamento: 'Novo lançamento',
+    contribuicao: 'Nova contribuição',
+    votacao: 'Nova votação'
 };
 const MODAL_META = {
     turma: {
         eyebrow: 'Planejamento',
         lead: 'Configure a turma e sua meta financeira',
-        help: 'Defina nome, curso e objetivo de arrecadacao para acompanhar o progresso desde o inicio.',
+        help: 'Defina nome, curso e objetivo de arrecadação para acompanhar o progresso desde o início.',
         icon: 'ph-graduation-cap',
         submit: 'Salvar turma'
     },
     aluno: {
         eyebrow: 'Cadastro individual',
         lead: 'Adicione um aluno com acesso ao portal',
-        help: 'Voce pode definir identificador, contato e perfil para liberar acesso e acompanhar a participacao no portal.',
+        help: 'Você pode definir identificador, contato e perfil para liberar acesso e acompanhar a participação no portal.',
         icon: 'ph-student',
         submit: 'Salvar aluno'
     },
@@ -31,24 +31,24 @@ const MODAL_META = {
     },
     lancamento: {
         eyebrow: 'Financeiro',
-        lead: 'Registre uma entrada ou saida',
-        help: 'Use valores positivos para receita e negativos para despesa e mantenha a previsao atualizada.',
+        lead: 'Registre uma entrada ou saída',
+        help: 'Use valores positivos para receita e negativos para despesa e mantenha a previsão atualizada.',
         icon: 'ph-currency-dollar',
-        submit: 'Salvar lancamento'
+        submit: 'Salvar lançamento'
     },
     contribuicao: {
         eyebrow: 'Campanha da meta',
-        lead: 'Registre uma contribuicao para a turma',
-        help: 'Guarde doacoes e apoios para a meta sem expor alunos ou criar fluxo de cobranca.',
+        lead: 'Registre uma contribuição para a turma',
+        help: 'Guarde doações e apoios para a meta sem expor alunos ou criar fluxo de cobrança.',
         icon: 'ph-gift',
-        submit: 'Salvar contribuicao'
+        submit: 'Salvar contribuição'
     },
     votacao: {
         eyebrow: 'Engajamento',
-        lead: 'Abra uma nova votacao da turma',
-        help: 'Defina o tema e o prazo para coletar decisoes da turma no portal do aluno.',
+        lead: 'Abra uma nova votação da turma',
+        help: 'Defina o tema e o prazo para coletar decisões da turma no portal do aluno.',
         icon: 'ph-chart-bar',
-        submit: 'Salvar votacao'
+        submit: 'Salvar votação'
     }
 };
 
@@ -162,13 +162,13 @@ export const modal = {
             if (kind === 'votacao' && lblDesc) lblDesc.innerText = 'Detalhes / Tema';
         } else if (kind === 'contribuicao') {
             if (lblDesc) lblDesc.innerText = 'Mensagem / Contexto';
-            if (lblValor) lblValor.innerText = 'Valor da contribuicao (R$)';
+            if (lblValor) lblValor.innerText = 'Valor da contribuição (R$)';
             if (inputValor) inputValor.placeholder = 'Ex.: 150.00';
             divApoiadorNome?.classList.remove('hidden');
             divContribuicaoAnonima?.classList.remove('hidden');
             divContribuicaoAnonima?.classList.add('flex');
         } else if (kind === 'lancamento') {
-            if (lblDesc) lblDesc.innerText = 'Referencia';
+            if (lblDesc) lblDesc.innerText = 'Referência';
         }
     },
 
@@ -211,14 +211,14 @@ export const modal = {
     updateTitle(kind) {
         const title = document.querySelector('#modalTitle span');
         if (!title) return;
-        title.textContent = MODAL_LABELS[kind] || 'Formulario';
+        title.textContent = MODAL_LABELS[kind] || 'Formulário';
     },
 
     updateIntro(kind) {
         const meta = MODAL_META[kind] || {
             eyebrow: 'Cadastro',
             lead: 'Preencha os dados principais',
-            help: 'Use este formulario para registrar um novo item no sistema.',
+            help: 'Use este formulário para registrar um novo item no sistema.',
             icon: 'ph-pencil-simple'
         };
 

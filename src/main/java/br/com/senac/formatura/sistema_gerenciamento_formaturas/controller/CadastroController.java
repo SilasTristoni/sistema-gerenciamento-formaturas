@@ -28,6 +28,7 @@ import br.com.senac.formatura.sistema_gerenciamento_formaturas.dto.AlunoInputDTO
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.dto.EventoInputDTO;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.dto.LancamentoInputDTO;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.dto.VotacaoInputDTO;
+import br.com.senac.formatura.sistema_gerenciamento_formaturas.dto.VotacaoResultadoDTO;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Aluno;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Evento;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.LancamentoFinanceiro;
@@ -300,11 +301,16 @@ public class CadastroController {
     }
 
     @GetMapping("/votacoes")
-    public List<Votacao> listarVotacoes() {
-        return votacaoRepo.findAll(Sort.by(
+    public List<VotacaoResultadoDTO> listarVotacoes() {
+        List<Votacao> votacoes = votacaoRepo.findAll(Sort.by(
             Sort.Order.asc("dataFim"),
             Sort.Order.asc("titulo")
         ));
+        Map<Long, Long> votosPorOpcao = buildVoteCountsByOpcao(votacoes);
+
+        return votacoes.stream()
+            .map(votacao -> toVotacaoResultado(votacao, votosPorOpcao))
+            .toList();
     }
 
     @PostMapping("/votacao")
@@ -402,6 +408,65 @@ public class CadastroController {
             .replaceAll("^[._-]+|[._-]+$", "");
     }
 
+    private VotacaoResultadoDTO toVotacaoResultado(Votacao votacao, Map<Long, Long> votosPorOpcao) {
+        List<OpcaoVotacao> opcoes = votacao.getOpcoes() == null ? List.of() : votacao.getOpcoes();
+        long totalVotos = opcoes.stream()
+            .mapToLong(opcao -> votosPorOpcao.getOrDefault(opcao.getId(), 0L))
+            .sum();
+
+        return new VotacaoResultadoDTO(
+            votacao.getId(),
+            firstNonBlank(votacao.getTitulo(), "Votação sem título"),
+            firstNonBlank(votacao.getStatus(), "aberta"),
+            votacao.getDataFim(),
+            votacao.getTurma() == null ? null : new VotacaoResultadoDTO.TurmaResumo(
+                votacao.getTurma().getId(),
+                firstNonBlank(votacao.getTurma().getNome(), "Sem turma")
+            ),
+            totalVotos,
+            opcoes.stream()
+                .map(opcao -> {
+                    long votos = votosPorOpcao.getOrDefault(opcao.getId(), 0L);
+                    return new VotacaoResultadoDTO.OpcaoResultadoDTO(
+                        opcao.getId(),
+                        firstNonBlank(opcao.getNomeFornecedor(), "Opção sem nome"),
+                        opcao.getDetalhesProposta(),
+                        opcao.getValorProposta(),
+                        votos,
+                        totalVotos <= 0 ? 0.0 : roundPercent((votos * 100.0) / totalVotos)
+                    );
+                })
+                .toList()
+        );
+    }
+
+    private Map<Long, Long> buildVoteCountsByOpcao(List<Votacao> votacoes) {
+        List<Long> votacaoIds = votacoes.stream()
+            .map(Votacao::getId)
+            .filter(id -> id != null)
+            .toList();
+
+        if (votacaoIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, Long> votosPorOpcao = new java.util.HashMap<>();
+        for (Object[] row : votoRepo.countVotesByOpcaoForVotacoes(votacaoIds)) {
+            if (row.length < 2 || row[0] == null || row[1] == null) continue;
+            votosPorOpcao.merge(((Number) row[0]).longValue(), ((Number) row[1]).longValue(), Long::sum);
+        }
+        return votosPorOpcao;
+    }
+
+    private String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return "";
+    }
+
     private String normalizeText(String value) {
         return value == null ? "" : value.trim().replaceAll("\\s{2,}", " ");
     }
@@ -433,6 +498,10 @@ public class CadastroController {
     }
 
     private double roundMoney(double value) {
+        return Math.round(value * 100.0) / 100.0;
+    }
+
+    private double roundPercent(double value) {
         return Math.round(value * 100.0) / 100.0;
     }
 

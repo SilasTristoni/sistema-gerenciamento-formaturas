@@ -60,11 +60,14 @@ public record AlunoPainelResponseDTO(
         Long opcaoSelecionadaId,
         String opcaoSelecionadaNome,
         long diasRestantes,
+        long totalVotos,
         List<OpcaoAluno> opcoes
     ) {}
 
     public record OpcaoAluno(
         Long id,
-        String nome
+        String nome,
+        long votos,
+        double percentual
     ) {}
 }

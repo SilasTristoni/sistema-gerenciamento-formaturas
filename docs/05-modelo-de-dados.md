@@ -1,21 +1,20 @@
 # Modelo de Dados
 
-Este documento descreve o modelo relacional do sistema.
-O diagrama foi organizado para ficar proximo ao estilo visual visto na referencia
-da imagem anexada, com foco em tabelas, chaves e relacionamentos.
+Este documento consolida o modelo entidade-relacionamento e o modelo relacional
+logico do projeto com base nas entidades JPA atuais em `src/main/java/.../model`.
 
 Arquivos de apoio:
 
 - `diagramas/modelo-relacional-drawsql.mmd`
 - `diagramas/schema-drawsql.sql`
 
-## Visao geral das entidades
+## Visao geral
 
-### Tabelas de identidade e acesso
+### Identidade e acesso
 
 - `usuarios`
 
-### Tabelas de dominio academico e operacional
+### Nucleo academico e operacional
 
 - `turma`
 - `aluno`
@@ -23,17 +22,17 @@ Arquivos de apoio:
 - `presencas_evento`
 - `tarefa`
 
-### Tabelas de dominio financeiro
+### Financeiro e contribuicoes
 
 - `lancamento_financeiro`
 
-### Tabelas de decisao e votacao
+### Decisao coletiva
 
 - `votacao`
 - `opcao_votacao`
 - `voto`
 
-## DER em Mermaid
+## DER atualizado
 
 ```mermaid
 erDiagram
@@ -43,6 +42,7 @@ erDiagram
         VARCHAR curso
         VARCHAR instituicao
         DECIMAL total_arrecadado
+        DECIMAL meta_arrecadacao
         VARCHAR status
     }
 
@@ -86,6 +86,8 @@ erDiagram
         BIGINT aluno_id FK
         VARCHAR descricao
         VARCHAR tipo
+        BOOLEAN contribuicao
+        VARCHAR apoiador_nome
         DECIMAL valor
         DATE data_lancamento
         VARCHAR referencia
@@ -145,17 +147,50 @@ erDiagram
     OPCAO_VOTACAO ||--o{ VOTO : selecionada_em
 ```
 
+## Visao relacional resumida
+
+### Chaves principais
+
+- `turma.id`
+- `aluno.id`
+- `usuarios.id`
+- `evento.id`
+- `presencas_evento.id`
+- `lancamento_financeiro.id`
+- `tarefa.id`
+- `votacao.id`
+- `opcao_votacao.id`
+- `voto.id`
+
+### Principais chaves estrangeiras
+
+- `aluno.turma_id -> turma.id`
+- `usuarios.aluno_id -> aluno.id`
+- `evento.turma_id -> turma.id`
+- `presencas_evento.evento_id -> evento.id`
+- `presencas_evento.aluno_id -> aluno.id`
+- `lancamento_financeiro.turma_id -> turma.id`
+- `lancamento_financeiro.aluno_id -> aluno.id`
+- `tarefa.turma_id -> turma.id`
+- `tarefa.responsavel_id -> aluno.id`
+- `votacao.turma_id -> turma.id`
+- `opcao_votacao.votacao_id -> votacao.id`
+- `voto.votacao_id -> votacao.id`
+- `voto.opcao_id -> opcao_votacao.id`
+- `voto.aluno_id -> aluno.id`
+
 ## Dicionario resumido
 
 ### turma
 
 Representa a unidade principal de organizacao da formatura.
 Tudo o que importa para o negocio e agrupado por turma.
+Tambem guarda `totalArrecadado` e `metaArrecadacao`.
 
 ### aluno
 
 Representa o formando participante da turma.
-Carrega dados pessoais basicos e status financeiro.
+Carrega dados pessoais basicos, identificador unico e status.
 
 ### usuarios
 
@@ -175,6 +210,11 @@ Hoje o sistema trabalha com foco em confirmacao de presenca.
 
 Representa entrada ou saida financeira vinculada a uma turma.
 Pode opcionalmente referenciar um aluno.
+No modelo atual tambem registra:
+
+- se o item e uma contribuicao;
+- quem foi o apoiador;
+- uma referencia ou mensagem.
 
 ### tarefa
 
@@ -198,6 +238,7 @@ Representa a escolha efetiva do aluno em uma votacao.
 - `aluno.identificador` deve ser unico;
 - `usuarios.login` deve ser unico;
 - `usuarios.email` deve ser unico;
+- `usuarios.aluno_id` deve ser unico para manter o vinculo um-para-um;
 - `voto` deve ser unico por par `votacao_id` + `aluno_id`;
 - `evento`, `lancamento_financeiro`, `votacao` e `tarefa` dependem de `turma`.
 
