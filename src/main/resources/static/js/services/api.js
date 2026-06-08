@@ -5,6 +5,7 @@ const CADASTRO_URL = `${API_URL}/cadastro`;
 const AUTH_URL = `${API_URL}/auth`;
 const VOTACAO_URL = `${API_URL}/votacoes`;
 const CONTRIBUICOES_URL = `${API_URL}/contribuicoes`;
+const RELATORIOS_URL = `${API_URL}/relatorios/financeiro`;
 
 function authHeaders(isJson = true) {
     const token = auth.getToken();
@@ -33,6 +34,33 @@ async function parseResponse(response) {
     return contentType.includes("application/json") ? response.json() : response.text();
 }
 
+async function parseFileResponse(response) {
+    if (response.status === 401) throw new Error("Sessao expirada");
+    if (response.status === 403) throw new Error("Acesso negado");
+
+    if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "Erro na exportacao do arquivo");
+    }
+
+    const disposition = response.headers.get("content-disposition") || "";
+    const filenameMatch = disposition.match(/filename\*?=(?:UTF-8'')?("?)([^";]+)\1/);
+    const filename = filenameMatch ? decodeURIComponent(filenameMatch[2]) : "arquivo-exportado";
+
+    return {
+        blob: await response.blob(),
+        filename
+    };
+}
+
+function buildQueryString(filters = {}) {
+    const params = new URLSearchParams();
+    if (filters.turmaId) params.set("turmaId", String(filters.turmaId));
+    if (filters.periodMonths) params.set("periodoMeses", String(filters.periodMonths));
+    const queryString = params.toString();
+    return queryString ? `?${queryString}` : "";
+}
+
 export const api = {
     async login(login, senha) {
         const response = await fetch(`${AUTH_URL}/login`, {
@@ -52,11 +80,7 @@ export const api = {
     },
 
     async dashboardResumo(filters = {}) {
-        const params = new URLSearchParams();
-        if (filters.turmaId) params.set('turmaId', String(filters.turmaId));
-        if (filters.periodMonths) params.set('periodoMeses', String(filters.periodMonths));
-
-        const queryString = params.toString();
+        const queryString = buildQueryString(filters).replace(/^\?/, "");
         const response = await fetch(`${API_URL}/dashboard/resumo${queryString ? `?${queryString}` : ''}`, {
             method: "GET",
             headers: authHeaders(false)
@@ -73,14 +97,28 @@ export const api = {
     },
 
     async contribuicoesResumo(filters = {}) {
-        const params = new URLSearchParams();
-        if (filters.turmaId) params.set('turmaId', String(filters.turmaId));
-        const queryString = params.toString();
+        const queryString = buildQueryString({ turmaId: filters.turmaId }).replace(/^\?/, "");
         const response = await fetch(`${CONTRIBUICOES_URL}/resumo${queryString ? `?${queryString}` : ''}`, {
             method: "GET",
             headers: authHeaders(false)
         });
         return parseResponse(response);
+    },
+
+    async relatorioFinanceiro(filters = {}) {
+        const response = await fetch(`${RELATORIOS_URL}${buildQueryString(filters)}`, {
+            method: "GET",
+            headers: authHeaders(false)
+        });
+        return parseResponse(response);
+    },
+
+    async exportarRelatorioFinanceiro(resourcePath, filters = {}) {
+        const response = await fetch(`${RELATORIOS_URL}/export/${resourcePath}${buildQueryString(filters)}`, {
+            method: "GET",
+            headers: authHeaders(false)
+        });
+        return parseFileResponse(response);
     },
 
     async registrarContribuicao(payload) {

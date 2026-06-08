@@ -5,18 +5,23 @@ import { ui } from './components/ui.js';
 import { modal } from './components/modal.js';
 import { showToast } from './components/toast.js';
 
-let db = { turmas: [], alunos: [], eventos: [], financeiro: [], votacoes: [], dashboard: null, contribuicoes: null };
+let db = { turmas: [], alunos: [], eventos: [], financeiro: [], votacoes: [], dashboard: null, contribuicoes: null, relatorio: null };
 let usuarioLogado = null;
 let monthlyChart = null;
 const LAST_TURMA_KEY = 'gestaoform.lastTurmaId';
 const DASHBOARD_FILTER_KEY = 'gestaoform.dashboard.filters';
 const CONTRIBUTION_FILTER_KEY = 'gestaoform.contribuicoes.filters';
+const REPORT_FILTER_KEY = 'gestaoform.relatorios.filters';
 const DEFAULT_DASHBOARD_FILTERS = {
     turmaId: '',
     periodMonths: '6'
 };
 const DEFAULT_CONTRIBUTION_FILTERS = {
     turmaId: ''
+};
+const DEFAULT_REPORT_FILTERS = {
+    turmaId: '',
+    periodMonths: '6'
 };
 const agendaState = {
     currentMonth: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
@@ -89,13 +94,17 @@ export async function carregarDados() {
     try {
         syncMainDashboardFilterInputs();
         syncContributionFilterInputs();
+        syncReportFilterInputs();
         const turmas = await api.buscar('turmas');
         normalizeDashboardFiltersForTurmas(turmas);
         normalizeContributionFiltersForTurmas(turmas);
+        normalizeReportFiltersForTurmas(turmas);
         populateMainDashboardTurmaFilter(turmas);
         populateContributionTurmaFilter(turmas);
+        populateReportTurmaFilter(turmas);
         syncMainDashboardFilterInputs();
         syncContributionFilterInputs();
+        syncReportFilterInputs();
 
         const [alunos, financeiro, eventos, votacoes, dashboard, contribuicoes] = await Promise.all([
             api.buscar('alunos'),
@@ -106,7 +115,7 @@ export async function carregarDados() {
             api.contribuicoesResumo(getContributionFilterPayload())
         ]);
 
-        db = { turmas, alunos, financeiro, eventos, votacoes, dashboard, contribuicoes };
+        db = { ...db, turmas, alunos, financeiro, eventos, votacoes, dashboard, contribuicoes };
 
         ui.renderTurmas(db.turmas);
         ui.renderAlunos(db.alunos);
@@ -116,6 +125,7 @@ export async function carregarDados() {
         renderIntegratedDashboard(db.dashboard);
         renderAgendaModule(db.eventos, db.turmas);
         renderContributions(db.contribuicoes);
+        renderReportModule(db.relatorio);
 
         document.querySelectorAll('.btn-admin').forEach(btn => {
             btn.style.display = usuarioLogado?.perfil === 'ROLE_COMISSAO' ? 'inline-flex' : 'none';
@@ -185,6 +195,22 @@ function writeContributionFilters(filters) {
     localStorage.setItem(CONTRIBUTION_FILTER_KEY, JSON.stringify(filters));
 }
 
+function readReportFilters() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(REPORT_FILTER_KEY) || '{}');
+        return {
+            turmaId: saved.turmaId || DEFAULT_REPORT_FILTERS.turmaId,
+            periodMonths: saved.periodMonths || DEFAULT_REPORT_FILTERS.periodMonths
+        };
+    } catch (error) {
+        return { ...DEFAULT_REPORT_FILTERS };
+    }
+}
+
+function writeReportFilters(filters) {
+    localStorage.setItem(REPORT_FILTER_KEY, JSON.stringify(filters));
+}
+
 function getDashboardFilterPayload() {
     const filters = readDashboardFilters();
     return {
@@ -197,6 +223,14 @@ function getContributionFilterPayload() {
     const filters = readContributionFilters();
     return {
         turmaId: filters.turmaId ? Number(filters.turmaId) : undefined
+    };
+}
+
+function getReportFilterPayload() {
+    const filters = readReportFilters();
+    return {
+        turmaId: filters.turmaId ? Number(filters.turmaId) : undefined,
+        periodMonths: Number(filters.periodMonths || DEFAULT_REPORT_FILTERS.periodMonths)
     };
 }
 
@@ -213,6 +247,15 @@ function syncContributionFilterInputs() {
     const filters = readContributionFilters();
     const turmaSelect = document.getElementById('contributionTurmaFilter');
     if (turmaSelect) turmaSelect.value = filters.turmaId;
+}
+
+function syncReportFilterInputs() {
+    const filters = readReportFilters();
+    const turmaSelect = document.getElementById('reportTurmaFilter');
+    const periodSelect = document.getElementById('reportPeriodFilter');
+
+    if (turmaSelect) turmaSelect.value = filters.turmaId;
+    if (periodSelect) periodSelect.value = filters.periodMonths;
 }
 
 function parseLocalDate(value) {
@@ -511,6 +554,26 @@ function normalizeContributionFiltersForTurmas(turmas = []) {
     }
 }
 
+function populateReportTurmaFilter(turmas = []) {
+    const select = document.getElementById('reportTurmaFilter');
+    if (!select) return;
+
+    const currentValue = readReportFilters().turmaId;
+    select.innerHTML = `
+        <option value="">Todas as turmas</option>
+        ${turmas.map(turma => `<option value="${turma.id}">${escapeHtml(turma.nome || 'Turma')}</option>`).join('')}
+    `;
+    select.value = turmas.some(turma => String(turma.id) === currentValue) ? currentValue : '';
+}
+
+function normalizeReportFiltersForTurmas(turmas = []) {
+    const filters = readReportFilters();
+    if (filters.turmaId && !turmas.some(turma => String(turma.id) === filters.turmaId)) {
+        filters.turmaId = '';
+        writeReportFilters(filters);
+    }
+}
+
 function renderContributions(contribuicoes) {
     const summary = contribuicoes?.summary || {};
     const recentes = contribuicoes?.recentes || [];
@@ -551,6 +614,104 @@ function renderContributions(contribuicoes) {
             </div>
         </article>
     `, 'Nenhuma turma encontrada para este filtro.');
+}
+
+function formatRunway(value = 0) {
+    const numericValue = Number(value || 0);
+    if (numericValue <= 0) return 'Sem base';
+    return `${numericValue.toFixed(1).replace('.', ',')} meses`;
+}
+
+function renderReportModule(report) {
+    const emptyState = document.getElementById('reportEmptyState');
+    const resultPanel = document.getElementById('reportResultPanel');
+    const exportButtons = [
+        document.getElementById('exportReportPdfBtn'),
+        document.getElementById('exportReportSummaryCsvBtn'),
+        document.getElementById('exportReportTransactionsCsvBtn')
+    ];
+    const currentFilters = readReportFilters();
+    const summary = report?.summary || {};
+    const filters = report?.filters || {};
+
+    if (!report) {
+        if (emptyState) emptyState.hidden = false;
+        if (resultPanel) resultPanel.hidden = true;
+        exportButtons.forEach(button => button && (button.disabled = true));
+        setText('reportScopeLabel', currentFilters.turmaId ? 'Relatorio preparado para turma selecionada' : 'Visao consolidada de todas as turmas');
+        setText(
+            'reportFilterHint',
+            `${currentFilters.turmaId ? 'Filtro por turma ativo' : 'Todas as turmas'} | Janela de ${currentFilters.periodMonths || DEFAULT_REPORT_FILTERS.periodMonths} meses | Clique em gerar relatorio`
+        );
+        return;
+    }
+
+    if (emptyState) emptyState.hidden = true;
+    if (resultPanel) resultPanel.hidden = false;
+    exportButtons.forEach(button => button && (button.disabled = false));
+
+    setText('reportCurrentBalance', formatCurrency(summary.saldoAtualEscopo || 0));
+    setText('reportGeneratedAt', report.generatedAt ? `Gerado em ${new Date(report.generatedAt).toLocaleString('pt-BR')}` : 'Gerado agora');
+    setText('reportPeriodRevenue', formatCurrency(summary.receitasPeriodo || 0));
+    setText('reportAverageNet', `Resultado medio ${formatCurrency(summary.resultadoMedioMensal || 0)}`);
+    setText('reportPeriodExpenses', formatCurrency(summary.despesasPeriodo || 0));
+    setText('reportRunwayMonths', `Cobertura ${formatRunway(summary.coberturaCaixaMeses || 0)}`);
+    setText('reportPeriodContributions', formatCurrency(summary.totalContribuicoesPeriodo || 0));
+    setText('reportContributionShare', `Participacao ${formatPercent(summary.participacaoContribuicoesReceita || 0)}`);
+    setText('reportScopeLabel', filters.scopeLabel || 'Visao consolidada de todas as turmas');
+    setText(
+        'reportFilterHint',
+        `${filters.turmaNome || 'Todas as turmas'} | Janela de ${filters.periodMonths || DEFAULT_REPORT_FILTERS.periodMonths} meses | ${summary.totalLancamentosPeriodo || 0} lancamentos no recorte`
+    );
+
+    renderSimpleList('reportSummaryList', [
+        {
+            title: 'Escopo selecionado',
+            description: filters.scopeLabel || 'Visao consolidada de todas as turmas'
+        },
+        {
+            title: 'Periodo analisado',
+            description: `${filters.periodMonths || DEFAULT_REPORT_FILTERS.periodMonths} meses`
+        },
+        {
+            title: 'Lancamentos considerados',
+            description: `${summary.totalLancamentosPeriodo || 0} registros no recorte`
+        },
+        {
+            title: 'Contribuicoes registradas',
+            description: `${formatCurrency(summary.totalContribuicoesPeriodo || 0)} no periodo`
+        }
+    ], item => `
+        <article class="simple-item">
+            <div class="simple-item__main">
+                <p class="simple-item__title">${escapeHtml(item.title || 'Resumo')}</p>
+                <p class="simple-item__subtitle">${escapeHtml(item.description || '')}</p>
+            </div>
+        </article>
+    `, 'Nenhum resumo disponivel.');
+
+    renderSimpleList('reportInsightsList', report?.insights || [], item => `
+        <article class="simple-item">
+            <div class="simple-item__main">
+                <p class="simple-item__title">${escapeHtml(item.title || 'Leitura')}</p>
+                <p class="simple-item__subtitle">${escapeHtml(item.description || '')}</p>
+            </div>
+            <div class="simple-item__side">
+                <span class="simple-pill simple-pill--${escapeHtml(item.tone || 'info')}">${escapeHtml(item.tone || 'info')}</span>
+            </div>
+        </article>
+    `, 'Nenhum insight disponivel para o recorte atual.');
+}
+
+function downloadBlob(blob, filename) {
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.URL.revokeObjectURL(url);
 }
 
 function renderAgendaModule(eventos = [], turmas = []) {
@@ -821,6 +982,7 @@ function setupNavigation() {
 function setupDashboardFilterControls() {
     syncMainDashboardFilterInputs();
     syncContributionFilterInputs();
+    syncReportFilterInputs();
 
     document.getElementById('mainDashboardTurmaFilter')?.addEventListener('change', event => {
         const filters = readDashboardFilters();
@@ -842,7 +1004,61 @@ function setupDashboardFilterControls() {
         writeContributionFilters(filters);
         carregarDados().catch(console.error);
     });
+
+    document.getElementById('reportTurmaFilter')?.addEventListener('change', event => {
+        const filters = readReportFilters();
+        filters.turmaId = event.target.value || '';
+        writeReportFilters(filters);
+        db.relatorio = null;
+        renderReportModule(null);
+    });
+
+    document.getElementById('reportPeriodFilter')?.addEventListener('change', event => {
+        const filters = readReportFilters();
+        filters.periodMonths = event.target.value || DEFAULT_REPORT_FILTERS.periodMonths;
+        writeReportFilters(filters);
+        db.relatorio = null;
+        renderReportModule(null);
+    });
 }
+
+window.generateReport = async () => {
+    const button = document.getElementById('generateReportBtn');
+    const originalLabel = button?.innerHTML;
+
+    try {
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = '<i class="ph ph-spinner-gap animate-spin"></i> Gerando...';
+        }
+
+        const report = await api.relatorioFinanceiro(getReportFilterPayload());
+        db.relatorio = report;
+        renderReportModule(report);
+        showToast('Relatorio gerado com sucesso!', 'success');
+    } catch (error) {
+        showToast(error.message || 'Erro ao gerar relatorio', 'error');
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.innerHTML = originalLabel || 'Gerar relatorio';
+        }
+    }
+};
+
+window.exportReportFile = async (resourcePath) => {
+    try {
+        if (!db.relatorio) {
+            showToast('Gere o relatorio antes de exportar.', 'error');
+            return;
+        }
+        const { blob, filename } = await api.exportarRelatorioFinanceiro(resourcePath, getReportFilterPayload());
+        downloadBlob(blob, filename);
+        showToast('Relatorio exportado com sucesso!', 'success');
+    } catch (error) {
+        showToast(error.message || 'Erro ao exportar relatorio', 'error');
+    }
+};
 
 window.mudarMesAgenda = (delta) => {
     agendaState.currentMonth = new Date(agendaState.currentMonth.getFullYear(), agendaState.currentMonth.getMonth() + delta, 1);

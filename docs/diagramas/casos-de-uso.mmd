@@ -1,0 +1,46 @@
+flowchart LR
+    comissao[Comissao]
+    aluno[Aluno]
+
+    ucLogin((Autenticar-se))
+    ucPerfil((Consultar usuario logado))
+
+    ucTurmas((Gerenciar turmas))
+    ucAlunos((Gerenciar alunos))
+    ucImportar((Importar alunos por CSV))
+    ucEventos((Gerenciar eventos))
+    ucFinanceiro((Gerenciar lancamentos financeiros))
+    ucVotacoes((Gerenciar votacoes e opcoes))
+    ucDashboard((Consultar dashboard executivo))
+    ucContribResumo((Consultar resumo de contribuicoes))
+    ucContribRegistrar((Registrar contribuicao))
+    ucRelatorio((Gerar relatorio financeiro))
+    ucExportar((Exportar relatorio financeiro))
+
+    ucPainelAluno((Consultar painel do aluno))
+    ucPresenca((Confirmar presenca em evento))
+    ucVotar((Votar em enquete))
+
+    comissao --> ucLogin
+    comissao --> ucPerfil
+    comissao --> ucTurmas
+    comissao --> ucAlunos
+    comissao --> ucImportar
+    comissao --> ucEventos
+    comissao --> ucFinanceiro
+    comissao --> ucVotacoes
+    comissao --> ucDashboard
+    comissao --> ucContribResumo
+    comissao --> ucContribRegistrar
+    comissao --> ucRelatorio
+    comissao --> ucExportar
+
+    aluno --> ucLogin
+    aluno --> ucPerfil
+    aluno --> ucPainelAluno
+    aluno --> ucPresenca
+    aluno --> ucVotar
+    aluno --> ucContribResumo
+    aluno --> ucContribRegistrar
+
+    ucExportar --> ucRelatorio

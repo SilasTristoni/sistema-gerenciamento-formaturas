@@ -45,12 +45,19 @@
     <aside class="hidden md:flex w-80 flex-col bg-dark-800/80 backdrop-blur-xl border-r border-white/5">
       <div class="px-6 pt-6 pb-5 border-b border-white/6">
         <div class="brand-sidebar">
+<<<<<<< HEAD
           <div class="brand-mark" aria-hidden="true"><i class="ph ph-graduation-cap"></i></div>
+=======
+          <div class="brand-mark brand-mark--icon" aria-hidden="true">
+            <i class="ph ph-graduation-cap"></i>
+          </div>
+>>>>>>> e43c02f364dc1c16e3dd0bf744aafa2e39e617aa
           <div>
             <div class="text-white font-semibold text-lg leading-tight">Formaly</div>
             <div class="text-xs text-slate-500">Painel inteligente da comissão</div>
           </div>
         </div>
+<<<<<<< HEAD
         <div class="brand-sidebar__card">
           <div class="brand-sidebar__photo" aria-hidden="true"></div>
           <div class="brand-sidebar__copy">
@@ -59,6 +66,8 @@
             <p>Uma leitura visual única para agenda, caixa e crescimento da turma.</p>
           </div>
         </div>
+=======
+>>>>>>> e43c02f364dc1c16e3dd0bf744aafa2e39e617aa
       </div>
 
       <nav class="flex-1 overflow-y-auto py-5 px-3 space-y-1.5">
@@ -67,22 +76,28 @@
         <button onclick="navigate('turmas')" id="nav-turmas" class="nav-item"><i class="ph ph-graduation-cap text-xl"></i> Turmas</button>
         <button onclick="navigate('eventos')" id="nav-eventos" class="nav-item"><i class="ph ph-calendar-check text-xl"></i> Eventos</button>
         <button onclick="navigate('financeiro')" id="nav-financeiro" class="nav-item"><i class="ph ph-currency-dollar text-xl"></i> Financeiro</button>
-        <button onclick="navigate('contribuicoes')" id="nav-contribuicoes" class="nav-item"><i class="ph ph-gift text-xl"></i> Contribuicoes</button>
+        <button onclick="navigate('contribuicoes')" id="nav-contribuicoes" class="nav-item"><i class="ph ph-gift text-xl"></i> Contribuições</button>
+        <button onclick="navigate('relatorios')" id="nav-relatorios" class="nav-item"><i class="ph ph-file-arrow-down text-xl"></i> Relatórios</button>
         <button onclick="navigate('votacao')" id="nav-votacao" class="nav-item"><i class="ph ph-chart-bar text-xl"></i> Enquetes</button>
       </nav>
 
-      <div class="m-3 mt-auto rounded-[22px] border border-white/8 bg-white/[0.04] p-4">
-        <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-2xl bg-slate-700 flex items-center justify-center text-white font-bold text-lg" id="userAvatar">U</div>
-          <div class="min-w-0">
-            <div class="text-sm text-white font-semibold truncate" id="userNameDisplay">Carregando...</div>
-            <div class="text-xs text-slate-500" id="userRoleDisplay">...</div>
-            <div class="text-xs text-emerald-300 truncate mt-1" id="userLoginDisplay">@...</div>
+      <div class="m-3 mt-auto space-y-3">
+        <div class="rounded-[22px] border border-white/8 bg-white/[0.04] p-4">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-slate-700 flex items-center justify-center text-white font-bold text-lg" id="userAvatar">U</div>
+            <div class="min-w-0">
+              <div class="text-sm text-white font-semibold truncate" id="userNameDisplay">Carregando...</div>
+              <div class="text-xs text-slate-500" id="userRoleDisplay">...</div>
+              <div class="text-xs text-emerald-300 truncate mt-1" id="userLoginDisplay">@...</div>
+            </div>
           </div>
+          <button onclick="logout()" class="mt-4 w-full text-left flex items-center justify-center gap-2 px-3 py-3 rounded-2xl text-red-400 border border-red-500/15 bg-red-500/5 hover:bg-red-500/10 transition-colors text-sm font-semibold">
+            <i class="ph ph-sign-out text-lg"></i> Sair do Sistema
+          </button>
         </div>
-        <button onclick="logout()" class="mt-4 w-full text-left flex items-center justify-center gap-2 px-3 py-3 rounded-2xl text-red-400 border border-red-500/15 bg-red-500/5 hover:bg-red-500/10 transition-colors text-sm font-semibold">
-          <i class="ph ph-sign-out text-lg"></i> Sair do Sistema
-        </button>
+        <div class="brand-wide-logo-card brand-wide-logo-card--footer">
+          <img src="./assets/brand/formaly-banner.png" alt="Banner da Formaly" class="brand-wide-logo brand-wide-logo--footer">
+        </div>
       </div>
     </aside>
 
@@ -107,7 +122,11 @@
             <div>
               <p class="simple-kicker">Tudo em um lugar</p>
               <h2 class="simple-title">O que a turma precisa ver hoje</h2>
+<<<<<<< HEAD
               <p class="simple-copy">Uma visão rápida para acompanhar dinheiro, próximos passos e o que precisa de atenção.</p>
+=======
+              <p class="simple-copy">Uma visão rapida para acompanhar dinheiro, próximos passos e o que precisa de atenção.</p>
+>>>>>>> e43c02f364dc1c16e3dd0bf744aafa2e39e617aa
             </div>
             <div class="simple-hero__media">
               <div class="simple-update">
@@ -122,7 +141,11 @@
               <div>
                 <p class="text-xs uppercase tracking-[0.22em] text-slate-500 font-semibold">Filtro da dashboard</p>
                 <p class="mt-2 text-base font-semibold text-white" id="mainDashboardScopeLabel">Visão consolidada de todas as turmas</p>
+<<<<<<< HEAD
                 <p class="mt-1 text-sm text-slate-400" id="mainDashboardFilterHint">Ajuste o recorte para analisar uma turma específica ou ampliar a janela histórica.</p>
+=======
+                <p class="mt-1 text-sm text-slate-400" id="mainDashboardFilterHint">Ajuste o recorte para analisar uma turma especifica ou ampliar a janela histórica.</p>
+>>>>>>> e43c02f364dc1c16e3dd0bf744aafa2e39e617aa
               </div>
 
               <label class="block">
@@ -269,7 +292,7 @@
           <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4">
             <div>
               <h2 class="text-2xl font-bold text-white">Alunos</h2>
-              <p class="text-sm text-slate-500 mt-1">Cadastre alunos com identificador proprio para login.</p>
+              <p class="text-sm text-slate-500 mt-1">Cadastre alunos com identificador próprio para login.</p>
             </div>
             <div class="flex gap-2 flex-wrap">
               <input type="file" id="fileImportCSV" accept=".csv" class="hidden" onchange="importarAlunosCSV(event)">
@@ -313,7 +336,7 @@
                 <span>Qua</span>
                 <span>Qui</span>
                 <span>Sex</span>
-                <span>Sab</span>
+                <span>Sáb</span>
                 <span>Dom</span>
               </div>
 
@@ -370,7 +393,11 @@
         </section>
 
         <section id="screen-financeiro" class="screen hidden">
+<<<<<<< HEAD
           <div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold text-white">Financeiro</h2><button onclick="openModal('new','lancamento')" class="btn btn-primary btn-admin">Novo Lançamento</button></div>
+=======
+          <div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold text-white">Financeiro</h2><button onclick="openModal('new','lancamento')" class="btn btn-primary btn-admin">Novo Lancamento</button></div>
+>>>>>>> e43c02f364dc1c16e3dd0bf744aafa2e39e617aa
           <div class="card-panel"><div class="overflow-x-auto"><table id="financeiroTable" class="w-full text-left text-sm text-slate-400"><thead class="bg-dark-900/50 text-xs uppercase font-semibold text-slate-500"><tr><th class="px-6 py-4">Descrição</th><th class="px-6 py-4">Tipo</th><th class="px-6 py-4">Valor</th><th class="px-6 py-4">Data</th><th class="px-6 py-4 text-right">Ações</th></tr></thead><tbody id="financeiroBody" class="divide-y divide-white/5"></tbody></table></div></div>
         </section>
 
@@ -432,6 +459,103 @@
           </div>
         </section>
 
+        <section id="screen-relatorios" class="screen hidden">
+          <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-5">
+            <div>
+              <h2 class="text-2xl font-bold text-white">Relatorios Financeiros</h2>
+              <p class="text-sm text-slate-500 mt-1">Escolha os filtros e gere um resumo financeiro quando precisar.</p>
+            </div>
+            <div class="report-action-group">
+              <button type="button" id="generateReportBtn" onclick="generateReport()" class="btn btn-primary"><i class="ph ph-chart-line-up"></i> Gerar relatório</button>
+              <button type="button" id="exportReportPdfBtn" onclick="exportReportFile('resumo.pdf')" class="btn-outline" disabled><i class="ph ph-file-pdf"></i> PDF</button>
+              <button type="button" id="exportReportSummaryCsvBtn" onclick="exportReportFile('resumo.csv')" class="btn-outline" disabled><i class="ph ph-file-csv"></i> CSV resumo</button>
+              <button type="button" id="exportReportTransactionsCsvBtn" onclick="exportReportFile('lancamentos.csv')" class="btn-outline" disabled><i class="ph ph-files"></i> CSV lancamentos</button>
+            </div>
+          </div>
+
+          <div class="mb-6 rounded-[24px] border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl">
+            <div class="grid gap-4 lg:grid-cols-[1.2fr_220px_220px]">
+              <div>
+                <p class="text-xs uppercase tracking-[0.22em] text-slate-500 font-semibold">Filtro do relatório</p>
+                <p class="mt-2 text-base font-semibold text-white" id="reportScopeLabel">Visão consolidada de todas as turmas</p>
+                <p class="mt-1 text-sm text-slate-400" id="reportFilterHint">Selecione uma turma e o período para montar o relatório sob demanda.</p>
+              </div>
+
+              <label class="block">
+                <span class="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Turma</span>
+                <select id="reportTurmaFilter" class="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition focus:border-emerald-400/70 focus:ring-4 focus:ring-emerald-400/10">
+                  <option value="">Todas as turmas</option>
+                </select>
+              </label>
+
+              <label class="block">
+                <span class="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Período</span>
+                <select id="reportPeriodFilter" class="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition focus:border-emerald-400/70 focus:ring-4 focus:ring-emerald-400/10">
+                  <option value="3">Últimos 3 meses</option>
+                  <option value="6">Últimos 6 meses</option>
+                  <option value="12">Últimos 12 meses</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div id="reportEmptyState" class="simple-panel">
+            <div class="simple-panel__head">
+              <div>
+                <p class="simple-kicker">Relatório sob demanda</p>
+                <h3 class="simple-panel__title">Nenhum relatório gerado ainda</h3>
+              </div>
+            </div>
+            <p class="text-sm text-slate-400">Use os filtros acima e clique em <strong class="text-white">Gerar relatório</strong> para montar o resumo financeiro e liberar as exportações.</p>
+          </div>
+
+          <div id="reportResultPanel" hidden>
+            <div class="report-kpi-grid">
+              <article class="simple-card simple-card--money">
+                <span class="simple-card__label">Saldo atual</span>
+                <strong id="reportCurrentBalance" class="simple-card__value">R$ 0,00</strong>
+                <small id="reportGeneratedAt">Aguardando geração</small>
+              </article>
+              <article class="simple-card simple-card--event">
+                <span class="simple-card__label">Receitas do período</span>
+                <strong id="reportPeriodRevenue" class="simple-card__value">R$ 0,00</strong>
+                <small id="reportAverageNet">Resultado médio R$ 0,00</small>
+              </article>
+              <article class="simple-card simple-card--attention">
+                <span class="simple-card__label">Despesas do período</span>
+                <strong id="reportPeriodExpenses" class="simple-card__value">R$ 0,00</strong>
+                <small id="reportRunwayMonths">Cobertura Sem base</small>
+              </article>
+              <article class="simple-card">
+                <span class="simple-card__label">Contribuições no período</span>
+                <strong id="reportPeriodContributions" class="simple-card__value">R$ 0,00</strong>
+                <small id="reportContributionShare">Participação 0%</small>
+              </article>
+            </div>
+
+            <div class="simple-panel mt-6">
+              <div class="simple-panel__head">
+                <div>
+                  <p class="simple-kicker">Resumo gerado</p>
+                  <h3 class="simple-panel__title">Visão rápida</h3>
+                </div>
+                <p class="text-sm text-slate-400">Resumo simples para consulta rápida e exportação.</p>
+              </div>
+              <div id="reportSummaryList" class="simple-stack"></div>
+            </div>
+
+            <div class="simple-panel mt-6">
+              <div class="simple-panel__head">
+                <div>
+                  <p class="simple-kicker">Observações</p>
+                  <h3 class="simple-panel__title">Principais insights</h3>
+                </div>
+              </div>
+              <div id="reportInsightsList" class="simple-stack"></div>
+            </div>
+          </div>
+        </section>
+
         <section id="screen-votacao" class="screen hidden">
           <div class="flex justify-between items-center mb-6"><div><h2 class="text-2xl font-bold text-white">Votações e Enquetes</h2><p class="text-sm text-slate-500">Decisões democráticas da turma</p></div><button onclick="openModal('new','votacao')" class="btn btn-primary btn-admin"><i class="ph ph-plus-bold"></i> Nova Votação</button></div>
           <div id="votacoesContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"></div>
@@ -489,8 +613,13 @@
             </div>
             <div id="divSenhaAluno" class="hidden mt-4">
               <label class="form-label">Senha do aluno</label>
+<<<<<<< HEAD
               <input id="modalSenha" type="password" class="form-input" placeholder="Mínimo 6 caracteres" />
               <p class="text-xs text-slate-500 mt-2">Se ficar em branco no cadastro, o sistema usa a senha temporária configurada para novos acessos. Na edição, senha vazia mantém a atual.</p>
+=======
+              <input id="modalSenha" type="password" class="form-input" placeholder="Minimo 6 caracteres" />
+              <p class="text-xs text-slate-500 mt-2">Se ficar em branco no cadastro, o sistema usa a senha temporaria configurada para novos acessos. Na edição, senha vazia mantem a atual.</p>
+>>>>>>> e43c02f364dc1c16e3dd0bf744aafa2e39e617aa
             </div>
             <div class="grid grid-cols-2 gap-4 mt-4" id="divDataValor">
               <div id="divModalDataField"><label id="modalDataLabel" class="form-label">Data</label><input id="modalData" type="date" class="form-input" /></div>

@@ -56,6 +56,21 @@
       </button>
     </header>
 
+    <section class="student-mobile-glance" aria-label="Resumo rapido do aluno">
+      <article class="student-mobile-stat">
+        <span>Próximo</span>
+        <strong id="studentQuickNextEvent">Sem evento</strong>
+      </article>
+      <article class="student-mobile-stat">
+        <span>Pendências</span>
+        <strong id="studentQuickPendingPresence">0 Aguardando</strong>
+      </article>
+      <article class="student-mobile-stat">
+        <span>Votações</span>
+        <strong id="studentQuickVotesOpen">0 Abertas</strong>
+      </article>
+    </section>
+
     <div id="studentNavBackdrop" class="student-nav-backdrop" hidden></div>
 
     <aside id="studentNavDrawer" class="student-nav-drawer" aria-hidden="true">
@@ -69,7 +84,11 @@
         </button>
       </div>
       <p class="student-nav__text">No celular, o painel foi dividido em blocos para você acessar cada área sem rolagem excessiva.</p>
+<<<<<<< HEAD
       <div class="student-nav__list" aria-label="Seções da área do aluno">
+=======
+      <div class="student-nav__list" aria-label="Secoes da area do aluno">
+>>>>>>> e43c02f364dc1c16e3dd0bf744aafa2e39e617aa
         <button type="button" class="student-nav-link is-active" data-student-section-target="resumo">
           <i class="ph ph-squares-four"></i>
           <span>Resumo</span>
@@ -84,7 +103,7 @@
         </button>
         <button type="button" class="student-nav-link" data-student-section-target="votacoes">
           <i class="ph ph-check-square-offset"></i>
-          <span>Votacoes</span>
+          <span>Votações</span>
         </button>
       </div>
     </aside>
@@ -104,7 +123,7 @@
       </button>
       <button type="button" class="student-nav-link" data-student-section-target="votacoes">
         <i class="ph ph-check-square-offset"></i>
-        <span>Votacoes</span>
+        <span>Votações</span>
       </button>
     </nav>
 
@@ -129,7 +148,7 @@
             <div>
               <p class="student-profile__name" id="studentName">Carregando...</p>
               <p class="student-profile__meta" id="studentTurma">Turma</p>
-              <p class="student-profile__meta" id="studentLogin">@usuario</p>
+              <p class="student-profile__meta" id="studentLogin">@usuário</p>
             </div>
           </div>
         </div>
@@ -142,7 +161,7 @@
             <p id="nextEventDate" class="student-highlight__copy">Sem data definida</p>
             <p id="nextEventLocation" class="student-highlight__copy">Local a definir</p>
             <div class="student-highlight__footer">
-              <span class="student-status-badge" id="studentStatusBadge">agenda</span>
+              <span class="student-status-badge" id="studentStatusBadge">Agenda</span>
               <strong id="nextEventCountdown">--</strong>
             </div>
           </article>
@@ -168,7 +187,11 @@
         <article class="student-metric">
           <span class="student-metric__label">Presenças respondidas</span>
           <strong id="summaryPresence" class="student-metric__value">0</strong>
+<<<<<<< HEAD
           <small>Confirmações já enviadas</small>
+=======
+          <small>Confirmações ja enviadas</small>
+>>>>>>> e43c02f364dc1c16e3dd0bf744aafa2e39e617aa
         </article>
         <article class="student-metric">
           <span class="student-metric__label">Votações abertas</span>
@@ -226,7 +249,7 @@
       <article class="student-card">
         <div class="student-card__head">
           <div>
-            <p class="student-card__eyebrow">Contribuicoes</p>
+            <p class="student-card__eyebrow">Contribuições</p>
             <h2 class="student-card__title">Apoie a meta da sua turma</h2>
           </div>
           <span id="studentContributionScope" class="student-chip student-chip--neutral">Campanha da turma</span>
@@ -236,7 +259,7 @@
           <article class="student-metric">
             <span class="student-metric__label">Total contribuído</span>
             <strong id="studentContributionTotal" class="student-metric__value">R$ 0,00</strong>
-            <small id="studentContributionCount">0 apoios registrados</small>
+            <small id="studentContributionCount">0 Apoios registrados</small>
           </article>
           <article class="student-metric">
             <span class="student-metric__label">Ticket médio</span>
@@ -284,7 +307,7 @@
             <p class="student-card__eyebrow">Agenda</p>
             <h2 class="student-card__title">Eventos da sua turma</h2>
           </div>
-          <span class="student-chip" id="summaryPendingPresence">0 pendentes</span>
+          <span class="student-chip" id="summaryPendingPresence">0 Pendentes</span>
         </div>
         <div id="eventList" class="student-stack"></div>
       </article>
@@ -334,6 +357,27 @@
         <p id="errorMessage">Tente novamente em alguns instantes.</p>
       </div>
     </section>
+
+    <nav class="student-bottom-dock" aria-label="Acesso rapido do aluno">
+      <div class="student-bottom-dock__nav">
+        <button type="button" class="student-bottom-dock__button is-active" data-student-section-target="resumo">
+          <i class="ph ph-squares-four"></i>
+          <span>Resumo</span>
+        </button>
+        <button type="button" class="student-bottom-dock__button" data-student-section-target="agenda">
+          <i class="ph ph-calendar-blank"></i>
+          <span>Agenda</span>
+        </button>
+        <button type="button" class="student-bottom-dock__button" data-student-section-target="cadastro">
+          <i class="ph ph-identification-card"></i>
+          <span>Cadastro</span>
+        </button>
+        <button type="button" class="student-bottom-dock__button" data-student-section-target="votacoes">
+          <i class="ph ph-check-square-offset"></i>
+          <span>Votações</span>
+        </button>
+      </div>
+    </nav>
   </main>
 
   <script type="module" src="./js/aluno.js"></script>
