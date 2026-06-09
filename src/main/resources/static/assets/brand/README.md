@@ -15,7 +15,7 @@ Arquivos atuais:
 - `formaly-cover.png`
   Imagem visual usada no card lateral e no destaque do dashboard.
 
-Recomendacoes:
+Recomendações:
 
 - `logo-mark.png`: 512x512 com fundo transparente
 - `logo-wide.png`: 1200x400 com fundo transparente
