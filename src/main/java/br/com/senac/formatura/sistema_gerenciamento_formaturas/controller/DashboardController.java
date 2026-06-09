@@ -1,6 +1,7 @@
 package br.com.senac.formatura.sistema_gerenciamento_formaturas.controller;
 
 import java.text.DateFormatSymbols;
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -84,6 +85,7 @@ public class DashboardController {
             .mapToDouble(item -> safeDouble(item.getValor()))
             .sum();
         double saldo = round(receitas - despesas);
+        Map<Long, Double> saldoPorTurma = summarizeSaldoByTurma(lancamentos);
 
         long totalAlunos = alunos.size();
         long totalEventos = eventos.size();
@@ -133,11 +135,11 @@ public class DashboardController {
             .toList();
         List<DashboardResumoDTO.TurmaPerformanceItem> topTurmas = turmasEscopo.stream()
             .sorted(Comparator.comparing(
-                this::goalProgressForTurma,
+                (Turma turma) -> goalProgressForTurma(turma, saldoPorTurma),
                 Comparator.reverseOrder()
-            ).thenComparing(Turma::getTotalArrecadado, Comparator.nullsLast(Comparator.reverseOrder())))
+            ).thenComparing((Turma turma) -> saldoTurma(turma, saldoPorTurma), Comparator.reverseOrder()))
             .limit(5)
-            .map(turma -> toTurmaPerformanceItem(turma, quantidadeAlunosPorTurma))
+            .map(turma -> toTurmaPerformanceItem(turma, quantidadeAlunosPorTurma, saldoPorTurma))
             .toList();
 
         long eventosNoMes = eventos.stream()
@@ -155,7 +157,7 @@ public class DashboardController {
             votacoesAbertas,
             ticketMedioPorAluno
         );
-        DashboardResumoDTO.GoalProgressSnapshot goalProgress = buildGoalProgress(turmasEscopo, receitas, quantidadeAlunosPorTurma);
+        DashboardResumoDTO.GoalProgressSnapshot goalProgress = buildGoalProgress(turmasEscopo, saldo, quantidadeAlunosPorTurma);
 
         DashboardResumoDTO.FilterSnapshot filters = new DashboardResumoDTO.FilterSnapshot(
             turmaSelecionada != null ? turmaSelecionada.getId() : null,
@@ -189,13 +191,13 @@ public class DashboardController {
 
     private DashboardResumoDTO.GoalProgressSnapshot buildGoalProgress(
         List<Turma> turmasEscopo,
-        double receitas,
+        double saldoMeta,
         Map<Long, Long> quantidadeAlunosPorTurma
     ) {
         double valorMeta = round(turmasEscopo.stream()
             .mapToDouble(turma -> safeDouble(turma.getMetaArrecadacao()))
             .sum());
-        double valorArrecadado = round(Math.max(0.0, receitas));
+        double valorArrecadado = round(saldoMeta);
         boolean metaDefinida = valorMeta > 0;
         double percentualAtingido = metaDefinida ? round((valorArrecadado / valorMeta) * 100.0) : 0.0;
         double valorRestante = metaDefinida ? round(Math.max(0.0, valorMeta - valorArrecadado)) : 0.0;
@@ -217,7 +219,7 @@ public class DashboardController {
         } else {
             titulo = "Meta financeira em andamento";
             descricao = "Faltam " + formatCurrency(valorRestante)
-                + " para bater a meta. Como referência opcional, isso representa "
+                + " para bater a meta. Como sugestão opcional, isso representa "
                 + formatCurrency(sugestaoContribuicaoMedia)
                 + " por participante.";
         }
@@ -482,14 +484,18 @@ public class DashboardController {
             firstNonBlank(lancamento.getTipo(), "despesa"),
             round(safeDouble(lancamento.getValor())),
             lancamento.getDataLancamento(),
-            firstNonBlank(lancamento.getReferencia(), "Sem referência"),
+            firstNonBlank(lancamento.getReferencia(), "Sem categoria"),
             lancamento.getTurma() != null ? firstNonBlank(lancamento.getTurma().getNome(), "Sem turma") : "Sem turma"
         );
     }
 
-    private DashboardResumoDTO.TurmaPerformanceItem toTurmaPerformanceItem(Turma turma, Map<Long, Long> quantidadeAlunosPorTurma) {
+    private DashboardResumoDTO.TurmaPerformanceItem toTurmaPerformanceItem(
+        Turma turma,
+        Map<Long, Long> quantidadeAlunosPorTurma,
+        Map<Long, Double> saldoPorTurma
+    ) {
         double meta = round(safeDouble(turma.getMetaArrecadacao()));
-        double arrecadado = round(safeDouble(turma.getTotalArrecadado()));
+        double arrecadado = saldoTurma(turma, saldoPorTurma);
         double percentualMeta = meta <= 0 ? 0.0 : round((arrecadado / meta) * 100.0);
         double valorRestanteMeta = meta <= 0 ? 0.0 : round(Math.max(0.0, meta - arrecadado));
         return new DashboardResumoDTO.TurmaPerformanceItem(
@@ -522,10 +528,30 @@ public class DashboardController {
         return Math.max(0, Math.min(100, score));
     }
 
-    private double goalProgressForTurma(Turma turma) {
+    private Map<Long, Double> summarizeSaldoByTurma(List<LancamentoFinanceiro> lancamentos) {
+        Map<Long, Double> saldos = new LinkedHashMap<>();
+        for (LancamentoFinanceiro lancamento : lancamentos) {
+            if (lancamento.getTurma() == null || lancamento.getTurma().getId() == null) continue;
+            saldos.merge(lancamento.getTurma().getId(), signedValue(lancamento), Double::sum);
+        }
+        return saldos;
+    }
+
+    private double saldoTurma(Turma turma, Map<Long, Double> saldoPorTurma) {
+        if (turma == null || turma.getId() == null) return 0.0;
+        return round(saldoPorTurma.getOrDefault(turma.getId(), 0.0));
+    }
+
+    private double signedValue(LancamentoFinanceiro lancamento) {
+        if ("receita".equalsIgnoreCase(lancamento.getTipo())) return safeDouble(lancamento.getValor());
+        if ("despesa".equalsIgnoreCase(lancamento.getTipo())) return -safeDouble(lancamento.getValor());
+        return 0.0;
+    }
+
+    private double goalProgressForTurma(Turma turma, Map<Long, Double> saldoPorTurma) {
         double meta = safeDouble(turma.getMetaArrecadacao());
         if (meta <= 0) return 0.0;
-        return round((safeDouble(turma.getTotalArrecadado()) / meta) * 100.0);
+        return round((saldoTurma(turma, saldoPorTurma) / meta) * 100.0);
     }
 
 
@@ -558,6 +584,6 @@ public class DashboardController {
     }
 
     private String formatCurrency(double value) {
-        return "R$ %.2f".formatted(value).replace('.', ',');
+        return NumberFormat.getCurrencyInstance(LOCALE_PT_BR).format(value);
     }
 }

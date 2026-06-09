@@ -247,9 +247,10 @@ public class CadastroController {
     public LancamentoFinanceiro criarLancamento(@RequestBody LancamentoInputDTO dto) {
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
         LancamentoFinanceiro lanc = new LancamentoFinanceiro();
+        String tipo = resolveTipoFinanceiro(dto.tipo(), dto.valor());
         lanc.setDescricao(normalizeText(dto.descricao()));
-        lanc.setValor(dto.valor());
-        lanc.setTipo(dto.tipo());
+        lanc.setValor(normalizeMoneyMagnitude(dto.valor()));
+        lanc.setTipo(tipo);
         lanc.setContribuicao(Boolean.TRUE.equals(dto.contribuicao()));
         lanc.setApoiadorNome(normalizeText(dto.apoiadorNome()));
         lanc.setDataLancamento(dto.data());
@@ -268,9 +269,10 @@ public class CadastroController {
         LancamentoFinanceiro lanc = lancamentoRepo.findById(id).orElseThrow();
         Long turmaAnteriorId = lanc.getTurma() != null ? lanc.getTurma().getId() : null;
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
+        String tipo = resolveTipoFinanceiro(dto.tipo(), dto.valor());
         lanc.setDescricao(normalizeText(dto.descricao()));
-        lanc.setValor(dto.valor());
-        lanc.setTipo(dto.tipo());
+        lanc.setValor(normalizeMoneyMagnitude(dto.valor()));
+        lanc.setTipo(tipo);
         lanc.setContribuicao(Boolean.TRUE.equals(dto.contribuicao()));
         lanc.setApoiadorNome(normalizeText(dto.apoiadorNome()));
         lanc.setDataLancamento(dto.data());
@@ -478,8 +480,8 @@ public class CadastroController {
 
     private void syncTurmaTotalArrecadado(Turma turma) {
         if (turma == null || turma.getId() == null) return;
-        double totalAtualizado = normalizeMoney(lancamentoRepo.totalReceitasByTurmaId(turma.getId()));
-        if (Double.compare(normalizeMoney(turma.getTotalArrecadado()), totalAtualizado) == 0) return;
+        double totalAtualizado = normalizeSignedMoney(lancamentoRepo.saldoByTurmaId(turma.getId()));
+        if (Double.compare(normalizeSignedMoney(turma.getTotalArrecadado()), totalAtualizado) == 0) return;
         turma.setTotalArrecadado(totalAtualizado);
         turmaRepo.save(turma);
     }
@@ -491,6 +493,25 @@ public class CadastroController {
 
     private double normalizeMoney(Double value) {
         return roundMoney(Math.max(0.0, safeDouble(value)));
+    }
+
+    private double normalizeSignedMoney(Double value) {
+        return roundMoney(safeDouble(value));
+    }
+
+    private double normalizeMoneyMagnitude(Double value) {
+        return roundMoney(Math.abs(safeDouble(value)));
+    }
+
+    private String resolveTipoFinanceiro(String tipoInformado, Double valorInformado) {
+        String tipo = normalizeText(tipoInformado).toLowerCase();
+        if (tipo.isBlank()) {
+            return safeDouble(valorInformado) < 0 ? "despesa" : "receita";
+        }
+        if ("receita".equals(tipo) || "despesa".equals(tipo)) {
+            return tipo;
+        }
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tipo de lançamento financeiro inválido.");
     }
 
     private double safeDouble(Double value) {

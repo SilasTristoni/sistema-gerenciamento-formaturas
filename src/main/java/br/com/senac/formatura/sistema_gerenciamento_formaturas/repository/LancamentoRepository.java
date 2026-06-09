@@ -27,6 +27,19 @@ public interface LancamentoRepository extends JpaRepository<LancamentoFinanceiro
     """)
     Double totalReceitasByTurmaId(@Param("turmaId") Long turmaId);
 
+    @Query("""
+        SELECT COALESCE(SUM(
+            CASE
+                WHEN LOWER(l.tipo) = 'receita' THEN l.valor
+                WHEN LOWER(l.tipo) = 'despesa' THEN -l.valor
+                ELSE 0
+            END
+        ), 0)
+        FROM LancamentoFinanceiro l
+        WHERE l.turma.id = :turmaId
+    """)
+    Double saldoByTurmaId(@Param("turmaId") Long turmaId);
+
     List<LancamentoFinanceiro> findByContribuicaoTrueOrderByDataLancamentoDescIdDesc();
 
     List<LancamentoFinanceiro> findByTurmaIdAndContribuicaoTrueOrderByDataLancamentoDescIdDesc(Long turmaId);

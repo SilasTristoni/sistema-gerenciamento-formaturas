@@ -1,9 +1,11 @@
 package br.com.senac.formatura.sistema_gerenciamento_formaturas.controller;
 
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -32,6 +34,7 @@ import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.VotoRe
 @RestController
 @RequestMapping("/api/aluno")
 public class AlunoPortalController {
+    private static final Locale LOCALE_PT_BR = Locale.forLanguageTag("pt-BR");
 
     private final AlunoRepository alunoRepository;
     private final EventoRepository eventoRepository;
@@ -116,7 +119,7 @@ public class AlunoPortalController {
             .orElseGet(() -> eventosResponse.stream().findFirst().orElse(null));
 
         Double valorMetaBruto = aluno.getTurma() != null ? aluno.getTurma().getMetaArrecadacao() : null;
-        double valorArrecadado = roundMoney(safeDouble(lancamentoRepository.totalReceitasByTurmaId(turmaId)));
+        double valorArrecadado = roundMoney(safeDouble(lancamentoRepository.saldoByTurmaId(turmaId)));
         double valorMeta = roundMoney(safeDouble(valorMetaBruto));
         double percentualAtingido = valorMeta <= 0 ? 0.0 : roundMoney((valorArrecadado / valorMeta) * 100.0);
         double valorRestante = valorMeta <= 0 ? 0.0 : roundMoney(Math.max(0.0, valorMeta - valorArrecadado));
@@ -137,7 +140,7 @@ public class AlunoPortalController {
             tituloMeta = "Meta em andamento";
             descricaoMeta = "Faltam "
                 + formatCurrency(valorRestante)
-                + " para bater a meta. Como referência opcional, isso representa em média "
+                + " para bater a meta. Como sugestão opcional, isso representa em média "
                 + formatCurrency(sugestaoContribuicaoMedia)
                 + " por participante.";
         }
@@ -277,6 +280,6 @@ public class AlunoPortalController {
     }
 
     private String formatCurrency(double value) {
-        return "R$ %.2f".formatted(value).replace('.', ',');
+        return NumberFormat.getCurrencyInstance(LOCALE_PT_BR).format(value);
     }
 }

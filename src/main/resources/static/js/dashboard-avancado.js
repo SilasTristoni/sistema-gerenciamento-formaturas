@@ -392,7 +392,7 @@ function renderTransactions(transactions = []) {
       <article class="list-item">
         <div class="item-main">
           <p class="item-title">${escapeHtml(item.descricao || "Lançamento")}</p>
-          <p class="item-subtitle">${escapeHtml(formatDate(item.data))} | ${escapeHtml(item.referencia || "Sem referência")} | ${escapeHtml(item.turmaNome || "Sem turma")}</p>
+          <p class="item-subtitle">${escapeHtml(formatDate(item.data))} | ${escapeHtml(item.referencia || "Sem categoria")} | ${escapeHtml(item.turmaNome || "Sem turma")}</p>
         </div>
         <div class="item-side">
           <strong class="${(item.tipo || "").toLowerCase() === "receita" ? "money-positive" : "money-negative"}">
@@ -538,7 +538,7 @@ function renderReportModule(report) {
         </div>
         <div class="item-side">
           <strong class="${(item.tipo || "").toLowerCase() === "receita" ? "money-positive" : "money-negative"}">${escapeHtml(formatCurrency(item.valor))}</strong>
-          <p class="item-subtitle">${escapeHtml(item.referencia || item.apoiadorNome || "Sem referencia")}</p>
+          <p class="item-subtitle">${escapeHtml(item.referencia || item.apoiadorNome || "Sem categoria")}</p>
         </div>
       </article>
     `,

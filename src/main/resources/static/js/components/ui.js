@@ -105,7 +105,7 @@ export const ui = {
                     <div class="mt-1 text-xs text-slate-500">${(t.metaArrecadacao || 0) > 0 ? 'Objetivo financeiro' : 'Defina a meta da turma'}</div>
                 </td>
                 <td class="px-6 py-4">
-                    <div class="text-emerald-400 font-semibold">${escapeHtml(formatCurrency(t.totalArrecadado || 0))}</div>
+                    <div class="${Number(t.totalArrecadado || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'} font-semibold">${escapeHtml(formatCurrency(t.totalArrecadado || 0))}</div>
                     <div class="mt-2">${goalBar(t.percentualMeta ?? (((t.metaArrecadacao || 0) > 0) ? (((t.totalArrecadado || 0) / (t.metaArrecadacao || 1)) * 100) : 0))}</div>
                     <div class="mt-1 text-xs text-slate-500">${escapeHtml(formatGoalProgress(t.metaArrecadacao, t.totalArrecadado))}</div>
                 </td>
@@ -167,7 +167,7 @@ export const ui = {
             <tr>
                 <td class="px-6 py-4 text-white">${escapeHtml(f.descricao)}</td>
                 <td class="px-6 py-4 uppercase text-xs tracking-wider">${escapeHtml(f.tipo || '---')}</td>
-                <td class="px-6 py-4 font-bold ${(f.tipo || '').toLowerCase() === 'receita' ? 'text-emerald-400' : 'text-red-400'}">${escapeHtml(formatCurrency(f.valor || 0))}</td>
+                <td class="px-6 py-4 font-bold ${(f.tipo || '').toLowerCase() === 'receita' ? 'text-emerald-400' : 'text-red-400'}">${(f.tipo || '').toLowerCase() === 'receita' ? '+' : '-'} ${escapeHtml(formatCurrency(f.valor || 0))}</td>
                 <td class="px-6 py-4">${escapeHtml(formatDate(f.dataLancamento))}</td>
                 <td class="px-6 py-4 text-right flex justify-end gap-3">
                     <button onclick="editarRegistro('lancamento', ${f.id})" class="btn-admin text-primary-500 hover:text-primary-400" style="display:none;"><i class="ph ph-pencil-simple text-lg"></i></button>

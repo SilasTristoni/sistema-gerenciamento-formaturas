@@ -2,7 +2,6 @@ Arquivos de identidade visual em uso
 
 Arquivos atuais:
 
-<<<<<<< HEAD
 - `logo-mark.png`
   Logo quadrada para sidebar, login e cabecalhos.
 - `logo-wide.png`
@@ -11,16 +10,6 @@ Arquivos atuais:
   Imagem principal da campanha ou da formatura.
 - `student-cover.jpg`
   Foto usada na área do formando.
-
-Recomendacoes:
-
-- `logo-mark.png`: 512x512 com fundo transparente
-- `logo-wide.png`: 1200x400 com fundo transparente
-- `campaign-cover.jpg`: 1600x1000
-- `student-cover.jpg`: 1600x1000
-
-Se um arquivo não existir, o sistema usa um layout visual de fallback.
-=======
 - `formaly-banner.png`
   Banner horizontal exibido no topo esquerdo do menu lateral.
 - `formaly-cover.png`
@@ -28,6 +17,11 @@ Se um arquivo não existir, o sistema usa um layout visual de fallback.
 
 Recomendacoes:
 
+- `logo-mark.png`: 512x512 com fundo transparente
+- `logo-wide.png`: 1200x400 com fundo transparente
+- `campaign-cover.jpg`: 1600x1000
+- `student-cover.jpg`: 1600x1000
 - `formaly-banner.png`: imagem horizontal larga
 - `formaly-cover.png`: 1600x1000
->>>>>>> e43c02f364dc1c16e3dd0bf744aafa2e39e617aa
+
+Se um arquivo não existir, o sistema usa um layout visual de fallback.

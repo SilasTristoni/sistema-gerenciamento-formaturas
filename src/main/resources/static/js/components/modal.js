@@ -25,7 +25,7 @@ const MODAL_META = {
     evento: {
         eyebrow: 'Agenda',
         lead: 'Crie um compromisso da turma',
-        help: 'Registre data, local e contexto para manter a agenda da formatura sempre clara.',
+        help: 'Registre data, local e informações do compromisso para manter a agenda da formatura sempre clara.',
         icon: 'ph-calendar-check',
         submit: 'Salvar evento'
     },
@@ -59,12 +59,18 @@ function todayValue() {
     return `${now.getFullYear()}-${month}-${day}`;
 }
 
+function alunoTurmaId(aluno = {}) {
+    return aluno.turma?.id ?? aluno.turmaId ?? '';
+}
+
 export const modal = {
     backdrop: document.getElementById('modalBackdrop'),
     panel: document.getElementById('modalPanel'),
+    alunos: [],
 
-    open(kind, turmas) {
+    open(kind, turmas, alunos = []) {
         this.resetFields();
+        this.alunos = Array.isArray(alunos) ? alunos : [];
 
         const select = document.getElementById('modalTurmaSelect');
         if (kind !== 'turma' && select) {
@@ -77,6 +83,7 @@ export const modal = {
             });
             this.applyPreferredTurma(turmas);
         }
+        this.bindDynamicSelects();
 
         const cat = document.getElementById('modalCategoria');
         if (cat) cat.value = kind;
@@ -127,6 +134,9 @@ export const modal = {
         const divSenha = document.getElementById('divSenhaAluno');
         const divApoiadorNome = document.getElementById('divApoiadorNome');
         const divContribuicaoAnonima = document.getElementById('divContribuicaoAnonima');
+        const divAlunoSelect = document.getElementById('divAlunoSelect');
+        const detailsTitle = document.getElementById('modalDetailsTitle');
+        const inputDescricao = document.getElementById('modalDescricao');
 
         divTurma?.classList.remove('hidden');
         divDataValor?.classList.remove('hidden');
@@ -138,8 +148,11 @@ export const modal = {
         divApoiadorNome?.classList.add('hidden');
         divContribuicaoAnonima?.classList.add('hidden');
         divContribuicaoAnonima?.classList.remove('flex');
+        divAlunoSelect?.classList.add('hidden');
 
+        if (detailsTitle) detailsTitle.innerText = 'Detalhes adicionais';
         if (lblDesc) lblDesc.innerText = 'Descrição / Detalhes';
+        if (inputDescricao) inputDescricao.placeholder = 'Detalhes adicionais...';
 
         if (lblValor) lblValor.innerText = 'Valor (R$)';
         if (inputValor) inputValor.placeholder = '0.00';
@@ -161,19 +174,25 @@ export const modal = {
             if (kind === 'evento' && lblDesc) lblDesc.innerText = 'Local';
             if (kind === 'votacao' && lblDesc) lblDesc.innerText = 'Detalhes / Tema';
         } else if (kind === 'contribuicao') {
-            if (lblDesc) lblDesc.innerText = 'Mensagem / Contexto';
+            if (detailsTitle) detailsTitle.innerText = 'Contribuição';
+            if (lblDesc) lblDesc.innerText = 'Mensagem';
+            if (inputDescricao) inputDescricao.placeholder = 'Mensagem opcional para identificar a contribuição';
             if (lblValor) lblValor.innerText = 'Valor da contribuição (R$)';
             if (inputValor) inputValor.placeholder = 'Ex.: 150.00';
+            divAlunoSelect?.classList.remove('hidden');
             divApoiadorNome?.classList.remove('hidden');
             divContribuicaoAnonima?.classList.remove('hidden');
             divContribuicaoAnonima?.classList.add('flex');
+            this.populateAlunoSelect();
         } else if (kind === 'lancamento') {
-            if (lblDesc) lblDesc.innerText = 'Referência';
+            if (detailsTitle) detailsTitle.innerText = 'Classificação';
+            if (lblDesc) lblDesc.innerText = 'Categoria / observação';
+            if (inputDescricao) inputDescricao.placeholder = 'Ex.: Contrato, Evento, Patrocínio...';
         }
     },
 
     resetFields() {
-        const ids = ['modalItemId', 'modalNome', 'modalData', 'modalValor', 'modalDescricao', 'modalTurmaSelect', 'modalIdentificador', 'modalSenha', 'modalApoiadorNome'];
+        const ids = ['modalItemId', 'modalNome', 'modalData', 'modalValor', 'modalDescricao', 'modalTurmaSelect', 'modalIdentificador', 'modalSenha', 'modalApoiadorNome', 'modalAlunoSelect'];
         ids.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
@@ -198,6 +217,68 @@ export const modal = {
 
         if (turmas.length === 1) {
             select.value = String(turmas[0].id);
+        }
+    },
+
+    bindDynamicSelects() {
+        const turmaSelect = document.getElementById('modalTurmaSelect');
+        const alunoSelect = document.getElementById('modalAlunoSelect');
+
+        if (turmaSelect && !turmaSelect.dataset.alunoFilterBound) {
+            turmaSelect.addEventListener('change', () => this.populateAlunoSelect());
+            turmaSelect.dataset.alunoFilterBound = 'true';
+        }
+
+        if (alunoSelect && !alunoSelect.dataset.alunoSelectBound) {
+            alunoSelect.addEventListener('change', () => this.applyAlunoSelection());
+            alunoSelect.dataset.alunoSelectBound = 'true';
+        }
+    },
+
+    populateAlunoSelect() {
+        const select = document.getElementById('modalAlunoSelect');
+        if (!select) return;
+
+        const kind = document.getElementById('modalCategoria')?.value || '';
+        const turmaId = document.getElementById('modalTurmaSelect')?.value || '';
+        const currentValue = select.value;
+        select.innerHTML = '<option value="">Sem vínculo com aluno</option>';
+
+        if (kind !== 'contribuicao') return;
+
+        this.alunos
+            .filter(aluno => !turmaId || String(alunoTurmaId(aluno)) === String(turmaId))
+            .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR'))
+            .forEach(aluno => {
+                const opt = document.createElement('option');
+                opt.value = aluno.id;
+                const turmaNome = aluno.nomeTurma || aluno.turma?.nome || 'sem turma';
+                opt.innerText = `${aluno.nome || 'Aluno sem nome'} - ${turmaNome}`;
+                select.appendChild(opt);
+            });
+
+        if ([...select.options].some(option => option.value === currentValue)) {
+            select.value = currentValue;
+        }
+    },
+
+    applyAlunoSelection() {
+        const select = document.getElementById('modalAlunoSelect');
+        const turmaSelect = document.getElementById('modalTurmaSelect');
+        const apoiadorInput = document.getElementById('modalApoiadorNome');
+        const aluno = this.alunos.find(item => String(item.id) === String(select?.value || ''));
+
+        if (!aluno) return;
+
+        const turmaId = alunoTurmaId(aluno);
+        if (turmaId && turmaSelect && turmaSelect.value !== String(turmaId)) {
+            turmaSelect.value = String(turmaId);
+            this.populateAlunoSelect();
+            if (select) select.value = String(aluno.id);
+        }
+
+        if (apoiadorInput && !apoiadorInput.value.trim() && aluno.nome) {
+            apoiadorInput.value = aluno.nome;
         }
     },
 
@@ -256,6 +337,7 @@ export const modal = {
             identificador: document.getElementById('modalIdentificador')?.value?.trim() || '',
             senha: document.getElementById('modalSenha')?.value || '',
             apoiadorNome: document.getElementById('modalApoiadorNome')?.value?.trim() || '',
+            alunoId: document.getElementById('modalAlunoSelect')?.value || '',
             anonima: Boolean(document.getElementById('modalContribuicaoAnonima')?.checked)
         };
     }

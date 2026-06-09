@@ -62,7 +62,8 @@ public class ContribuicaoController {
         long quantidade = contribuicoes.size();
         double ticketMedio = quantidade == 0 ? 0.0 : round(total / quantidade);
         double metaTotal = round(turmas.stream().mapToDouble(turma -> safe(turma.getMetaArrecadacao())).sum());
-        double totalArrecadado = round(turmas.stream().mapToDouble(turma -> safe(turma.getTotalArrecadado())).sum());
+        Map<Long, Double> saldosPorTurma = summarizeSaldosTurmas(turmas);
+        double totalArrecadado = round(turmas.stream().mapToDouble(turma -> saldosPorTurma.getOrDefault(turma.getId(), 0.0)).sum());
         double metaRestante = metaTotal <= 0 ? 0.0 : round(Math.max(0.0, metaTotal - totalArrecadado));
         double percentualMeta = metaTotal <= 0 ? 0.0 : round((totalArrecadado / metaTotal) * 100.0);
         Map<Long, ContributionAggregate> aggregates = summarizeByTurma(turmas);
@@ -79,7 +80,11 @@ public class ContribuicaoController {
             contribuicoes.stream().limit(12).map(this::toItem).toList(),
             turmas.stream()
                 .sorted(Comparator.comparing(Turma::getNome, Comparator.nullsLast(String::compareToIgnoreCase)))
-                .map(turma -> toTurmaResumo(turma, aggregates.getOrDefault(turma.getId(), ContributionAggregate.EMPTY)))
+                .map(turma -> toTurmaResumo(
+                    turma,
+                    aggregates.getOrDefault(turma.getId(), ContributionAggregate.EMPTY),
+                    saldosPorTurma.getOrDefault(turma.getId(), 0.0)
+                ))
                 .toList()
         ));
     }
@@ -89,15 +94,36 @@ public class ContribuicaoController {
         @AuthenticationPrincipal Usuario usuario,
         @RequestBody ContribuicaoInputDTO input
     ) {
-        Scope scope = resolveScope(usuario, input.turmaId());
-        Turma turma = turmaRepository.findById(scope.turmaId())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Turma não encontrada."));
+        if (usuario == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não autenticado.");
+        }
 
         Aluno aluno = null;
+        Long turmaId = input.turmaId();
         if (usuario.getPerfil() == Perfil.ROLE_ALUNO) {
             aluno = usuario.getAluno();
         } else if (input.alunoId() != null) {
-            aluno = alunoRepository.findById(input.alunoId()).orElse(null);
+            aluno = alunoRepository.findById(input.alunoId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Aluno não encontrado."));
+            if (turmaId == null && aluno.getTurma() != null) {
+                turmaId = aluno.getTurma().getId();
+            }
+        }
+
+        Scope scope = resolveScope(usuario, turmaId);
+        if (scope.turmaId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Selecione uma turma para registrar a contribuição.");
+        }
+        Turma turma = turmaRepository.findById(scope.turmaId())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Turma não encontrada."));
+
+        if (aluno != null && (aluno.getTurma() == null || !turma.getId().equals(aluno.getTurma().getId()))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O aluno selecionado não pertence à turma da contribuição.");
+        }
+
+        double valor = round(safe(input.valor()));
+        if (valor <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe um valor positivo para a contribuição.");
         }
 
         LancamentoFinanceiro lancamento = new LancamentoFinanceiro();
@@ -105,14 +131,14 @@ public class ContribuicaoController {
         lancamento.setAluno(aluno);
         lancamento.setTipo("receita");
         lancamento.setContribuicao(true);
-        lancamento.setValor(round(Math.max(0.0, safe(input.valor()))));
+        lancamento.setValor(valor);
         lancamento.setDataLancamento(input.data());
         lancamento.setDescricao(normalize(input.titulo(), "Contribuição para a meta"));
         lancamento.setReferencia(normalize(input.mensagem(), ""));
         lancamento.setApoiadorNome(resolveApoiadorNome(usuario, input, aluno));
 
         lancamentoRepository.save(lancamento);
-        turma.setTotalArrecadado(round(safe(lancamentoRepository.totalReceitasByTurmaId(turma.getId()))));
+        turma.setTotalArrecadado(round(safe(lancamentoRepository.saldoByTurmaId(turma.getId()))));
         turmaRepository.save(turma);
 
         return ResponseEntity.ok("Contribuição registrada com sucesso.");
@@ -169,9 +195,9 @@ public class ContribuicaoController {
         );
     }
 
-    private ContribuicaoResumoDTO.TurmaResumo toTurmaResumo(Turma turma, ContributionAggregate aggregate) {
+    private ContribuicaoResumoDTO.TurmaResumo toTurmaResumo(Turma turma, ContributionAggregate aggregate, double saldoTurma) {
         double meta = safe(turma.getMetaArrecadacao());
-        double arrecadado = safe(turma.getTotalArrecadado());
+        double arrecadado = saldoTurma;
         double percentualMeta = meta <= 0 ? 0.0 : round((arrecadado / meta) * 100.0);
         double metaRestante = meta <= 0 ? 0.0 : round(Math.max(0.0, meta - arrecadado));
 
@@ -183,6 +209,15 @@ public class ContribuicaoController {
             percentualMeta,
             metaRestante
         );
+    }
+
+    private Map<Long, Double> summarizeSaldosTurmas(List<Turma> turmas) {
+        Map<Long, Double> saldos = new HashMap<>();
+        for (Turma turma : turmas) {
+            if (turma.getId() == null) continue;
+            saldos.put(turma.getId(), round(safe(lancamentoRepository.saldoByTurmaId(turma.getId()))));
+        }
+        return saldos;
     }
 
     private Map<Long, ContributionAggregate> summarizeByTurma(List<Turma> turmas) {

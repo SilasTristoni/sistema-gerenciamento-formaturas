@@ -422,7 +422,7 @@ function renderIntegratedDashboard(dashboard) {
         <article class="simple-item">
             <div class="simple-item__main">
                 <p class="simple-item__title">${escapeHtml(item.descricao || 'Lançamento')}</p>
-                <p class="simple-item__subtitle">${escapeHtml(formatDate(item.data))} | ${escapeHtml(item.referencia || 'Sem referência')} | ${escapeHtml(item.turmaNome || 'Sem turma')}</p>
+                <p class="simple-item__subtitle">${escapeHtml(formatDate(item.data))} | ${escapeHtml(item.referencia || 'Sem categoria')} | ${escapeHtml(item.turmaNome || 'Sem turma')}</p>
             </div>
             <div class="simple-item__side">
                 <strong class="${(item.tipo || '').toLowerCase() === 'receita' ? 'money-positive' : 'money-negative'}">${(item.tipo || '').toLowerCase() === 'receita' ? '+' : '-'} ${escapeHtml(formatCurrency(item.valor))}</strong>
@@ -811,7 +811,7 @@ function renderAgendaUpcoming(eventos = []) {
 }
 
 function setupModalEvents() {
-    window.openModal = (mode, kind) => modal.open(kind, db.turmas);
+    window.openModal = (mode, kind) => modal.open(kind, db.turmas, db.alunos);
     window.closeModal = () => modal.close();
 
     window.salvarFormulario = async (e) => {
@@ -878,6 +878,7 @@ function setupModalEvents() {
                         data: data.data,
                         mensagem: data.desc,
                         turmaId: Number(data.turmaId),
+                        alunoId: data.alunoId ? Number(data.alunoId) : null,
                         apoiadorNome: data.apoiadorNome,
                         anonima: data.anonima
                     };
@@ -1265,7 +1266,7 @@ window.editarRegistro = (kind, id) => {
             turma: 'Atualize os dados da turma e da meta',
             aluno: 'Revise acesso, contato e perfil do aluno',
             evento: 'Ajuste data, local e informações do evento',
-            lancamento: 'Corrija valores ou referência do movimento',
+            lancamento: 'Corrija valores ou categoria do movimento',
             votacao: 'Atualize o tema ou o prazo da votação'
         };
         modalLead.textContent = labels[kind] || 'Revise os dados do cadastro';
@@ -1293,7 +1294,8 @@ window.editarRegistro = (kind, id) => {
         document.getElementById('modalData') && (document.getElementById('modalData').value = item.dataEvento || '');
         document.getElementById('modalDescricao') && (document.getElementById('modalDescricao').value = item.localEvento || '');
     } else if (kind === 'lancamento') {
-        document.getElementById('modalValor') && (document.getElementById('modalValor').value = item.valor || '');
+        const valor = Math.abs(Number(item.valor || 0));
+        document.getElementById('modalValor') && (document.getElementById('modalValor').value = (item.tipo || '').toLowerCase() === 'despesa' ? -valor : valor);
         document.getElementById('modalData') && (document.getElementById('modalData').value = item.dataLancamento || '');
         document.getElementById('modalDescricao') && (document.getElementById('modalDescricao').value = item.referencia || '');
     } else if (kind === 'votacao') {

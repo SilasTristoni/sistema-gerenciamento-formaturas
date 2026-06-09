@@ -265,8 +265,6 @@ table tbody tr:hover {
 .toast-enter { animation: slideInRight 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards; }
 .toast-exit { animation: fadeOut 0.3s ease forwards; }
 
-<<<<<<< HEAD
-=======
 .login-visual-board {
     display: grid;
     grid-template-columns: minmax(0, 1.18fr) minmax(220px, 0.82fr);
@@ -527,7 +525,6 @@ table tbody tr:hover {
     }
 }
 
->>>>>>> e43c02f364dc1c16e3dd0bf744aafa2e39e617aa
 .simple-hero {
     display: flex;
     justify-content: space-between;
@@ -544,10 +541,7 @@ table tbody tr:hover {
 .simple-hero__media {
     display: grid;
     gap: 0.9rem;
-<<<<<<< HEAD
     align-content: start;
-=======
->>>>>>> e43c02f364dc1c16e3dd0bf744aafa2e39e617aa
     min-width: min(220px, 100%);
 }
 
@@ -756,16 +750,13 @@ table tbody tr:hover {
 .brand-sidebar__photo {
     min-height: 132px;
     border-radius: 1rem;
-<<<<<<< HEAD
     background-image:
         linear-gradient(180deg, rgba(2, 6, 23, 0.08), rgba(2, 6, 23, 0.34)),
         var(--visual-dashboard-identity);
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
-=======
     overflow: hidden;
->>>>>>> e43c02f364dc1c16e3dd0bf744aafa2e39e617aa
 }
 
 .brand-hero-card {
@@ -2429,16 +2420,15 @@ body.student-menu-open {
         grid-template-columns: 1fr;
     }
 
-<<<<<<< HEAD
     .dashboard-visual-banner {
         min-height: 128px;
         border-radius: 1.1rem;
-=======
+    }
+
     .login-form-options,
     .login-security-strip,
     .student-mobile-glance {
         grid-template-columns: 1fr;
->>>>>>> e43c02f364dc1c16e3dd0bf744aafa2e39e617aa
     }
 
     .student-actions,
