@@ -85,9 +85,24 @@ class SistemaGerenciamentoFormaturasApplicationTests {
             .andExpect(jsonPath("$.overview.totalReceitas").value(300.0))
             .andExpect(jsonPath("$.overview.totalDespesas").value(50.0))
             .andExpect(jsonPath("$.goalProgress.valorMeta").value(1000.0))
-            .andExpect(jsonPath("$.goalProgress.valorArrecadado").value(300.0))
+            .andExpect(jsonPath("$.goalProgress.valorArrecadado").value(250.0))
             .andExpect(jsonPath("$.goalProgress.metaDefinida").value(true))
             .andExpect(jsonPath("$.notifications").isArray());
+    }
+
+    @Test
+    void dashboardResumoContaDespesaComoSaldoNegativoNaMeta() throws Exception {
+        Usuario comissao = createCommissionUser("gestor-negativo", "gestor-negativo@example.com", "senha-segura");
+        Turma turma = createTurma("FELPS", 5000.0);
+        createLancamento(turma, "Arrecadacao", "receita", 1000.0, LocalDate.now().minusDays(2), "Campanha");
+        createLancamento(turma, "Compra para evento", "despesa", 2000.0, LocalDate.now().minusDays(1), "Evento");
+
+        mockMvc.perform(get("/api/dashboard/resumo")
+                .param("turmaId", String.valueOf(turma.getId()))
+                .header("Authorization", bearer(comissao)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.goalProgress.valorArrecadado").value(-1000.0))
+            .andExpect(jsonPath("$.goalProgress.valorRestante").value(6000.0));
     }
 
     @Test
@@ -105,7 +120,7 @@ class SistemaGerenciamentoFormaturasApplicationTests {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.summary.totalContribuicoes").value(200.0))
             .andExpect(jsonPath("$.summary.quantidadeContribuicoes").value(1))
-            .andExpect(jsonPath("$.summary.scopeLabel").value("Contribuicoes da sua turma"))
+            .andExpect(jsonPath("$.summary.scopeLabel").value("Contribuições da sua turma"))
             .andExpect(jsonPath("$.turmas.length()").value(1))
             .andExpect(jsonPath("$.turmas[0].turmaNome").value("Marketing"));
     }
@@ -119,10 +134,10 @@ class SistemaGerenciamentoFormaturasApplicationTests {
                 .header("Authorization", bearer(aluno))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"titulo":"Contribuicao espontanea","valor":180.0,"data":"%s","mensagem":"Apoio para a meta","anonima":true}
+                    {"titulo":"Contribuição espontânea","valor":180.0,"data":"%s","mensagem":"Apoio para a meta","anonima":true}
                     """.formatted(LocalDate.now())))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$").value("Contribuicao registrada com sucesso."));
+            .andExpect(jsonPath("$").value("Contribuição registrada com sucesso."));
 
         Turma turmaAtualizada = turmaRepository.findById(turma.getId()).orElseThrow();
         LancamentoFinanceiro contribuicao = lancamentoRepository.findByTurmaIdAndContribuicaoTrueOrderByDataLancamentoDescIdDesc(turma.getId())
@@ -131,8 +146,35 @@ class SistemaGerenciamentoFormaturasApplicationTests {
             .orElseThrow();
 
         org.junit.jupiter.api.Assertions.assertEquals(180.0, turmaAtualizada.getTotalArrecadado());
-        org.junit.jupiter.api.Assertions.assertEquals("Contribuicao anonima", contribuicao.getApoiadorNome());
+        org.junit.jupiter.api.Assertions.assertEquals("Contribuição anônima", contribuicao.getApoiadorNome());
         org.junit.jupiter.api.Assertions.assertTrue(Boolean.TRUE.equals(contribuicao.getContribuicao()));
+    }
+
+    @Test
+    void commissionCanRegisterContributionLinkedToExistingStudent() throws Exception {
+        Usuario comissao = createCommissionUser("comissao-contribuicao", "comissao-contribuicao@example.com", "senha-segura");
+        Turma turma = createTurma("FELPS", 3000.0);
+        Usuario aluno = createStudentUser("felps.aluno", "felps@example.com", "senha-segura", "Felps Aluno", turma);
+
+        mockMvc.perform(post("/api/contribuicoes")
+                .header("Authorization", bearer(comissao))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"titulo":"Parcela da formatura","valor":250.0,"data":"%s","alunoId":%d}
+                    """.formatted(LocalDate.now(), aluno.getAluno().getId())))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").value("Contribuição registrada com sucesso."));
+
+        LancamentoFinanceiro contribuicao = lancamentoRepository.findByAlunoIdAndContribuicaoTrueOrderByDataLancamentoDescIdDesc(aluno.getAluno().getId())
+            .stream()
+            .findFirst()
+            .orElseThrow();
+        Turma turmaAtualizada = turmaRepository.findById(turma.getId()).orElseThrow();
+
+        org.junit.jupiter.api.Assertions.assertEquals(aluno.getAluno().getId(), contribuicao.getAluno().getId());
+        org.junit.jupiter.api.Assertions.assertEquals(turma.getId(), contribuicao.getTurma().getId());
+        org.junit.jupiter.api.Assertions.assertEquals("Felps Aluno", contribuicao.getApoiadorNome());
+        org.junit.jupiter.api.Assertions.assertEquals(250.0, turmaAtualizada.getTotalArrecadado());
     }
 
     private Usuario createCommissionUser(String login, String email, String senha) {
@@ -214,7 +256,7 @@ class SistemaGerenciamentoFormaturasApplicationTests {
         lancamento.setValor(valor);
         lancamento.setDataLancamento(LocalDate.now());
         lancamento.setContribuicao(true);
-        lancamento.setApoiadorNome(anonima ? "Contribuicao anonima" : apoiadorNome);
+        lancamento.setApoiadorNome(anonima ? "Contribuição anônima" : apoiadorNome);
         LancamentoFinanceiro salvo = lancamentoRepository.save(lancamento);
         turma.setTotalArrecadado((turma.getTotalArrecadado() == null ? 0.0 : turma.getTotalArrecadado()) + valor);
         turmaRepository.save(turma);

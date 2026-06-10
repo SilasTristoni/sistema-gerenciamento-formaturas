@@ -64,7 +64,7 @@ class AlunoPortalControllerTest {
         when(votacaoRepository.findByTurmaIdOrderByDataFimAscTituloAsc(7L)).thenReturn(List.of());
         when(presencaEventoRepository.findAllByAlunoId(9L)).thenReturn(List.of());
         when(votoRepository.findAllByAlunoId(9L)).thenReturn(List.of());
-        when(lancamentoRepository.totalReceitasByTurmaId(7L)).thenReturn(40.0);
+        when(lancamentoRepository.saldoByTurmaId(7L)).thenReturn(40.0);
         when(alunoRepository.countByTurmaId(7L)).thenReturn(4L);
 
         ResponseEntity<?> response = controller.painel(usuario);

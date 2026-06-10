@@ -19,6 +19,8 @@
     --brand-logo-wide: url("../assets/brand/formaly-banner.png");
     --brand-campaign-cover: url("../assets/brand/formaly-cover.png");
     --brand-student-cover: url("../assets/brand/student-cover.jpg");
+    --visual-dashboard-identity: url("../assets/images/formatura-dashboard-identidade.png");
+    --visual-dashboard-banner: url("../assets/images/formatura-banner-horizontal.png");
 }
 
 html {
@@ -539,6 +541,7 @@ table tbody tr:hover {
 .simple-hero__media {
     display: grid;
     gap: 0.9rem;
+    align-content: start;
     min-width: min(220px, 100%);
 }
 
@@ -644,12 +647,21 @@ table tbody tr:hover {
 .brand-mark,
 .student-topbar__brand,
 .student-brand-mark {
-    background-image: var(--brand-logo-mark), linear-gradient(135deg, var(--primary-600), #2dd4bf);
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain, cover;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--primary-600), #2dd4bf);
     border: 1px solid rgba(255,255,255,0.08);
     box-shadow: var(--shadow-glow);
+    color: #ecfdf5;
+    font-size: 1.45rem;
+}
+
+.brand-mark i,
+.student-topbar__brand i,
+.student-brand-mark i {
+    display: block;
+    line-height: 1;
 }
 
 .brand-mark {
@@ -693,11 +705,14 @@ table tbody tr:hover {
 
 .brand-sidebar__card {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 92px;
+    grid-template-columns: minmax(0, 1fr);
     gap: 0.9rem;
     margin-top: 1rem;
     padding: 0.9rem;
     border-radius: 1.35rem;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.025)),
+        rgba(255,255,255,0.04);
 }
 
 .brand-sidebar__copy strong,
@@ -733,8 +748,14 @@ table tbody tr:hover {
 }
 
 .brand-sidebar__photo {
-    min-height: 100%;
+    min-height: 132px;
     border-radius: 1rem;
+    background-image:
+        linear-gradient(180deg, rgba(2, 6, 23, 0.08), rgba(2, 6, 23, 0.34)),
+        var(--visual-dashboard-identity);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
     overflow: hidden;
 }
 
@@ -806,6 +827,32 @@ table tbody tr:hover {
 
 .login-brand-showcase__copy {
     align-self: center;
+}
+
+.dashboard-visual-banner {
+    position: relative;
+    min-height: 180px;
+    margin-top: 1rem;
+    overflow: hidden;
+    border-radius: 1.5rem;
+    border: 1px solid rgba(52, 211, 153, 0.14);
+    background-image:
+        linear-gradient(90deg, rgba(2, 6, 23, 0.18), rgba(2, 6, 23, 0.42)),
+        var(--visual-dashboard-banner);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    box-shadow: var(--shadow-soft);
+}
+
+.dashboard-visual-banner::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.05), transparent 42%),
+        radial-gradient(circle at 82% 28%, rgba(45, 212, 191, 0.22), transparent 32%);
+    pointer-events: none;
 }
 
 .simple-update__label {
@@ -2155,6 +2202,75 @@ body.student-menu-open {
     cursor: not-allowed;
 }
 
+.vote-result-summary {
+    margin-top: 1rem;
+}
+
+.vote-result-summary__head,
+.student-vote-result__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    color: var(--text-soft);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.vote-result-option {
+    display: grid;
+    gap: 0.4rem;
+    margin-top: 0.85rem;
+}
+
+.vote-result-option__top,
+.student-vote-result__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    color: var(--text-soft);
+    font-size: 0.86rem;
+}
+
+.vote-result-option__top strong,
+.student-vote-result__top strong {
+    color: white;
+}
+
+.student-vote-result {
+    margin-top: 1rem;
+    border-top: 1px solid var(--border-soft);
+    padding-top: 1rem;
+}
+
+.student-vote-result__list {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 0.8rem;
+}
+
+.student-vote-result__item {
+    display: grid;
+    gap: 0.4rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.03);
+    padding: 0.8rem;
+}
+
+.student-vote-result__item.is-selected {
+    border-color: rgba(52, 211, 153, 0.36);
+    background: rgba(52, 211, 153, 0.08);
+}
+
+.student-vote-result__item small {
+    color: var(--text-soft);
+    font-size: 0.78rem;
+}
+
 .student-status-badge {
     display: inline-flex;
     align-items: center;
@@ -2348,6 +2464,11 @@ body.student-menu-open {
     .student-brand-banner,
     .login-brand-showcase {
         grid-template-columns: 1fr;
+    }
+
+    .dashboard-visual-banner {
+        min-height: 128px;
+        border-radius: 1.1rem;
     }
 
     .login-form-options,

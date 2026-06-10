@@ -41,12 +41,12 @@
         <strong id="studentMobileName" class="student-topbar__title">Carregando...</strong>
         <p id="studentMobileMeta" class="student-topbar__text">Painel organizado para celular</p>
       </div>
-      <div class="student-topbar__brand" aria-hidden="true"></div>
+      <div class="student-topbar__brand" aria-hidden="true"><i class="ph ph-graduation-cap"></i></div>
       <button
         id="studentMenuToggle"
         type="button"
         class="student-menu-toggle"
-        aria-label="Abrir menu de navegacao"
+        aria-label="Abrir menu de navegação"
         aria-controls="studentNavDrawer"
         aria-expanded="false"
       >
@@ -84,7 +84,7 @@
         </button>
       </div>
       <p class="student-nav__text">No celular, o painel foi dividido em blocos para você acessar cada área sem rolagem excessiva.</p>
-      <div class="student-nav__list" aria-label="Secoes da area do aluno">
+      <div class="student-nav__list" aria-label="Seções da área do aluno">
         <button type="button" class="student-nav-link is-active" data-student-section-target="resumo">
           <i class="ph ph-squares-four"></i>
           <span>Resumo</span>
@@ -104,7 +104,7 @@
       </div>
     </aside>
 
-    <nav class="student-desktop-nav" aria-label="Secoes da area do aluno">
+    <nav class="student-desktop-nav" aria-label="Seções da área do aluno">
       <button type="button" class="student-nav-link is-active" data-student-section-target="resumo">
         <i class="ph ph-squares-four"></i>
         <span>Resumo</span>
@@ -150,7 +150,7 @@
         </div>
 
         <div class="student-hero__side">
-          <div class="student-brand-mark" aria-hidden="true"></div>
+          <div class="student-brand-mark" aria-hidden="true"><i class="ph ph-graduation-cap"></i></div>
           <article class="student-highlight">
             <span class="student-highlight__label">Próximo evento</span>
             <strong id="nextEventName" class="student-highlight__title">Carregando...</strong>
@@ -173,7 +173,7 @@
         <article class="student-metric">
           <span class="student-metric__label">Status financeiro</span>
           <strong id="studentStatusText" class="student-metric__value">ativo</strong>
-          <small>Seu portal esta pronto para acompanhar a turma</small>
+          <small>Seu portal está pronto para acompanhar a turma</small>
         </article>
         <article class="student-metric">
           <span class="student-metric__label">Eventos da turma</span>
@@ -183,7 +183,7 @@
         <article class="student-metric">
           <span class="student-metric__label">Presenças respondidas</span>
           <strong id="summaryPresence" class="student-metric__value">0</strong>
-          <small>Confirmações ja enviadas</small>
+          <small>Confirmações já enviadas</small>
         </article>
         <article class="student-metric">
           <span class="student-metric__label">Votações abertas</span>
@@ -203,7 +203,7 @@
 
         <div class="student-goal-layout">
           <div class="student-goal-visual">
-            <div class="student-goal-ring" role="img" aria-label="Progresso de arrecadacao da turma">
+            <div class="student-goal-ring" role="img" aria-label="Progresso de arrecadação da turma">
               <svg class="student-goal-ring__svg" viewBox="0 0 120 120" aria-hidden="true">
                 <circle class="student-goal-ring__track" cx="60" cy="60" r="48"></circle>
                 <circle id="studentGoalProgressCircle" class="student-goal-ring__progress" cx="60" cy="60" r="48"></circle>
@@ -249,12 +249,12 @@
 
         <div class="student-metrics">
           <article class="student-metric">
-            <span class="student-metric__label">Total contribuido</span>
+            <span class="student-metric__label">Total contribuído</span>
             <strong id="studentContributionTotal" class="student-metric__value">R$ 0,00</strong>
             <small id="studentContributionCount">0 Apoios registrados</small>
           </article>
           <article class="student-metric">
-            <span class="student-metric__label">Ticket medio</span>
+            <span class="student-metric__label">Ticket médio</span>
             <strong id="studentContributionAverage" class="student-metric__value">R$ 0,00</strong>
             <small>Acompanhamento neutro da campanha</small>
           </article>
@@ -268,7 +268,7 @@
         </div>
 
         <form id="studentContributionForm" class="student-stack">
-          <input id="studentContributionTitle" type="text" class="form-input" placeholder="Titulo da contribuicao" />
+          <input id="studentContributionTitle" type="text" class="form-input" placeholder="Título da contribuição" />
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input id="studentContributionAmount" type="number" step="0.01" min="0.01" class="form-input" placeholder="Valor (R$)" />
             <input id="studentContributionDate" type="date" class="form-input" />

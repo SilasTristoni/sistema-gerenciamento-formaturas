@@ -53,6 +53,14 @@
             <div class="text-xs text-slate-500">Painel inteligente da comissão</div>
           </div>
         </div>
+        <div class="brand-sidebar__card">
+          <div class="brand-sidebar__photo" aria-hidden="true"></div>
+          <div class="brand-sidebar__copy">
+            <span class="brand-tag">Identidade visual</span>
+            <strong>Campanha da formatura</strong>
+            <p>Uma leitura visual única para agenda, caixa e crescimento da turma.</p>
+          </div>
+        </div>
       </div>
 
       <nav class="flex-1 overflow-y-auto py-5 px-3 space-y-1.5">
@@ -107,7 +115,7 @@
             <div>
               <p class="simple-kicker">Tudo em um lugar</p>
               <h2 class="simple-title">O que a turma precisa ver hoje</h2>
-              <p class="simple-copy">Uma visão rapida para acompanhar dinheiro, próximos passos e o que precisa de atenção.</p>
+              <p class="simple-copy">Uma visão rápida para acompanhar dinheiro, próximos passos e o que precisa de atenção.</p>
             </div>
             <div class="simple-hero__media">
               <div class="simple-update">
@@ -122,7 +130,7 @@
               <div>
                 <p class="text-xs uppercase tracking-[0.22em] text-slate-500 font-semibold">Filtro da dashboard</p>
                 <p class="mt-2 text-base font-semibold text-white" id="mainDashboardScopeLabel">Visão consolidada de todas as turmas</p>
-                <p class="mt-1 text-sm text-slate-400" id="mainDashboardFilterHint">Ajuste o recorte para analisar uma turma especifica ou ampliar a janela histórica.</p>
+                <p class="mt-1 text-sm text-slate-400" id="mainDashboardFilterHint">Ajuste o recorte para analisar uma turma específica ou ampliar a janela histórica.</p>
               </div>
 
               <label class="block">
@@ -133,7 +141,7 @@
               </label>
 
               <label class="block">
-                <span class="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Periodo</span>
+                <span class="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Período</span>
                 <select id="mainDashboardPeriodFilter" class="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition focus:border-emerald-400/70 focus:ring-4 focus:ring-emerald-400/10">
                   <option value="3">Últimos 3 meses</option>
                   <option value="6">Últimos 6 meses</option>
@@ -166,7 +174,7 @@
               <div class="simple-panel__head">
                 <div>
                   <p class="simple-kicker">Meta financeira</p>
-                  <h3 class="simple-panel__title">Progresso e proximo passo</h3>
+                  <h3 class="simple-panel__title">Progresso e próximo passo</h3>
                 </div>
                 <span id="goalProgressBadge" class="simple-goal-badge">Sem meta</span>
               </div>
@@ -261,6 +269,8 @@
               <div id="alertsList" class="simple-stack mt-4"></div>
             </article>
           </div>
+
+          <div class="dashboard-visual-banner" aria-hidden="true"></div>
         </section>
 
         <section id="screen-alunos" class="screen hidden">
@@ -275,7 +285,7 @@
               <button onclick="openModal('new','aluno')" class="btn btn-primary btn-admin">Novo Aluno</button>
             </div>
           </div>
-          <div class="card-panel"><div class="overflow-x-auto"><table id="alunosTable" class="w-full text-left text-sm text-slate-400"><thead class="bg-dark-900/50 text-xs uppercase font-semibold text-slate-500 tracking-wider"><tr><th class="px-6 py-4">Aluno / Login</th><th class="px-6 py-4">Turma</th><th class="px-6 py-4">Contato</th><th class="px-6 py-4">Status</th><th class="px-6 py-4 text-right">Acoes</th></tr></thead><tbody id="alunosBody" class="divide-y divide-white/5"></tbody></table></div></div>
+          <div class="card-panel"><div class="overflow-x-auto"><table id="alunosTable" class="w-full text-left text-sm text-slate-400"><thead class="bg-dark-900/50 text-xs uppercase font-semibold text-slate-500 tracking-wider"><tr><th class="px-6 py-4">Aluno / Login</th><th class="px-6 py-4">Turma</th><th class="px-6 py-4">Contato</th><th class="px-6 py-4">Status</th><th class="px-6 py-4 text-right">Ações</th></tr></thead><tbody id="alunosBody" class="divide-y divide-white/5"></tbody></table></div></div>
         </section>
 
         <section id="screen-turmas" class="screen hidden">
@@ -297,7 +307,7 @@
           <div class="agenda-grid">
             <article class="agenda-panel agenda-panel--calendar">
               <div class="agenda-toolbar">
-                <button onclick="mudarMesAgenda(-1)" class="agenda-nav-btn" aria-label="Mes anterior"><i class="ph ph-caret-left"></i></button>
+                <button onclick="mudarMesAgenda(-1)" class="agenda-nav-btn" aria-label="Mês anterior"><i class="ph ph-caret-left"></i></button>
                 <div>
                   <p class="agenda-label">Calendário</p>
                   <h3 id="agendaMonthLabel" class="agenda-title">Mês atual</h3>
@@ -339,11 +349,11 @@
                 <div class="agenda-quick-form">
                   <div>
                     <label class="form-label">Nome do evento</label>
-                    <input id="agendaQuickName" type="text" class="form-input" placeholder="Ex.: Reuniao da turma" />
+                    <input id="agendaQuickName" type="text" class="form-input" placeholder="Ex.: Reunião da turma" />
                   </div>
                   <div>
                     <label class="form-label">Local</label>
-                    <input id="agendaQuickLocal" type="text" class="form-input" placeholder="Ex.: Auditorio do colegio" />
+                    <input id="agendaQuickLocal" type="text" class="form-input" placeholder="Ex.: Auditório do colégio" />
                   </div>
                   <div>
                     <label class="form-label">Turma</label>
@@ -368,7 +378,7 @@
         </section>
 
         <section id="screen-financeiro" class="screen hidden">
-          <div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold text-white">Financeiro</h2><button onclick="openModal('new','lancamento')" class="btn btn-primary btn-admin">Novo Lancamento</button></div>
+          <div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold text-white">Financeiro</h2><button onclick="openModal('new','lancamento')" class="btn btn-primary btn-admin">Novo Lançamento</button></div>
           <div class="card-panel"><div class="overflow-x-auto"><table id="financeiroTable" class="w-full text-left text-sm text-slate-400"><thead class="bg-dark-900/50 text-xs uppercase font-semibold text-slate-500"><tr><th class="px-6 py-4">Descrição</th><th class="px-6 py-4">Tipo</th><th class="px-6 py-4">Valor</th><th class="px-6 py-4">Data</th><th class="px-6 py-4 text-right">Ações</th></tr></thead><tbody id="financeiroBody" class="divide-y divide-white/5"></tbody></table></div></div>
         </section>
 
@@ -391,7 +401,7 @@
 
           <div class="simple-cards">
             <article class="simple-card simple-card--money">
-              <span class="simple-card__label">Total contribuido</span>
+              <span class="simple-card__label">Total contribuído</span>
               <strong id="contributionTotal" class="simple-card__value">R$ 0,00</strong>
               <small id="contributionScopeLabel">Contribuições de todas as turmas</small>
             </article>
@@ -540,7 +550,7 @@
   <div id="modalBackdrop" class="fixed inset-0 bg-dark-900/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 modal-backdrop">
     <div id="modalPanel" class="bg-dark-800/95 w-full max-w-xl rounded-[28px] shadow-2xl border border-white/8 transform scale-95 opacity-0 modal-panel">
       <div class="px-6 py-5 border-b border-white/6 flex justify-between items-center bg-dark-800/60">
-        <h3 id="modalTitle" class="text-lg font-bold text-white flex items-center gap-2"><i class="ph ph-pencil-simple text-primary-500"></i> <span>Formulario</span></h3>
+        <h3 id="modalTitle" class="text-lg font-bold text-white flex items-center gap-2"><i class="ph ph-pencil-simple text-primary-500"></i> <span>Formulário</span></h3>
         <button onclick="closeModal()" class="text-slate-500 hover:text-white transition-colors p-1 rounded-md hover:bg-dark-700"><i class="ph ph-x text-lg"></i></button>
       </div>
       <div class="p-6 max-h-[80vh] overflow-y-auto custom-scroll">
@@ -580,12 +590,12 @@
             <div id="divIdentificador" class="hidden mt-4">
               <label class="form-label">Identificador do aluno</label>
               <input id="modalIdentificador" type="text" class="form-input" placeholder="ex.: silas.tristoni" />
-              <p class="text-xs text-slate-500 mt-2">Esse identificador sera usado no login do aluno. Se voce deixar em branco, o sistema gera automaticamente.</p>
+              <p class="text-xs text-slate-500 mt-2">Esse identificador será usado no login do aluno. Se você deixar em branco, o sistema gera automaticamente.</p>
             </div>
             <div id="divSenhaAluno" class="hidden mt-4">
               <label class="form-label">Senha do aluno</label>
-              <input id="modalSenha" type="password" class="form-input" placeholder="Minimo 6 caracteres" />
-              <p class="text-xs text-slate-500 mt-2">Se ficar em branco no cadastro, o sistema usa a senha temporaria configurada para novos acessos. Na edição, senha vazia mantem a atual.</p>
+              <input id="modalSenha" type="password" class="form-input" placeholder="Mínimo 6 caracteres" />
+              <p class="text-xs text-slate-500 mt-2">Se ficar em branco no cadastro, o sistema usa a senha temporária configurada para novos acessos. Na edição, senha vazia mantém a atual.</p>
             </div>
             <div class="grid grid-cols-2 gap-4 mt-4" id="divDataValor">
               <div id="divModalDataField"><label id="modalDataLabel" class="form-label">Data</label><input id="modalData" type="date" class="form-input" /></div>
@@ -594,10 +604,18 @@
           </div>
 
           <div class="modal-section modal-section--compact">
-            <p class="modal-section__title">Contexto</p>
+            <p id="modalDetailsTitle" class="modal-section__title">Detalhes adicionais</p>
             <div>
               <label id="lblDescricao" class="form-label">Descrição</label>
               <textarea id="modalDescricao" rows="3" class="form-input" placeholder="Detalhes adicionais..."></textarea>
+            </div>
+            <div id="divAlunoSelect" class="mt-3 hidden">
+              <label class="form-label">Vincular a aluno cadastrado</label>
+              <div class="relative">
+                <select id="modalAlunoSelect" class="form-input form-select"><option value="">Sem vínculo com aluno</option></select>
+                <i class="ph ph-caret-down absolute right-4 top-3.5 text-slate-400 pointer-events-none"></i>
+              </div>
+              <p class="text-xs text-slate-500 mt-2">Opcional: use para registrar a contribuição diretamente no nome de um aluno existente.</p>
             </div>
             <div id="divApoiadorNome" class="mt-3 hidden">
               <label class="form-label">Nome do apoiador</label>

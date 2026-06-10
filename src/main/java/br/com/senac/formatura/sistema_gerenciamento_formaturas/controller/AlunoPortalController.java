@@ -1,9 +1,11 @@
 package br.com.senac.formatura.sistema_gerenciamento_formaturas.controller;
 
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.dto.AlunoPainelResponseDTO;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Aluno;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Evento;
+import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.OpcaoVotacao;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.PresencaEvento;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Usuario;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Votacao;
@@ -31,6 +34,7 @@ import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.VotoRe
 @RestController
 @RequestMapping("/api/aluno")
 public class AlunoPortalController {
+    private static final Locale LOCALE_PT_BR = Locale.forLanguageTag("pt-BR");
 
     private final AlunoRepository alunoRepository;
     private final EventoRepository eventoRepository;
@@ -58,11 +62,11 @@ public class AlunoPortalController {
     @GetMapping("/painel")
     public ResponseEntity<?> painel(@AuthenticationPrincipal Usuario usuario) {
         if (usuario == null) {
-            return ResponseEntity.status(401).body("Usuario nao autenticado.");
+            return ResponseEntity.status(401).body("Usuário não autenticado.");
         }
 
         if (usuario.getAluno() == null) {
-            return ResponseEntity.status(403).body("Somente alunos podem acessar esta area.");
+            return ResponseEntity.status(403).body("Somente alunos podem acessar esta área.");
         }
 
         Aluno aluno = usuario.getAluno();
@@ -82,13 +86,14 @@ public class AlunoPortalController {
         Map<Long, Voto> votosPorVotacao = votoRepository.findAllByAlunoId(aluno.getId()).stream()
             .filter(item -> item.getVotacao() != null && item.getVotacao().getId() != null)
             .collect(Collectors.toMap(item -> item.getVotacao().getId(), Function.identity(), (left, right) -> right));
+        Map<Long, Long> votosPorOpcao = buildVoteCountsByOpcao(votacoes);
 
         List<AlunoPainelResponseDTO.EventoAluno> eventosResponse = eventos.stream()
             .map(evento -> toEventoAluno(evento, presencasPorEvento.get(evento.getId()), hoje))
             .toList();
 
         List<AlunoPainelResponseDTO.VotacaoAluno> votacoesResponse = votacoes.stream()
-            .map(votacao -> toVotacaoAluno(votacao, votosPorVotacao.get(votacao.getId()), hoje))
+            .map(votacao -> toVotacaoAluno(votacao, votosPorVotacao.get(votacao.getId()), hoje, votosPorOpcao))
             .toList();
 
         long eventosRespondidos = eventosResponse.stream()
@@ -114,7 +119,7 @@ public class AlunoPortalController {
             .orElseGet(() -> eventosResponse.stream().findFirst().orElse(null));
 
         Double valorMetaBruto = aluno.getTurma() != null ? aluno.getTurma().getMetaArrecadacao() : null;
-        double valorArrecadado = roundMoney(safeDouble(lancamentoRepository.totalReceitasByTurmaId(turmaId)));
+        double valorArrecadado = roundMoney(safeDouble(lancamentoRepository.saldoByTurmaId(turmaId)));
         double valorMeta = roundMoney(safeDouble(valorMetaBruto));
         double percentualAtingido = valorMeta <= 0 ? 0.0 : roundMoney((valorArrecadado / valorMeta) * 100.0);
         double valorRestante = valorMeta <= 0 ? 0.0 : roundMoney(Math.max(0.0, valorMeta - valorArrecadado));
@@ -126,16 +131,16 @@ public class AlunoPortalController {
         String descricaoMeta;
 
         if (!metaDefinida) {
-            tituloMeta = "Meta ainda nao definida";
-            descricaoMeta = "A comissao ainda nao publicou uma meta financeira para a turma.";
+            tituloMeta = "Meta ainda não definida";
+            descricaoMeta = "A comissão ainda não publicou uma meta financeira para a turma.";
         } else if (metaAtingida) {
             tituloMeta = "Meta atingida";
-            descricaoMeta = "A turma ja bateu a meta de arrecadacao definida pela comissao.";
+            descricaoMeta = "A turma já bateu a meta de arrecadação definida pela comissão.";
         } else {
             tituloMeta = "Meta em andamento";
             descricaoMeta = "Faltam "
                 + formatCurrency(valorRestante)
-                + " para bater a meta. Como referencia opcional, isso representa em media "
+                + " para bater a meta. Como sugestão opcional, isso representa em média "
                 + formatCurrency(sugestaoContribuicaoMedia)
                 + " por participante.";
         }
@@ -147,7 +152,7 @@ public class AlunoPortalController {
                 aluno.getIdentificador(),
                 aluno.getContato(),
                 aluno.getTurma() != null ? firstNonBlank(aluno.getTurma().getNome(), "Sem turma") : "Sem turma",
-                aluno.getTurma() != null ? firstNonBlank(aluno.getTurma().getCurso(), "Curso nao informado") : "Curso nao informado"
+                aluno.getTurma() != null ? firstNonBlank(aluno.getTurma().getCurso(), "Curso não informado") : "Curso não informado"
             ),
             new AlunoPainelResponseDTO.ResumoAluno(
                 eventosResponse.size(),
@@ -186,27 +191,61 @@ public class AlunoPortalController {
         );
     }
 
-    private AlunoPainelResponseDTO.VotacaoAluno toVotacaoAluno(Votacao votacao, Voto voto, LocalDate hoje) {
+    private AlunoPainelResponseDTO.VotacaoAluno toVotacaoAluno(
+        Votacao votacao,
+        Voto voto,
+        LocalDate hoje,
+        Map<Long, Long> votosPorOpcao
+    ) {
         LocalDate dataFim = votacao.getDataFim();
         boolean aberta = isVotacaoAberta(votacao, hoje);
+        List<OpcaoVotacao> opcoes = votacao.getOpcoes() == null ? List.of() : votacao.getOpcoes();
+        long totalVotos = opcoes.stream()
+            .mapToLong(opcao -> votosPorOpcao.getOrDefault(opcao.getId(), 0L))
+            .sum();
 
         return new AlunoPainelResponseDTO.VotacaoAluno(
             votacao.getId(),
-            firstNonBlank(votacao.getTitulo(), "Votacao sem titulo"),
+            firstNonBlank(votacao.getTitulo(), "Votação sem título"),
             firstNonBlank(votacao.getStatus(), aberta ? "aberta" : "encerrada"),
             dataFim,
             aberta,
             voto != null,
             voto != null && voto.getOpcao() != null ? voto.getOpcao().getId() : null,
-            voto != null && voto.getOpcao() != null ? firstNonBlank(voto.getOpcao().getNomeFornecedor(), "Opcao selecionada") : "",
+            voto != null && voto.getOpcao() != null ? firstNonBlank(voto.getOpcao().getNomeFornecedor(), "Opção selecionada") : "",
             dataFim == null ? -1 : ChronoUnit.DAYS.between(hoje, dataFim),
-            votacao.getOpcoes() == null ? List.of() : votacao.getOpcoes().stream()
-                .map(opcao -> new AlunoPainelResponseDTO.OpcaoAluno(
-                    opcao.getId(),
-                    firstNonBlank(opcao.getNomeFornecedor(), "Opcao sem nome")
-                ))
+            totalVotos,
+            opcoes.stream()
+                .map(opcao -> {
+                    long votos = votosPorOpcao.getOrDefault(opcao.getId(), 0L);
+                    return new AlunoPainelResponseDTO.OpcaoAluno(
+                        opcao.getId(),
+                        firstNonBlank(opcao.getNomeFornecedor(), "Opção sem nome"),
+                        votos,
+                        totalVotos <= 0 ? 0.0 : roundPercent((votos * 100.0) / totalVotos)
+                    );
+                })
                 .toList()
         );
+    }
+
+    private Map<Long, Long> buildVoteCountsByOpcao(List<Votacao> votacoes) {
+        List<Long> votacaoIds = votacoes.stream()
+            .map(Votacao::getId)
+            .filter(id -> id != null)
+            .toList();
+
+        if (votacaoIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return votoRepository.countVotesByOpcaoForVotacoes(votacaoIds).stream()
+            .filter(row -> row.length >= 2 && row[0] != null && row[1] != null)
+            .collect(Collectors.toMap(
+                row -> ((Number) row[0]).longValue(),
+                row -> ((Number) row[1]).longValue(),
+                Long::sum
+            ));
     }
 
     private boolean isVotacaoAberta(Votacao votacao, LocalDate hoje) {
@@ -236,7 +275,11 @@ public class AlunoPortalController {
         return Math.round(value * 100.0) / 100.0;
     }
 
+    private double roundPercent(double value) {
+        return Math.round(value * 100.0) / 100.0;
+    }
+
     private String formatCurrency(double value) {
-        return "R$ %.2f".formatted(value).replace('.', ',');
+        return NumberFormat.getCurrencyInstance(LOCALE_PT_BR).format(value);
     }
 }

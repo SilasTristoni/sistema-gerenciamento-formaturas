@@ -47,7 +47,7 @@ function formatDate(value) {
 
 function formatDaysRemaining(days) {
     if (days == null) return 'Sem prazo definido';
-    if (days < 0) return 'Data ja passou';
+    if (days < 0) return 'Data já passou';
     if (days === 0) return 'Acontece hoje';
     if (days === 1) return 'Falta 1 dia';
     return `Faltam ${days} dias`;
@@ -55,6 +55,15 @@ function formatDaysRemaining(days) {
 
 function formatCurrency(value) {
     return currencyFormatter.format(Number(value || 0));
+}
+
+function formatPercent(value = 0) {
+    return `${Number(value || 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`;
+}
+
+function formatVoteCount(value = 0) {
+    const total = Number(value || 0);
+    return `${total} ${total === 1 ? 'voto' : 'votos'}`;
 }
 
 function todayValue() {
@@ -181,14 +190,14 @@ function renderFinancialProgress(financeiro = {}) {
     if (!metaDefinida) {
         badge.textContent = 'Sem meta';
         badge.className = 'student-chip student-chip--neutral';
-        status.textContent = financeiro.descricao || 'A comissao ainda nao definiu a meta financeira da turma.';
+        status.textContent = financeiro.descricao || 'A comissão ainda não definiu a meta financeira da turma.';
         return;
     }
 
     if (metaAtingida) {
         badge.textContent = 'Meta batida';
         badge.className = 'student-chip student-chip--success';
-        status.textContent = financeiro.descricao || `A turma ja arrecadou ${formatCurrency(valorArrecadado)} e atingiu o objetivo financeiro.`;
+        status.textContent = financeiro.descricao || `A turma já arrecadou ${formatCurrency(valorArrecadado)} e atingiu o objetivo financeiro.`;
         return;
     }
 
@@ -210,7 +219,7 @@ function renderContributions(contribuicoes = {}) {
     if (!recentList) return;
 
     if (!recentes.length) {
-        renderEmpty('studentContributionRecentList', 'Nenhuma contribuicao registrada ainda para a sua turma.');
+        renderEmpty('studentContributionRecentList', 'Nenhuma contribuição registrada ainda para a sua turma.');
         return;
     }
 
@@ -219,7 +228,7 @@ function renderContributions(contribuicoes = {}) {
             <div class="student-event-card__main">
                 <div class="student-event-card__top">
                     <div>
-                        <p class="student-event-card__title">${escapeHtml(item.titulo || 'Contribuicao')}</p>
+                        <p class="student-event-card__title">${escapeHtml(item.titulo || 'Contribuição')}</p>
                         <p class="student-event-card__meta">${escapeHtml(formatDate(item.data))} - ${escapeHtml(item.apoiadorNome || 'Apoiador da turma')}</p>
                     </div>
                     <span class="student-status-badge student-status-badge--positive">${escapeHtml(formatCurrency(item.valor || 0))}</span>
@@ -300,14 +309,14 @@ function renderProfile(painel) {
     const resumo = painel.resumo || {};
     const financeiro = painel.financeiro || {};
     const proximoEvento = painel.proximoEvento || {};
-    const turmaResumo = `${aluno.turmaNome || 'Sem turma'} - ${aluno.curso || 'Curso nao informado'}`;
+    const turmaResumo = `${aluno.turmaNome || 'Sem turma'} - ${aluno.curso || 'Curso não informado'}`;
 
     setText('studentTurma', turmaResumo);
     setText('studentMobileMeta', turmaResumo);
     setText('studentStatusText', 'ATIVO');
-    setText('studentCourse', aluno.curso || 'Nao informado');
-    setText('studentContact', aluno.contato || 'Nao informado');
-    setText('studentIdentifier', aluno.identificador || 'Nao informado');
+    setText('studentCourse', aluno.curso || 'Não informado');
+    setText('studentContact', aluno.contato || 'Não informado');
+    setText('studentIdentifier', aluno.identificador || 'Não informado');
 
     setText('summaryEvents', resumo.totalEventos ?? 0);
     setText('summaryPresence', resumo.eventosComPresencaRespondida ?? 0);
@@ -367,7 +376,7 @@ function renderEvents(eventos = []) {
                 <div class="student-presence-actions">
                     <button class="student-presence-btn ${presenceStatus === 'confirmado' ? 'is-active' : ''}" data-presenca-evento="${evento.id}" data-presenca-status="confirmado" ${disabled}>Vou</button>
                     <button class="student-presence-btn ${presenceStatus === 'talvez' ? 'is-active' : ''}" data-presenca-evento="${evento.id}" data-presenca-status="talvez" ${disabled}>Talvez</button>
-                    <button class="student-presence-btn ${presenceStatus === 'nao vou' ? 'is-active' : ''}" data-presenca-evento="${evento.id}" data-presenca-status="nao vou" ${disabled}>Nao vou</button>
+                    <button class="student-presence-btn ${presenceStatus === 'nao vou' ? 'is-active' : ''}" data-presenca-evento="${evento.id}" data-presenca-status="nao vou" ${disabled}>Não vou</button>
                 </div>
             </article>
         `;
@@ -379,34 +388,65 @@ function renderVotes(votacoes = []) {
     if (!container) return;
 
     if (!votacoes.length) {
-        renderEmpty('voteList', 'Nenhuma votacao disponivel para a sua turma.');
+        renderEmpty('voteList', 'Nenhuma votação disponível para a sua turma.');
         return;
     }
 
     container.innerHTML = votacoes.map((votacao) => {
         const disabled = !votacao.aberta || votacao.jaVotou;
         const tone = normalizeStatus(votacao.status || (votacao.aberta ? 'aberta' : 'encerrada'));
+        const showResults = !votacao.aberta || votacao.jaVotou;
+        const resultTitle = votacao.aberta ? 'Resultado parcial' : 'Resultado final';
+        const totalVotos = Number(votacao.totalVotos || 0);
 
         return `
             <article class="student-vote-card">
                 <div class="student-vote-card__head">
                     <div>
-                        <p class="student-vote-card__title">${escapeHtml(votacao.titulo || 'Votacao sem titulo')}</p>
+                        <p class="student-vote-card__title">${escapeHtml(votacao.titulo || 'Votação sem título')}</p>
                         <p class="student-vote-card__meta">Prazo: ${escapeHtml(formatDate(votacao.dataFim))} - ${escapeHtml(formatDaysRemaining(votacao.diasRestantes))}</p>
                     </div>
                     <span class="student-status-badge student-status-badge--${tone}">${escapeHtml(votacao.aberta ? 'aberta' : 'encerrada')}</span>
                 </div>
                 ${votacao.jaVotou
-                    ? `<div class="student-vote-card__result">Seu voto: <strong>${escapeHtml(votacao.opcaoSelecionadaNome || 'Opcao registrada')}</strong></div>`
+                    ? `<div class="student-vote-card__result">Seu voto: <strong>${escapeHtml(votacao.opcaoSelecionadaNome || 'Opção registrada')}</strong></div>`
                     : ''}
                 <div class="student-option-list">
                     ${(votacao.opcoes || []).map((opcao) => `
                         <button class="student-option-btn" data-voto-id="${votacao.id}" data-opcao-id="${opcao.id}" ${disabled ? 'disabled' : ''}>
-                            <span>${escapeHtml(opcao.nome || 'Opcao')}</span>
+                            <span>${escapeHtml(opcao.nome || 'Opção')}</span>
                             <i class="ph ph-check-circle"></i>
                         </button>
                     `).join('')}
                 </div>
+                ${showResults ? `
+                    <div class="student-vote-result">
+                        <div class="student-vote-result__head">
+                            <span>${escapeHtml(resultTitle)}</span>
+                            <span>${escapeHtml(formatVoteCount(totalVotos))}</span>
+                        </div>
+                        <div class="student-vote-result__list">
+                            ${(votacao.opcoes || []).map((opcao) => {
+                                const votos = Number(opcao.votos || 0);
+                                const percentual = Number(opcao.percentual || 0);
+                                const selected = votacao.opcaoSelecionadaId === opcao.id;
+
+                                return `
+                                    <div class="student-vote-result__item ${selected ? 'is-selected' : ''}">
+                                        <div class="student-vote-result__top">
+                                            <span>${escapeHtml(opcao.nome || 'Opção')}</span>
+                                            <strong>${escapeHtml(formatPercent(percentual))}</strong>
+                                        </div>
+                                        <div class="goal-table-progress">
+                                            <div class="goal-table-progress__bar" style="width:${Math.max(0, Math.min(percentual, 100))}%;"></div>
+                                        </div>
+                                        <small>${escapeHtml(formatVoteCount(votos))}</small>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                ` : ''}
             </article>
         `;
     }).join('');
@@ -429,7 +469,7 @@ async function loadStudentArea() {
         renderVotes(painel.votacoes || []);
         showState({ loading: false, error: '' });
     } catch (error) {
-        showState({ loading: false, error: error.message || 'Nao foi possivel carregar seus dados.' });
+        showState({ loading: false, error: error.message || 'Não foi possível carregar seus dados.' });
     }
 }
 
@@ -441,10 +481,10 @@ async function handlePresenceClick(button) {
 
     try {
         await api.confirmarPresenca(eventoId, status);
-        showToast('Presenca atualizada com sucesso!', 'success');
+        showToast('Presença atualizada com sucesso!', 'success');
         await loadStudentArea();
     } catch (error) {
-        showToast(error.message || 'Nao foi possivel atualizar sua presenca.', 'error');
+        showToast(error.message || 'Não foi possível atualizar sua presença.', 'error');
     }
 }
 
@@ -459,7 +499,7 @@ async function handleVoteClick(button) {
         showToast('Voto registrado com sucesso!', 'success');
         await loadStudentArea();
     } catch (error) {
-        showToast(error.message || 'Nao foi possivel registrar seu voto.', 'error');
+        showToast(error.message || 'Não foi possível registrar seu voto.', 'error');
     }
 }
 
@@ -474,17 +514,17 @@ async function handleContributionSubmit(event) {
     const anonima = Boolean(document.getElementById('studentContributionAnonymous')?.checked);
 
     if (!title) {
-        showToast('Informe um titulo para a contribuicao.', 'error');
+        showToast('Informe um título para a contribuição.', 'error');
         return;
     }
 
     if (!Number.isFinite(amount) || amount <= 0) {
-        showToast('Informe um valor positivo para a contribuicao.', 'error');
+        showToast('Informe um valor positivo para a contribuição.', 'error');
         return;
     }
 
     if (!data) {
-        showToast('Escolha a data da contribuicao.', 'error');
+        showToast('Escolha a data da contribuição.', 'error');
         return;
     }
 
@@ -509,10 +549,10 @@ async function handleContributionSubmit(event) {
         const dateInput = document.getElementById('studentContributionDate');
         if (dateInput) dateInput.value = todayValue();
 
-        showToast('Contribuicao registrada com sucesso!', 'success');
+        showToast('Contribuição registrada com sucesso!', 'success');
         await loadStudentArea();
     } catch (error) {
-        showToast(error.message || 'Nao foi possivel registrar a contribuicao.', 'error');
+        showToast(error.message || 'Não foi possível registrar a contribuição.', 'error');
     } finally {
         if (submitButton) {
             submitButton.disabled = false;

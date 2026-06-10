@@ -3,6 +3,7 @@ package br.com.senac.formatura.sistema_gerenciamento_formaturas.service;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormatSymbols;
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -121,12 +122,13 @@ public class RelatorioFinanceiroService {
             maiorDespesaPeriodo
         );
 
+        Map<Long, Double> saldoPorTurma = summarizeSaldoByTurma(lancamentosEscopo);
         List<RelatorioFinanceiroDTO.TurmaIndicator> topTurmas = turmasEscopo.stream()
             .sorted(Comparator
-                .comparing(this::percentualMetaTurma, Comparator.reverseOrder())
-                .thenComparing(Turma::getTotalArrecadado, Comparator.nullsLast(Comparator.reverseOrder())))
+                .comparing((Turma turma) -> percentualMetaTurma(turma, saldoPorTurma), Comparator.reverseOrder())
+                .thenComparing((Turma turma) -> saldoTurma(turma, saldoPorTurma), Comparator.reverseOrder()))
             .limit(5)
-            .map(this::toTurmaIndicator)
+            .map(turma -> toTurmaIndicator(turma, saldoPorTurma))
             .toList();
 
         List<RelatorioFinanceiroDTO.TransactionItem> recentTransactions = lancamentosPeriodo.stream()
@@ -422,8 +424,8 @@ public class RelatorioFinanceiroService {
         return insights;
     }
 
-    private RelatorioFinanceiroDTO.TurmaIndicator toTurmaIndicator(Turma turma) {
-        double totalArrecadado = round(safe(turma.getTotalArrecadado()));
+    private RelatorioFinanceiroDTO.TurmaIndicator toTurmaIndicator(Turma turma, Map<Long, Double> saldoPorTurma) {
+        double totalArrecadado = saldoTurma(turma, saldoPorTurma);
         double meta = round(safe(turma.getMetaArrecadacao()));
         double percentualMeta = meta <= 0 ? 0.0 : round((totalArrecadado / meta) * 100.0);
 
@@ -487,10 +489,30 @@ public class RelatorioFinanceiroService {
         return item.getTipo() != null && item.getTipo().equalsIgnoreCase(tipo);
     }
 
-    private double percentualMetaTurma(Turma turma) {
+    private Map<Long, Double> summarizeSaldoByTurma(List<LancamentoFinanceiro> lancamentos) {
+        Map<Long, Double> saldos = new LinkedHashMap<>();
+        for (LancamentoFinanceiro lancamento : lancamentos) {
+            if (lancamento.getTurma() == null || lancamento.getTurma().getId() == null) continue;
+            saldos.merge(lancamento.getTurma().getId(), signedValue(lancamento), Double::sum);
+        }
+        return saldos;
+    }
+
+    private double saldoTurma(Turma turma, Map<Long, Double> saldoPorTurma) {
+        if (turma == null || turma.getId() == null) return 0.0;
+        return round(saldoPorTurma.getOrDefault(turma.getId(), 0.0));
+    }
+
+    private double signedValue(LancamentoFinanceiro lancamento) {
+        if (isTipo(lancamento, "receita")) return safe(lancamento.getValor());
+        if (isTipo(lancamento, "despesa")) return -safe(lancamento.getValor());
+        return 0.0;
+    }
+
+    private double percentualMetaTurma(Turma turma, Map<Long, Double> saldoPorTurma) {
         double meta = safe(turma.getMetaArrecadacao());
         if (meta <= 0) return 0.0;
-        return round((safe(turma.getTotalArrecadado()) / meta) * 100.0);
+        return round((saldoTurma(turma, saldoPorTurma) / meta) * 100.0);
     }
 
     private int normalizePeriod(Integer periodMonths) {
@@ -522,7 +544,7 @@ public class RelatorioFinanceiroService {
     }
 
     private String formatCurrency(double value) {
-        return "R$ %.2f".formatted(value).replace('.', ',');
+        return NumberFormat.getCurrencyInstance(LOCALE_PT_BR).format(value);
     }
 
     private String formatPercent(double value) {

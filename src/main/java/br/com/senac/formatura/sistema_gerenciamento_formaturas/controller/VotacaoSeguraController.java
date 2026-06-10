@@ -61,12 +61,12 @@ public class VotacaoSeguraController {
         OpcaoVotacao opcao = opcaoRepo.findById(request.opcaoId()).orElseThrow();
 
         if (votacao.getTurma() == null || aluno.getTurma() == null || !votacao.getTurma().getId().equals(aluno.getTurma().getId())) {
-            return ResponseEntity.status(403).body("Voce nao pode votar em uma enquete de outra turma.");
+            return ResponseEntity.status(403).body("Você não pode votar em uma enquete de outra turma.");
         }
 
         if ("encerrada".equalsIgnoreCase(votacao.getStatus())
             || (votacao.getDataFim() != null && votacao.getDataFim().isBefore(LocalDate.now()))) {
-            return ResponseEntity.badRequest().body("Esta votacao ja foi encerrada.");
+            return ResponseEntity.badRequest().body("Esta votação já foi encerrada.");
         }
 
         if (opcao.getVotacao() == null || !opcao.getVotacao().getId().equals(votacao.getId())) {
