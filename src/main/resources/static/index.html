@@ -285,12 +285,12 @@
               <button onclick="openModal('new','aluno')" class="btn btn-primary btn-admin">Novo Aluno</button>
             </div>
           </div>
-          <div class="card-panel"><div class="overflow-x-auto"><table id="alunosTable" class="w-full text-left text-sm text-slate-400"><thead class="bg-dark-900/50 text-xs uppercase font-semibold text-slate-500 tracking-wider"><tr><th class="px-6 py-4">Aluno / Login</th><th class="px-6 py-4">Turma</th><th class="px-6 py-4">Contato</th><th class="px-6 py-4">Status</th><th class="px-6 py-4 text-right">Ações</th></tr></thead><tbody id="alunosBody" class="divide-y divide-white/5"></tbody></table></div></div>
+          <div class="card-panel"><div class="overflow-x-auto"><table id="alunosTable" class="w-full text-left text-sm text-slate-400"><thead class="bg-dark-900/50 text-xs uppercase font-semibold text-slate-500 tracking-wider"><tr><th class="px-6 py-4">Nome</th><th class="px-6 py-4">Identificador</th><th class="px-6 py-4">E-mail</th><th class="px-6 py-4">WhatsApp</th><th class="px-6 py-4">Turma</th><th class="px-6 py-4">Status</th><th class="px-6 py-4 text-right">Ações</th></tr></thead><tbody id="alunosBody" class="divide-y divide-white/5"></tbody></table></div></div>
         </section>
 
         <section id="screen-turmas" class="screen hidden">
           <div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold text-white">Turmas</h2><button onclick="openModal('new','turma')" class="btn btn-primary btn-admin">Nova Turma</button></div>
-          <div class="card-panel"><div class="overflow-x-auto"><table id="turmasTable" class="w-full text-left text-sm text-slate-400"><thead class="bg-dark-900/50 text-xs uppercase font-semibold text-slate-500"><tr><th class="px-6 py-4">Turma</th><th class="px-6 py-4">Curso</th><th class="px-6 py-4">Alunos</th><th class="px-6 py-4">Meta</th><th class="px-6 py-4">Arrecadado</th><th class="px-6 py-4 text-right">Ações</th></tr></thead><tbody id="turmasBody" class="divide-y divide-white/5"></tbody></table></div></div>
+          <div class="card-panel"><div class="overflow-x-auto"><table id="turmasTable" class="w-full text-left text-sm text-slate-400"><thead class="bg-dark-900/50 text-xs uppercase font-semibold text-slate-500"><tr><th class="px-6 py-4">Turma</th><th class="px-6 py-4">Curso</th><th class="px-6 py-4">Instituição</th><th class="px-6 py-4">Ano/Semestre</th><th class="px-6 py-4">Alunos</th><th class="px-6 py-4">Meta</th><th class="px-6 py-4">Arrecadado</th><th class="px-6 py-4">Status</th><th class="px-6 py-4 text-right">Ações</th></tr></thead><tbody id="turmasBody" class="divide-y divide-white/5"></tbody></table></div></div>
         </section>
 
         <section id="screen-eventos" class="screen hidden">
@@ -379,7 +379,7 @@
 
         <section id="screen-financeiro" class="screen hidden">
           <div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold text-white">Financeiro</h2><button onclick="openModal('new','lancamento')" class="btn btn-primary btn-admin">Novo Lançamento</button></div>
-          <div class="card-panel"><div class="overflow-x-auto"><table id="financeiroTable" class="w-full text-left text-sm text-slate-400"><thead class="bg-dark-900/50 text-xs uppercase font-semibold text-slate-500"><tr><th class="px-6 py-4">Descrição</th><th class="px-6 py-4">Tipo</th><th class="px-6 py-4">Valor</th><th class="px-6 py-4">Data</th><th class="px-6 py-4 text-right">Ações</th></tr></thead><tbody id="financeiroBody" class="divide-y divide-white/5"></tbody></table></div></div>
+          <div class="card-panel"><div class="overflow-x-auto"><table id="financeiroTable" class="w-full text-left text-sm text-slate-400"><thead class="bg-dark-900/50 text-xs uppercase font-semibold text-slate-500"><tr><th class="px-6 py-4">Descrição</th><th class="px-6 py-4">Tipo</th><th class="px-6 py-4">Categoria</th><th class="px-6 py-4">Status</th><th class="px-6 py-4">Valor</th><th class="px-6 py-4">Data</th><th class="px-6 py-4 text-right">Ações</th></tr></thead><tbody id="financeiroBody" class="divide-y divide-white/5"></tbody></table></div></div>
         </section>
 
         <section id="screen-contribuicoes" class="screen hidden">
@@ -608,6 +608,40 @@
             <div>
               <label id="lblDescricao" class="form-label">Descrição</label>
               <textarea id="modalDescricao" rows="3" class="form-input" placeholder="Detalhes adicionais..."></textarea>
+            </div>
+            <div id="divTurmaExtras" class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 hidden">
+              <div><label class="form-label">Instituição</label><input id="modalInstituicao" type="text" class="form-input" placeholder="Ex.: Senac Joinville" /></div>
+              <div><label class="form-label">Ano/Semestre</label><input id="modalAnoSemestre" type="text" class="form-input" placeholder="Ex.: 2026/2" /></div>
+              <div><label class="form-label">Representante</label><input id="modalRepresentante" type="text" class="form-input" placeholder="Nome do representante" /></div>
+              <div><label class="form-label">Status da turma</label><select id="modalStatusTurma" class="form-input form-select"><option value="ATIVA">Ativa</option><option value="PAUSADA">Pausada</option><option value="CONCLUIDA">Concluída</option></select></div>
+            </div>
+            <div id="divAlunoExtras" class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 hidden">
+              <div><label class="form-label">E-mail</label><input id="modalEmailAluno" type="email" class="form-input" placeholder="aluno@email.com" /></div>
+              <div><label class="form-label">WhatsApp</label><input id="modalWhatsappAluno" type="text" class="form-input" placeholder="(47) 99999-0000" /></div>
+              <div><label class="form-label">Status do aluno</label><select id="modalStatusAluno" class="form-input form-select"><option value="ATIVO">Ativo</option><option value="PENDENTE">Pendente</option><option value="DESISTENTE">Desistente</option></select></div>
+            </div>
+            <div id="divEventoExtras" class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 hidden">
+              <div><label class="form-label">Horário</label><input id="modalHorarioEvento" type="time" class="form-input" /></div>
+              <div><label class="form-label">Local</label><input id="modalLocalEvento" type="text" class="form-input" placeholder="Ex.: Auditório" /></div>
+              <div><label class="form-label">Tipo</label><select id="modalTipoEvento" class="form-input form-select"><option value="REUNIAO_GERAL">Reunião geral</option><option value="REUNIAO_COMISSAO">Reunião da comissão</option><option value="ENSAIO">Ensaio</option><option value="PAGAMENTO">Pagamento</option><option value="VOTACAO">Votação</option><option value="EVENTO_OFICIAL">Evento oficial</option><option value="PRAZO_IMPORTANTE">Prazo importante</option></select></div>
+              <div><label class="form-label">Status</label><select id="modalStatusEvento" class="form-input form-select"><option value="AGENDADO">Agendado</option><option value="CONCLUIDO">Concluído</option><option value="CANCELADO">Cancelado</option></select></div>
+              <div class="md:col-span-2"><label class="form-label">Responsável</label><input id="modalResponsavelEvento" type="text" class="form-input" placeholder="Pessoa responsável pelo evento" /></div>
+            </div>
+            <div id="divFinanceiroExtras" class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 hidden">
+              <div><label class="form-label">Tipo</label><select id="modalTipoFinanceiro" class="form-input form-select"><option value="RECEITA">Receita</option><option value="DESPESA">Despesa</option></select></div>
+              <div><label class="form-label">Categoria</label><select id="modalCategoriaFinanceira" class="form-input form-select"><option value="MENSALIDADE">Mensalidade</option><option value="CONTRIBUICAO">Contribuição</option><option value="PATROCINIO">Patrocínio</option><option value="RIFA">Rifa</option><option value="EVENTO">Evento</option><option value="CONTRATO">Contrato</option><option value="DECORACAO">Decoração</option><option value="FOTO_VIDEO">Foto/Vídeo</option><option value="OUTROS">Outros</option></select></div>
+              <div><label class="form-label">Forma de pagamento</label><select id="modalFormaPagamento" class="form-input form-select"><option value="PIX">PIX</option><option value="DINHEIRO">Dinheiro</option><option value="BOLETO">Boleto</option><option value="CARTAO">Cartão</option><option value="TRANSFERENCIA">Transferência</option><option value="OUTROS">Outros</option></select></div>
+              <div><label class="form-label">Status</label><select id="modalStatusFinanceiro" class="form-input form-select"><option value="CONFIRMADO">Confirmado</option><option value="PENDENTE">Pendente</option><option value="CANCELADO">Cancelado</option><option value="ESTORNADO">Estornado</option></select></div>
+              <div><label class="form-label">Vencimento</label><input id="modalDataVencimento" type="date" class="form-input" /></div>
+              <div><label class="form-label">Campanha</label><select id="modalCampanha" class="form-input form-select"><option value="META_GERAL">Meta geral</option><option value="RIFA">Rifa</option><option value="PATROCINIO">Patrocínio</option><option value="EVENTO">Evento</option><option value="OUTROS">Outros</option></select></div>
+            </div>
+            <div id="divVotacaoExtras" class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 hidden">
+              <div><label class="form-label">Início</label><input id="modalDataInicioVotacao" type="date" class="form-input" /></div>
+              <div><label class="form-label">Status</label><select id="modalStatusVotacao" class="form-input form-select"><option value="RASCUNHO">Rascunho</option><option value="ABERTA">Aberta</option><option value="ENCERRADA">Encerrada</option></select></div>
+              <div><label class="form-label">Tipo</label><select id="modalTipoVotacao" class="form-input form-select"><option value="ESCOLHA_UNICA">Escolha única</option><option value="MULTIPLA_ESCOLHA">Múltipla escolha</option></select></div>
+              <div><label class="form-label">Resultado</label><select id="modalVisibilidadeResultado" class="form-input form-select"><option value="APOS_ENCERRAMENTO">Após encerramento</option><option value="SEMPRE">Sempre visível</option></select></div>
+              <div><label class="form-label">Quórum mínimo</label><input id="modalQuorumMinimo" type="number" min="0" class="form-input" placeholder="Opcional" /></div>
+              <label class="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-sm text-slate-300"><input id="modalVotacaoAnonima" type="checkbox" checked class="h-4 w-4 rounded border-white/20 bg-slate-900 text-emerald-500 focus:ring-emerald-500" /><span>Votação anônima</span></label>
             </div>
             <div id="divAlunoSelect" class="mt-3 hidden">
               <label class="form-label">Vincular a aluno cadastrado</label>

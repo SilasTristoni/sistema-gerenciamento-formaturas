@@ -151,8 +151,14 @@ public class AlunoPortalController {
                 aluno.getNome(),
                 aluno.getIdentificador(),
                 aluno.getContato(),
+                firstNonBlank(aluno.getEmail(), aluno.getContato()),
+                firstNonBlank(aluno.getWhatsapp(), aluno.getContato()),
+                firstNonBlank(aluno.getStatus(), "ATIVO"),
+                Boolean.TRUE.equals(aluno.getPrecisaTrocarSenha()),
                 aluno.getTurma() != null ? firstNonBlank(aluno.getTurma().getNome(), "Sem turma") : "Sem turma",
-                aluno.getTurma() != null ? firstNonBlank(aluno.getTurma().getCurso(), "Curso não informado") : "Curso não informado"
+                aluno.getTurma() != null ? firstNonBlank(aluno.getTurma().getCurso(), "Curso não informado") : "Curso não informado",
+                aluno.getTurma() != null ? firstNonBlank(aluno.getTurma().getInstituicao(), "Instituicao nao informada") : "Instituicao nao informada",
+                aluno.getTurma() != null ? firstNonBlank(aluno.getTurma().getAnoSemestre(), "Ano/semestre nao informado") : "Ano/semestre nao informado"
             ),
             new AlunoPainelResponseDTO.ResumoAluno(
                 eventosResponse.size(),
@@ -185,6 +191,9 @@ public class AlunoPortalController {
             firstNonBlank(evento.getNome(), "Evento sem nome"),
             data,
             firstNonBlank(evento.getLocalEvento(), "Local a definir"),
+            evento.getHorario() != null ? evento.getHorario().toString() : "",
+            firstNonBlank(evento.getTipo(), "REUNIAO_GERAL"),
+            firstNonBlank(evento.getResponsavel(), "Comissao"),
             firstNonBlank(evento.getStatus(), "agendado"),
             presenca != null ? firstNonBlank(presenca.getStatus(), "pendente") : "pendente",
             data == null ? -1 : ChronoUnit.DAYS.between(hoje, data)
@@ -207,7 +216,9 @@ public class AlunoPortalController {
         return new AlunoPainelResponseDTO.VotacaoAluno(
             votacao.getId(),
             firstNonBlank(votacao.getTitulo(), "Votação sem título"),
+            votacao.getDescricao(),
             firstNonBlank(votacao.getStatus(), aberta ? "aberta" : "encerrada"),
+            votacao.getDataInicio(),
             dataFim,
             aberta,
             voto != null,
@@ -221,6 +232,7 @@ public class AlunoPortalController {
                     return new AlunoPainelResponseDTO.OpcaoAluno(
                         opcao.getId(),
                         firstNonBlank(opcao.getNomeFornecedor(), "Opção sem nome"),
+                        firstNonBlank(opcao.getDescricaoCurta(), opcao.getDetalhesProposta(), ""),
                         votos,
                         totalVotos <= 0 ? 0.0 : roundPercent((votos * 100.0) / totalVotos)
                     );
@@ -249,9 +261,10 @@ public class AlunoPortalController {
     }
 
     private boolean isVotacaoAberta(Votacao votacao, LocalDate hoje) {
-        boolean statusAberto = !"encerrada".equalsIgnoreCase(votacao.getStatus());
+        boolean statusAberto = "ABERTA".equalsIgnoreCase(votacao.getStatus()) || "aberta".equalsIgnoreCase(votacao.getStatus());
+        boolean inicioValido = votacao.getDataInicio() == null || !votacao.getDataInicio().isAfter(hoje);
         boolean prazoValido = votacao.getDataFim() == null || !votacao.getDataFim().isBefore(hoje);
-        return statusAberto && prazoValido;
+        return statusAberto && inicioValido && prazoValido;
     }
 
     private String firstNonBlank(String... values) {

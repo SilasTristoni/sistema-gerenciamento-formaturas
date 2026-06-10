@@ -15,6 +15,8 @@ const quickAccessMeta = document.getElementById('quickAccessMeta');
 const quickAccessButton = document.getElementById('quickAccessButton');
 const loginHelper = document.getElementById('studentLoginHelper');
 const sessionHint = document.getElementById('sessionHint');
+const demoCommissionButton = document.getElementById('demoCommissionBtn');
+const demoStudentButton = document.getElementById('demoStudentBtn');
 
 const defaultButtonMarkup = loginButton?.innerHTML || '';
 
@@ -26,6 +28,8 @@ function setLoading(isLoading) {
     if (!loginButton) return;
 
     loginButton.disabled = isLoading;
+    if (demoCommissionButton) demoCommissionButton.disabled = isLoading;
+    if (demoStudentButton) demoStudentButton.disabled = isLoading;
     loginButton.innerHTML = isLoading
         ? '<i class="ph ph-spinner-gap animate-spin"></i> Autenticando...'
         : defaultButtonMarkup;
@@ -159,6 +163,33 @@ loginForm?.addEventListener('submit', async (event) => {
         showToast('Login invalido. Confira seu identificador e senha.', 'error');
         setLoading(false);
     }
+});
+
+async function handleDemoLogin(tipo) {
+    setLoading(true);
+    try {
+        const dados = await api.loginDemo(tipo);
+        const persistent = Boolean(rememberInput?.checked);
+        auth.saveSession({
+            ...dados,
+            persistent
+        });
+        showToast('Acesso demo iniciado com sucesso!');
+        window.setTimeout(() => {
+            redirectByProfile(dados.perfil);
+        }, 350);
+    } catch (error) {
+        showToast(error.message || 'Nao foi possivel iniciar o acesso demo.', 'error');
+        setLoading(false);
+    }
+}
+
+demoCommissionButton?.addEventListener('click', () => {
+    handleDemoLogin('comissao').catch(console.error);
+});
+
+demoStudentButton?.addEventListener('click', () => {
+    handleDemoLogin('aluno').catch(console.error);
 });
 
 updateLoginHelper();

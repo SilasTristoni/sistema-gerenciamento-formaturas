@@ -63,6 +63,11 @@ function alunoTurmaId(aluno = {}) {
     return aluno.turma?.id ?? aluno.turmaId ?? '';
 }
 
+function setSelectValue(id, value) {
+    const select = document.getElementById(id);
+    if (select) select.value = value;
+}
+
 export const modal = {
     backdrop: document.getElementById('modalBackdrop'),
     panel: document.getElementById('modalPanel'),
@@ -135,6 +140,11 @@ export const modal = {
         const divApoiadorNome = document.getElementById('divApoiadorNome');
         const divContribuicaoAnonima = document.getElementById('divContribuicaoAnonima');
         const divAlunoSelect = document.getElementById('divAlunoSelect');
+        const divTurmaExtras = document.getElementById('divTurmaExtras');
+        const divAlunoExtras = document.getElementById('divAlunoExtras');
+        const divEventoExtras = document.getElementById('divEventoExtras');
+        const divFinanceiroExtras = document.getElementById('divFinanceiroExtras');
+        const divVotacaoExtras = document.getElementById('divVotacaoExtras');
         const detailsTitle = document.getElementById('modalDetailsTitle');
         const inputDescricao = document.getElementById('modalDescricao');
 
@@ -149,6 +159,11 @@ export const modal = {
         divContribuicaoAnonima?.classList.add('hidden');
         divContribuicaoAnonima?.classList.remove('flex');
         divAlunoSelect?.classList.add('hidden');
+        divTurmaExtras?.classList.add('hidden');
+        divAlunoExtras?.classList.add('hidden');
+        divEventoExtras?.classList.add('hidden');
+        divFinanceiroExtras?.classList.add('hidden');
+        divVotacaoExtras?.classList.add('hidden');
 
         if (detailsTitle) detailsTitle.innerText = 'Detalhes adicionais';
         if (lblDesc) lblDesc.innerText = 'Descrição / Detalhes';
@@ -160,19 +175,28 @@ export const modal = {
         if (kind === 'turma') {
             divTurma?.classList.add('hidden');
             if (lblDesc) lblDesc.innerText = 'Curso';
+            divTurmaExtras?.classList.remove('hidden');
             divDataField?.classList.add('hidden');
             if (lblValor) lblValor.innerText = 'Meta da turma (R$)';
             if (inputValor) inputValor.placeholder = 'Ex.: 30000.00';
         } else if (kind === 'aluno') {
             divDataValor?.classList.add('hidden');
-            if (lblDesc) lblDesc.innerText = 'Contato';
+            if (lblDesc) lblDesc.innerText = 'ObservaÃ§Ã£o interna';
+            if (inputDescricao) inputDescricao.placeholder = 'ObservaÃ§Ã£o visÃ­vel apenas para a comissÃ£o';
             divPerfil?.classList.remove('hidden');
             divIdentificador?.classList.remove('hidden');
             divSenha?.classList.remove('hidden');
+            divAlunoExtras?.classList.remove('hidden');
         } else if (['evento', 'tarefa', 'votacao'].includes(kind)) {
             divValorField?.classList.add('hidden');
-            if (kind === 'evento' && lblDesc) lblDesc.innerText = 'Local';
-            if (kind === 'votacao' && lblDesc) lblDesc.innerText = 'Detalhes / Tema';
+            if (kind === 'evento') {
+                if (lblDesc) lblDesc.innerText = 'DescriÃ§Ã£o do evento';
+                divEventoExtras?.classList.remove('hidden');
+            }
+            if (kind === 'votacao') {
+                if (lblDesc) lblDesc.innerText = 'DescriÃ§Ã£o da votaÃ§Ã£o';
+                divVotacaoExtras?.classList.remove('hidden');
+            }
         } else if (kind === 'contribuicao') {
             if (detailsTitle) detailsTitle.innerText = 'Contribuição';
             if (lblDesc) lblDesc.innerText = 'Mensagem';
@@ -183,16 +207,27 @@ export const modal = {
             divApoiadorNome?.classList.remove('hidden');
             divContribuicaoAnonima?.classList.remove('hidden');
             divContribuicaoAnonima?.classList.add('flex');
+            divFinanceiroExtras?.classList.remove('hidden');
+            document.getElementById('modalTipoFinanceiro') && (document.getElementById('modalTipoFinanceiro').value = 'RECEITA');
+            document.getElementById('modalCategoriaFinanceira') && (document.getElementById('modalCategoriaFinanceira').value = 'CONTRIBUICAO');
+            document.getElementById('modalStatusFinanceiro') && (document.getElementById('modalStatusFinanceiro').value = 'PENDENTE');
             this.populateAlunoSelect();
         } else if (kind === 'lancamento') {
             if (detailsTitle) detailsTitle.innerText = 'Classificação';
-            if (lblDesc) lblDesc.innerText = 'Categoria / observação';
-            if (inputDescricao) inputDescricao.placeholder = 'Ex.: Contrato, Evento, Patrocínio...';
+            if (lblDesc) lblDesc.innerText = 'Observação';
+            if (inputDescricao) inputDescricao.placeholder = 'Observação opcional sobre o lançamento';
+            divFinanceiroExtras?.classList.remove('hidden');
         }
     },
 
     resetFields() {
-        const ids = ['modalItemId', 'modalNome', 'modalData', 'modalValor', 'modalDescricao', 'modalTurmaSelect', 'modalIdentificador', 'modalSenha', 'modalApoiadorNome', 'modalAlunoSelect'];
+        const ids = [
+            'modalItemId', 'modalNome', 'modalData', 'modalValor', 'modalDescricao', 'modalTurmaSelect',
+            'modalIdentificador', 'modalSenha', 'modalApoiadorNome', 'modalAlunoSelect',
+            'modalInstituicao', 'modalAnoSemestre', 'modalRepresentante', 'modalEmailAluno', 'modalWhatsappAluno',
+            'modalHorarioEvento', 'modalLocalEvento', 'modalResponsavelEvento', 'modalDataVencimento',
+            'modalDataInicioVotacao', 'modalQuorumMinimo'
+        ];
         ids.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
@@ -201,6 +236,20 @@ export const modal = {
         if (perfil) perfil.value = 'ALUNO';
         const anonima = document.getElementById('modalContribuicaoAnonima');
         if (anonima) anonima.checked = false;
+        const votacaoAnonima = document.getElementById('modalVotacaoAnonima');
+        if (votacaoAnonima) votacaoAnonima.checked = true;
+        setSelectValue('modalStatusTurma', 'ATIVA');
+        setSelectValue('modalStatusAluno', 'ATIVO');
+        setSelectValue('modalTipoEvento', 'REUNIAO_GERAL');
+        setSelectValue('modalStatusEvento', 'AGENDADO');
+        setSelectValue('modalTipoFinanceiro', 'RECEITA');
+        setSelectValue('modalCategoriaFinanceira', 'OUTROS');
+        setSelectValue('modalFormaPagamento', 'PIX');
+        setSelectValue('modalStatusFinanceiro', 'CONFIRMADO');
+        setSelectValue('modalCampanha', 'META_GERAL');
+        setSelectValue('modalStatusVotacao', 'ABERTA');
+        setSelectValue('modalTipoVotacao', 'ESCOLHA_UNICA');
+        setSelectValue('modalVisibilidadeResultado', 'APOS_ENCERRAMENTO');
     },
 
     applyPreferredTurma(turmas) {
@@ -287,6 +336,10 @@ export const modal = {
         if (modalData && ['evento', 'lancamento', 'contribuicao', 'votacao'].includes(kind)) {
             modalData.value = todayValue();
         }
+        const inicioVotacao = document.getElementById('modalDataInicioVotacao');
+        if (inicioVotacao && kind === 'votacao') {
+            inicioVotacao.value = todayValue();
+        }
     },
 
     updateTitle(kind) {
@@ -338,7 +391,31 @@ export const modal = {
             senha: document.getElementById('modalSenha')?.value || '',
             apoiadorNome: document.getElementById('modalApoiadorNome')?.value?.trim() || '',
             alunoId: document.getElementById('modalAlunoSelect')?.value || '',
-            anonima: Boolean(document.getElementById('modalContribuicaoAnonima')?.checked)
+            anonima: Boolean(document.getElementById('modalContribuicaoAnonima')?.checked),
+            instituicao: document.getElementById('modalInstituicao')?.value?.trim() || '',
+            anoSemestre: document.getElementById('modalAnoSemestre')?.value?.trim() || '',
+            representante: document.getElementById('modalRepresentante')?.value?.trim() || '',
+            statusTurma: document.getElementById('modalStatusTurma')?.value || 'ATIVA',
+            email: document.getElementById('modalEmailAluno')?.value?.trim() || '',
+            whatsapp: document.getElementById('modalWhatsappAluno')?.value?.trim() || '',
+            statusAluno: document.getElementById('modalStatusAluno')?.value || 'ATIVO',
+            horario: document.getElementById('modalHorarioEvento')?.value || '',
+            localEvento: document.getElementById('modalLocalEvento')?.value?.trim() || '',
+            tipoEvento: document.getElementById('modalTipoEvento')?.value || 'REUNIAO_GERAL',
+            statusEvento: document.getElementById('modalStatusEvento')?.value || 'AGENDADO',
+            responsavelEvento: document.getElementById('modalResponsavelEvento')?.value?.trim() || '',
+            tipoFinanceiro: document.getElementById('modalTipoFinanceiro')?.value || 'RECEITA',
+            categoriaFinanceira: document.getElementById('modalCategoriaFinanceira')?.value || 'OUTROS',
+            formaPagamento: document.getElementById('modalFormaPagamento')?.value || 'PIX',
+            statusFinanceiro: document.getElementById('modalStatusFinanceiro')?.value || 'CONFIRMADO',
+            dataVencimento: document.getElementById('modalDataVencimento')?.value || '',
+            campanha: document.getElementById('modalCampanha')?.value || 'META_GERAL',
+            dataInicioVotacao: document.getElementById('modalDataInicioVotacao')?.value || '',
+            statusVotacao: document.getElementById('modalStatusVotacao')?.value || 'ABERTA',
+            tipoVotacao: document.getElementById('modalTipoVotacao')?.value || 'ESCOLHA_UNICA',
+            visibilidadeResultado: document.getElementById('modalVisibilidadeResultado')?.value || 'APOS_ENCERRAMENTO',
+            quorumMinimo: document.getElementById('modalQuorumMinimo')?.value || '',
+            votacaoAnonima: Boolean(document.getElementById('modalVotacaoAnonima')?.checked)
         };
     }
 };

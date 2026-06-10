@@ -72,24 +72,27 @@ public class DashboardController {
         List<LancamentoFinanceiro> lancamentos = filterByTurma(lancamentoRepo.findAll(), turmaId, lancamento ->
             lancamento.getTurma() != null ? lancamento.getTurma().getId() : null
         );
+        List<LancamentoFinanceiro> lancamentosConfirmados = lancamentos.stream()
+            .filter(this::isLancamentoConfirmado)
+            .toList();
         List<Votacao> votacoes = filterByTurma(votacaoRepo.findAll(), turmaId, votacao ->
             votacao.getTurma() != null ? votacao.getTurma().getId() : null
         );
-        List<LancamentoFinanceiro> lancamentosPeriodo = filterLancamentosByPeriod(lancamentos, periodMonths, hoje);
+        List<LancamentoFinanceiro> lancamentosPeriodo = filterLancamentosByPeriod(lancamentosConfirmados, periodMonths, hoje);
         Map<Long, Long> quantidadeAlunosPorTurma = alunos.stream()
             .filter(aluno -> aluno.getTurma() != null && aluno.getTurma().getId() != null)
             .collect(Collectors.groupingBy(aluno -> aluno.getTurma().getId(), Collectors.counting()));
 
-        double receitas = lancamentos.stream()
+        double receitas = lancamentosConfirmados.stream()
             .filter(item -> "receita".equalsIgnoreCase(item.getTipo()))
             .mapToDouble(item -> safeDouble(item.getValor()))
             .sum();
-        double despesas = lancamentos.stream()
+        double despesas = lancamentosConfirmados.stream()
             .filter(item -> "despesa".equalsIgnoreCase(item.getTipo()))
             .mapToDouble(item -> safeDouble(item.getValor()))
             .sum();
         double saldo = round(receitas - despesas);
-        Map<Long, Double> saldoPorTurma = summarizeSaldoByTurma(lancamentos);
+        Map<Long, Double> saldoPorTurma = summarizeSaldoByTurma(lancamentosConfirmados);
 
         long totalAlunos = alunos.size();
         long totalEventos = eventos.size();
@@ -349,7 +352,7 @@ public class DashboardController {
         lancamentos.stream()
             .filter(item -> "despesa".equalsIgnoreCase(item.getTipo()))
             .forEach(item -> {
-                String categoria = firstNonBlank(item.getReferencia(), item.getDescricao(), "Sem categoria");
+                String categoria = firstNonBlank(item.getCategoria(), item.getReferencia(), item.getDescricao(), "Sem categoria");
                 grouped.merge(categoria, safeDouble(item.getValor()), Double::sum);
             });
 
@@ -585,6 +588,11 @@ public class DashboardController {
         if ("receita".equalsIgnoreCase(lancamento.getTipo())) return safeDouble(lancamento.getValor());
         if ("despesa".equalsIgnoreCase(lancamento.getTipo())) return -safeDouble(lancamento.getValor());
         return 0.0;
+    }
+
+    private boolean isLancamentoConfirmado(LancamentoFinanceiro lancamento) {
+        String status = firstNonBlank(lancamento.getStatus(), "CONFIRMADO");
+        return "CONFIRMADO".equalsIgnoreCase(status);
     }
 
     private double goalProgressForTurma(Turma turma, Map<Long, Double> saldoPorTurma) {

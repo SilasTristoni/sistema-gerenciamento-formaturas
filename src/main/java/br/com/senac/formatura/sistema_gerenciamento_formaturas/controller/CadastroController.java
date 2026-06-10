@@ -79,6 +79,12 @@ public class CadastroController {
 
     @PostMapping("/turma")
     public Turma criarTurma(@RequestBody Turma turma) {
+        turma.setNome(requireText(turma.getNome(), "Nome da turma e obrigatorio."));
+        turma.setCurso(requireText(firstNonBlank(turma.getCurso(), turma.getNome()), "Curso e obrigatorio."));
+        turma.setInstituicao(firstNonBlank(turma.getInstituicao(), "Instituicao nao informada"));
+        turma.setAnoSemestre(firstNonBlank(turma.getAnoSemestre(), "Nao informado"));
+        turma.setRepresentante(normalizeText(turma.getRepresentante()));
+        turma.setStatus(resolveOption(turma.getStatus(), "ATIVA", List.of("ATIVA", "CONCLUIDA", "PAUSADA")));
         turma.setMetaArrecadacao(normalizeMoney(turma.getMetaArrecadacao()));
         turma.setTotalArrecadado(normalizeMoney(turma.getTotalArrecadado()));
         return turmaRepo.save(turma);
@@ -87,8 +93,12 @@ public class CadastroController {
     @PutMapping("/turma/{id}")
     public Turma atualizarTurma(@PathVariable Long id, @RequestBody Turma dto) {
         Turma turma = turmaRepo.findById(id).orElseThrow();
-        turma.setNome(dto.getNome());
-        turma.setCurso(dto.getCurso());
+        turma.setNome(requireText(dto.getNome(), "Nome da turma e obrigatorio."));
+        turma.setCurso(requireText(firstNonBlank(dto.getCurso(), dto.getNome()), "Curso e obrigatorio."));
+        turma.setInstituicao(firstNonBlank(dto.getInstituicao(), turma.getInstituicao(), "Instituicao nao informada"));
+        turma.setAnoSemestre(firstNonBlank(dto.getAnoSemestre(), turma.getAnoSemestre(), "Nao informado"));
+        turma.setRepresentante(normalizeText(dto.getRepresentante()));
+        turma.setStatus(resolveOption(dto.getStatus(), "ATIVA", List.of("ATIVA", "CONCLUIDA", "PAUSADA")));
         turma.setMetaArrecadacao(normalizeMoney(dto.getMetaArrecadacao()));
         return turmaRepo.save(turma);
     }
@@ -106,16 +116,24 @@ public class CadastroController {
     @PostMapping("/aluno")
     public Aluno criarAluno(@RequestBody AlunoInputDTO dto) {
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
-        String nome = normalizeText(dto.nome());
-        String contato = normalizeText(dto.contato());
+        String nome = requireText(dto.nome(), "Nome do aluno e obrigatorio.");
+        String email = normalizeText(firstNonBlank(dto.email(), dto.contato()));
+        String whatsapp = normalizeText(dto.whatsapp());
+        String contato = firstNonBlank(email, whatsapp, normalizeText(dto.contato()));
         String identificador = gerarIdentificadorUnico(dto.identificador(), nome);
-        String emailContato = resolveEmailContato(contato, identificador);
+        String emailContato = resolveEmailContato(email, identificador);
+        boolean senhaTemporaria = dto.senha() == null || dto.senha().isBlank();
 
         Aluno aluno = new Aluno();
         aluno.setNome(nome);
         aluno.setIdentificador(identificador);
+        aluno.setEmail(email);
+        aluno.setWhatsapp(whatsapp);
         aluno.setContato(contato);
         aluno.setTurma(turma);
+        aluno.setStatus(resolveOption(dto.status(), "ATIVO", List.of("ATIVO", "PENDENTE", "DESISTENTE")));
+        aluno.setObservacaoInterna(normalizeText(dto.observacaoInterna()));
+        aluno.setPrecisaTrocarSenha(senhaTemporaria);
         Aluno alunoSalvo = alunoRepo.save(aluno);
 
         Usuario usuario = new Usuario();
@@ -133,15 +151,21 @@ public class CadastroController {
     public Aluno atualizarAluno(@PathVariable Long id, @RequestBody AlunoInputDTO dto) {
         Aluno aluno = alunoRepo.findById(id).orElseThrow();
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
-        String nome = normalizeText(dto.nome());
-        String contato = normalizeText(dto.contato());
+        String nome = requireText(dto.nome(), "Nome do aluno e obrigatorio.");
+        String email = normalizeText(firstNonBlank(dto.email(), dto.contato()));
+        String whatsapp = normalizeText(dto.whatsapp());
+        String contato = firstNonBlank(email, whatsapp, normalizeText(dto.contato()));
         String identificador = gerarIdentificadorUnico(dto.identificador(), nome, aluno.getId());
-        String emailContato = resolveEmailContato(contato, identificador);
+        String emailContato = resolveEmailContato(email, identificador);
 
         aluno.setNome(nome);
         aluno.setIdentificador(identificador);
+        aluno.setEmail(email);
+        aluno.setWhatsapp(whatsapp);
         aluno.setContato(contato);
         aluno.setTurma(turma);
+        aluno.setStatus(resolveOption(dto.status(), firstNonBlank(aluno.getStatus(), "ATIVO"), List.of("ATIVO", "PENDENTE", "DESISTENTE")));
+        aluno.setObservacaoInterna(normalizeText(dto.observacaoInterna()));
         Aluno alunoAtualizado = alunoRepo.save(aluno);
 
         usuarioRepo.findByAlunoId(aluno.getId()).ifPresent(usuario -> {
@@ -150,6 +174,8 @@ public class CadastroController {
             usuario.setPerfil("COMISSAO".equalsIgnoreCase(dto.perfil()) ? Perfil.ROLE_COMISSAO : Perfil.ROLE_ALUNO);
             if (dto.senha() != null && !dto.senha().isBlank()) {
                 usuario.setSenha(passwordEncoder.encode(validateProvidedPassword(dto.senha())));
+                aluno.setPrecisaTrocarSenha(false);
+                alunoRepo.save(aluno);
             }
             usuarioRepo.save(usuario);
         });
@@ -177,14 +203,22 @@ public class CadastroController {
                 if (primeiraLinha) { primeiraLinha = false; continue; }
                 String[] dados = linha.split(";");
                 if (dados.length >= 1) {
-                    String nome = dados[0].trim();
-                    String emailContato = dados.length > 1 ? normalizeText(dados[1]) : "";
-                    String identificador = gerarIdentificadorUnico(null, nome);
+                    String nome = requireText(dados[0], "Nome do aluno e obrigatorio no CSV.");
+                    String identificador = gerarIdentificadorUnico(dados.length > 1 ? dados[1] : null, nome);
+                    String emailContato = dados.length > 2 ? normalizeText(dados[2]) : "";
+                    String whatsapp = dados.length > 3 ? normalizeText(dados[3]) : "";
+                    String status = dados.length > 4 ? dados[4] : "ATIVO";
+                    String observacao = dados.length > 5 ? dados[5] : "";
 
                     Aluno aluno = new Aluno();
                     aluno.setNome(nome);
                     aluno.setIdentificador(identificador);
-                    aluno.setContato(emailContato);
+                    aluno.setEmail(emailContato);
+                    aluno.setWhatsapp(whatsapp);
+                    aluno.setContato(firstNonBlank(emailContato, whatsapp));
+                    aluno.setStatus(resolveOption(status, "ATIVO", List.of("ATIVO", "PENDENTE", "DESISTENTE")));
+                    aluno.setObservacaoInterna(normalizeText(observacao));
+                    aluno.setPrecisaTrocarSenha(true);
                     aluno.setTurma(turma);
                     Aluno alunoSalvo = alunoRepo.save(aluno);
 
@@ -218,9 +252,14 @@ public class CadastroController {
     public Evento criarEvento(@RequestBody EventoInputDTO dto) {
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
         Evento evento = new Evento();
-        evento.setNome(normalizeText(dto.nome()));
+        evento.setNome(requireText(dto.nome(), "Titulo do evento e obrigatorio."));
+        evento.setDescricao(normalizeText(dto.descricao()));
         evento.setDataEvento(dto.data());
+        evento.setHorario(dto.horario());
         evento.setLocalEvento(normalizeText(dto.local()));
+        evento.setTipo(resolveOption(dto.tipo(), "REUNIAO_GERAL", List.of("REUNIAO_COMISSAO", "REUNIAO_GERAL", "ENSAIO", "PAGAMENTO", "VOTACAO", "EVENTO_OFICIAL", "PRAZO_IMPORTANTE")));
+        evento.setResponsavel(normalizeText(dto.responsavel()));
+        evento.setStatus(resolveOption(dto.status(), "AGENDADO", List.of("AGENDADO", "CONCLUIDO", "CANCELADO")));
         evento.setTurma(turma);
         return eventoRepo.save(evento);
     }
@@ -229,9 +268,14 @@ public class CadastroController {
     public Evento atualizarEvento(@PathVariable Long id, @RequestBody EventoInputDTO dto) {
         Evento evento = eventoRepo.findById(id).orElseThrow();
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
-        evento.setNome(normalizeText(dto.nome()));
+        evento.setNome(requireText(dto.nome(), "Titulo do evento e obrigatorio."));
+        evento.setDescricao(normalizeText(dto.descricao()));
         evento.setDataEvento(dto.data());
+        evento.setHorario(dto.horario());
         evento.setLocalEvento(normalizeText(dto.local()));
+        evento.setTipo(resolveOption(dto.tipo(), firstNonBlank(evento.getTipo(), "REUNIAO_GERAL"), List.of("REUNIAO_COMISSAO", "REUNIAO_GERAL", "ENSAIO", "PAGAMENTO", "VOTACAO", "EVENTO_OFICIAL", "PRAZO_IMPORTANTE")));
+        evento.setResponsavel(normalizeText(dto.responsavel()));
+        evento.setStatus(resolveOption(dto.status(), firstNonBlank(evento.getStatus(), "AGENDADO"), List.of("AGENDADO", "CONCLUIDO", "CANCELADO")));
         evento.setTurma(turma);
         return eventoRepo.save(evento);
     }
@@ -252,8 +296,12 @@ public class CadastroController {
         return new EventoResumoDTO(
             evento.getId(),
             evento.getNome(),
+            evento.getDescricao(),
             evento.getDataEvento(),
+            evento.getHorario(),
             evento.getLocalEvento(),
+            evento.getTipo(),
+            evento.getResponsavel(),
             evento.getStatus(),
             turma == null ? null : new EventoResumoDTO.TurmaResumo(turma.getId(), turma.getNome()),
             presencaResumo.presencas(),
@@ -309,13 +357,21 @@ public class CadastroController {
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
         LancamentoFinanceiro lanc = new LancamentoFinanceiro();
         String tipo = resolveTipoFinanceiro(dto.tipo(), dto.valor());
-        lanc.setDescricao(normalizeText(dto.descricao()));
+        lanc.setDescricao(requireText(dto.descricao(), "Descricao do lancamento e obrigatoria."));
         lanc.setValor(normalizeMoneyMagnitude(dto.valor()));
         lanc.setTipo(tipo);
+        lanc.setCategoria(resolveOption(dto.categoria(), "OUTROS", List.of("MENSALIDADE", "CONTRIBUICAO", "PATROCINIO", "RIFA", "EVENTO", "CONTRATO", "DECORACAO", "FOTO_VIDEO", "OUTROS")));
+        lanc.setFormaPagamento(resolveOption(dto.formaPagamento(), "PIX", List.of("PIX", "DINHEIRO", "BOLETO", "CARTAO", "TRANSFERENCIA", "OUTROS")));
+        lanc.setStatus(resolveOption(dto.status(), "CONFIRMADO", List.of("PENDENTE", "CONFIRMADO", "CANCELADO", "ESTORNADO")));
         lanc.setContribuicao(Boolean.TRUE.equals(dto.contribuicao()));
         lanc.setApoiadorNome(normalizeText(dto.apoiadorNome()));
         lanc.setDataLancamento(dto.data());
+        lanc.setDataVencimento(dto.dataVencimento());
         lanc.setReferencia(normalizeText(dto.referencia()));
+        lanc.setObservacao(normalizeText(firstNonBlank(dto.observacao(), dto.referencia())));
+        lanc.setResponsavelLancamento(normalizeText(dto.responsavelLancamento()));
+        lanc.setCampanha(resolveOption(dto.campanha(), "META_GERAL", List.of("META_GERAL", "RIFA", "PATROCINIO", "EVENTO", "OUTROS")));
+        lanc.setAnonima(Boolean.TRUE.equals(dto.anonima()));
         lanc.setTurma(turma);
         if (dto.alunoId() != null) {
             alunoRepo.findById(dto.alunoId()).ifPresent(lanc::setAluno);
@@ -331,13 +387,21 @@ public class CadastroController {
         Long turmaAnteriorId = lanc.getTurma() != null ? lanc.getTurma().getId() : null;
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
         String tipo = resolveTipoFinanceiro(dto.tipo(), dto.valor());
-        lanc.setDescricao(normalizeText(dto.descricao()));
+        lanc.setDescricao(requireText(dto.descricao(), "Descricao do lancamento e obrigatoria."));
         lanc.setValor(normalizeMoneyMagnitude(dto.valor()));
         lanc.setTipo(tipo);
+        lanc.setCategoria(resolveOption(dto.categoria(), firstNonBlank(lanc.getCategoria(), "OUTROS"), List.of("MENSALIDADE", "CONTRIBUICAO", "PATROCINIO", "RIFA", "EVENTO", "CONTRATO", "DECORACAO", "FOTO_VIDEO", "OUTROS")));
+        lanc.setFormaPagamento(resolveOption(dto.formaPagamento(), firstNonBlank(lanc.getFormaPagamento(), "PIX"), List.of("PIX", "DINHEIRO", "BOLETO", "CARTAO", "TRANSFERENCIA", "OUTROS")));
+        lanc.setStatus(resolveOption(dto.status(), firstNonBlank(lanc.getStatus(), "CONFIRMADO"), List.of("PENDENTE", "CONFIRMADO", "CANCELADO", "ESTORNADO")));
         lanc.setContribuicao(Boolean.TRUE.equals(dto.contribuicao()));
         lanc.setApoiadorNome(normalizeText(dto.apoiadorNome()));
         lanc.setDataLancamento(dto.data());
+        lanc.setDataVencimento(dto.dataVencimento());
         lanc.setReferencia(normalizeText(dto.referencia()));
+        lanc.setObservacao(normalizeText(firstNonBlank(dto.observacao(), dto.referencia())));
+        lanc.setResponsavelLancamento(normalizeText(dto.responsavelLancamento()));
+        lanc.setCampanha(resolveOption(dto.campanha(), firstNonBlank(lanc.getCampanha(), "META_GERAL"), List.of("META_GERAL", "RIFA", "PATROCINIO", "EVENTO", "OUTROS")));
+        lanc.setAnonima(Boolean.TRUE.equals(dto.anonima()));
         lanc.setTurma(turma);
         if (dto.alunoId() != null) {
             alunoRepo.findById(dto.alunoId()).ifPresent(lanc::setAluno);
@@ -354,13 +418,24 @@ public class CadastroController {
 
     @DeleteMapping("/lancamento/{id}")
     public ResponseEntity<?> deletarLancamento(@PathVariable Long id) {
-        if(!lancamentoRepo.existsById(id)) return ResponseEntity.notFound().build();
-        Long turmaId = lancamentoRepo.findById(id)
-            .map(lancamento -> lancamento.getTurma() != null ? lancamento.getTurma().getId() : null)
-            .orElse(null);
-        lancamentoRepo.deleteById(id);
+        LancamentoFinanceiro lancamento = lancamentoRepo.findById(id).orElse(null);
+        if(lancamento == null) return ResponseEntity.notFound().build();
+        Long turmaId = lancamento.getTurma() != null ? lancamento.getTurma().getId() : null;
+        lancamento.setStatus("CANCELADO");
+        lancamentoRepo.save(lancamento);
         syncTurmaTotalArrecadado(turmaId);
-        return ResponseEntity.ok("Excluído com sucesso");
+        return ResponseEntity.ok("Lancamento cancelado com sucesso.");
+    }
+
+    @PutMapping("/lancamento/{id}/estornar")
+    public ResponseEntity<?> estornarLancamento(@PathVariable Long id) {
+        LancamentoFinanceiro lancamento = lancamentoRepo.findById(id).orElse(null);
+        if(lancamento == null) return ResponseEntity.notFound().build();
+        Long turmaId = lancamento.getTurma() != null ? lancamento.getTurma().getId() : null;
+        lancamento.setStatus("ESTORNADO");
+        lancamentoRepo.save(lancamento);
+        syncTurmaTotalArrecadado(turmaId);
+        return ResponseEntity.ok("Lancamento estornado com sucesso.");
     }
 
     @GetMapping("/votacoes")
@@ -380,8 +455,15 @@ public class CadastroController {
     public Votacao criarVotacao(@RequestBody VotacaoInputDTO dto) {
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
         Votacao vot = new Votacao();
-        vot.setTitulo(normalizeText(dto.titulo()));
+        vot.setTitulo(requireText(dto.titulo(), "Titulo da votacao e obrigatorio."));
+        vot.setDescricao(normalizeText(dto.descricao()));
+        vot.setDataInicio(dto.dataInicio());
         vot.setDataFim(dto.dataFim());
+        vot.setStatus(resolveOption(dto.status(), "ABERTA", List.of("RASCUNHO", "ABERTA", "ENCERRADA")));
+        vot.setTipo(resolveOption(dto.tipo(), "ESCOLHA_UNICA", List.of("ESCOLHA_UNICA", "MULTIPLA_ESCOLHA")));
+        vot.setVisibilidadeResultado(resolveOption(dto.visibilidadeResultado(), "APOS_ENCERRAMENTO", List.of("SEMPRE", "APOS_ENCERRAMENTO")));
+        vot.setAnonima(dto.anonima() == null ? true : dto.anonima());
+        vot.setQuorumMinimo(dto.quorumMinimo());
         vot.setTurma(turma);
         return votacaoRepo.save(vot);
     }
@@ -390,8 +472,15 @@ public class CadastroController {
     public Votacao atualizarVotacao(@PathVariable Long id, @RequestBody VotacaoInputDTO dto) {
         Votacao vot = votacaoRepo.findById(id).orElseThrow();
         Turma turma = turmaRepo.findById(dto.turmaId()).orElseThrow();
-        vot.setTitulo(normalizeText(dto.titulo()));
+        vot.setTitulo(requireText(dto.titulo(), "Titulo da votacao e obrigatorio."));
+        vot.setDescricao(normalizeText(dto.descricao()));
+        vot.setDataInicio(dto.dataInicio());
         vot.setDataFim(dto.dataFim());
+        vot.setStatus(resolveOption(dto.status(), firstNonBlank(vot.getStatus(), "ABERTA"), List.of("RASCUNHO", "ABERTA", "ENCERRADA")));
+        vot.setTipo(resolveOption(dto.tipo(), firstNonBlank(vot.getTipo(), "ESCOLHA_UNICA"), List.of("ESCOLHA_UNICA", "MULTIPLA_ESCOLHA")));
+        vot.setVisibilidadeResultado(resolveOption(dto.visibilidadeResultado(), firstNonBlank(vot.getVisibilidadeResultado(), "APOS_ENCERRAMENTO"), List.of("SEMPRE", "APOS_ENCERRAMENTO")));
+        vot.setAnonima(dto.anonima() == null ? Boolean.TRUE.equals(vot.getAnonima()) : dto.anonima());
+        vot.setQuorumMinimo(dto.quorumMinimo());
         vot.setTurma(turma);
         return votacaoRepo.save(vot);
     }
@@ -407,7 +496,9 @@ public class CadastroController {
     public OpcaoVotacao adicionarOpcao(@PathVariable Long id, @RequestBody Map<String, String> payload) {
         Votacao votacao = votacaoRepo.findById(id).orElseThrow();
         OpcaoVotacao opcao = new OpcaoVotacao();
-        opcao.setNomeFornecedor(payload.get("nome"));
+        opcao.setNomeFornecedor(requireText(payload.get("nome"), "Nome da opcao e obrigatorio."));
+        opcao.setDescricaoCurta(normalizeText(payload.get("descricaoCurta")));
+        opcao.setDetalhesProposta(normalizeText(payload.get("detalhes")));
         opcao.setVotacao(votacao);
         return opcaoRepo.save(opcao);
     }
@@ -480,8 +571,14 @@ public class CadastroController {
         return new VotacaoResultadoDTO(
             votacao.getId(),
             firstNonBlank(votacao.getTitulo(), "Votação sem título"),
+            votacao.getDescricao(),
             firstNonBlank(votacao.getStatus(), "aberta"),
+            votacao.getDataInicio(),
             votacao.getDataFim(),
+            firstNonBlank(votacao.getTipo(), "ESCOLHA_UNICA"),
+            firstNonBlank(votacao.getVisibilidadeResultado(), "APOS_ENCERRAMENTO"),
+            votacao.getAnonima(),
+            votacao.getQuorumMinimo(),
             votacao.getTurma() == null ? null : new VotacaoResultadoDTO.TurmaResumo(
                 votacao.getTurma().getId(),
                 firstNonBlank(votacao.getTurma().getNome(), "Sem turma")
@@ -493,6 +590,7 @@ public class CadastroController {
                     return new VotacaoResultadoDTO.OpcaoResultadoDTO(
                         opcao.getId(),
                         firstNonBlank(opcao.getNomeFornecedor(), "Opção sem nome"),
+                        opcao.getDescricaoCurta(),
                         opcao.getDetalhesProposta(),
                         opcao.getValorProposta(),
                         votos,
@@ -534,6 +632,25 @@ public class CadastroController {
         return value == null ? "" : value.trim().replaceAll("\\s{2,}", " ");
     }
 
+    private String requireText(String value, String message) {
+        String normalized = normalizeText(value);
+        if (normalized.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
+        }
+        return normalized;
+    }
+
+    private String resolveOption(String value, String fallback, List<String> allowed) {
+        String candidate = normalizeText(value).toUpperCase().replace('-', '_').replace(' ', '_');
+        if (candidate.isBlank()) {
+            candidate = normalizeText(fallback).toUpperCase().replace('-', '_').replace(' ', '_');
+        }
+        if (allowed.contains(candidate)) {
+            return candidate;
+        }
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Opcao invalida: " + value);
+    }
+
     private String resolveEmailContato(String contato, String identificador) {
         String email = normalizeText(contato);
         return email.isBlank() ? identificador + "@gestaoform.local" : email;
@@ -567,10 +684,10 @@ public class CadastroController {
     private String resolveTipoFinanceiro(String tipoInformado, Double valorInformado) {
         String tipo = normalizeText(tipoInformado).toLowerCase();
         if (tipo.isBlank()) {
-            return safeDouble(valorInformado) < 0 ? "despesa" : "receita";
+            return safeDouble(valorInformado) < 0 ? "DESPESA" : "RECEITA";
         }
         if ("receita".equals(tipo) || "despesa".equals(tipo)) {
-            return tipo;
+            return tipo.toUpperCase();
         }
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tipo de lançamento financeiro inválido.");
     }

@@ -58,8 +58,11 @@ public class ContribuicaoController {
             ? turmaRepository.findById(scope.turmaId()).map(List::of).orElse(List.of())
             : turmaRepository.findAll();
 
-        double total = round(contribuicoes.stream().mapToDouble(item -> safe(item.getValor())).sum());
-        long quantidade = contribuicoes.size();
+        double total = round(contribuicoes.stream()
+            .filter(this::isConfirmada)
+            .mapToDouble(item -> safe(item.getValor()))
+            .sum());
+        long quantidade = contribuicoes.stream().filter(this::isConfirmada).count();
         double ticketMedio = quantidade == 0 ? 0.0 : round(total / quantidade);
         double metaTotal = round(turmas.stream().mapToDouble(turma -> safe(turma.getMetaArrecadacao())).sum());
         Map<Long, Double> saldosPorTurma = summarizeSaldosTurmas(turmas);
@@ -129,8 +132,13 @@ public class ContribuicaoController {
         LancamentoFinanceiro lancamento = new LancamentoFinanceiro();
         lancamento.setTurma(turma);
         lancamento.setAluno(aluno);
-        lancamento.setTipo("receita");
+        lancamento.setTipo("RECEITA");
         lancamento.setContribuicao(true);
+        lancamento.setCategoria("CONTRIBUICAO");
+        lancamento.setFormaPagamento(resolveOption(input.formaPagamento(), "PIX", List.of("PIX", "DINHEIRO", "BOLETO", "CARTAO", "TRANSFERENCIA", "OUTROS")));
+        lancamento.setStatus(resolveOption(input.status(), usuario.getPerfil() == Perfil.ROLE_COMISSAO ? "CONFIRMADO" : "PENDENTE", List.of("PENDENTE", "CONFIRMADO", "CANCELADO")));
+        lancamento.setCampanha(resolveOption(input.campanha(), "META_GERAL", List.of("META_GERAL", "RIFA", "PATROCINIO", "EVENTO", "OUTROS")));
+        lancamento.setAnonima(Boolean.TRUE.equals(input.anonima()));
         lancamento.setValor(valor);
         lancamento.setDataLancamento(input.data());
         lancamento.setDescricao(normalize(input.titulo(), "Contribuição para a meta"));
@@ -191,7 +199,11 @@ public class ContribuicaoController {
             lancamento.getTurma() != null ? lancamento.getTurma().getId() : null,
             lancamento.getTurma() != null ? normalize(lancamento.getTurma().getNome(), "Sem turma") : "Sem turma",
             normalize(lancamento.getApoiadorNome(), "Apoiador da turma"),
-            normalize(lancamento.getReferencia(), "")
+            normalize(lancamento.getReferencia(), ""),
+            normalize(lancamento.getCampanha(), "META_GERAL"),
+            normalize(lancamento.getFormaPagamento(), "PIX"),
+            normalize(lancamento.getStatus(), "PENDENTE"),
+            Boolean.TRUE.equals(lancamento.getAnonima())
         );
     }
 
@@ -242,6 +254,18 @@ public class ContribuicaoController {
 
     private String normalize(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value.trim();
+    }
+
+    private String resolveOption(String value, String fallback, List<String> allowed) {
+        String candidate = normalize(value, fallback).toUpperCase().replace('-', '_').replace(' ', '_');
+        if (allowed.contains(candidate)) {
+            return candidate;
+        }
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Opcao invalida: " + value);
+    }
+
+    private boolean isConfirmada(LancamentoFinanceiro lancamento) {
+        return "CONFIRMADO".equalsIgnoreCase(normalize(lancamento.getStatus(), "CONFIRMADO"));
     }
 
     private double safe(Double value) {

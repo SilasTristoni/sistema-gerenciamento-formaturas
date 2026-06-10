@@ -25,7 +25,11 @@ public record ContribuicaoResumoDTO(
         Long turmaId,
         String turmaNome,
         String apoiadorNome,
-        String mensagem
+        String mensagem,
+        String campanha,
+        String formaPagamento,
+        String status,
+        boolean anonima
     ) {}
 
     public record TurmaResumo(

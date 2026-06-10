@@ -64,9 +64,17 @@ public class VotacaoSeguraController {
             return ResponseEntity.status(403).body("Você não pode votar em uma enquete de outra turma.");
         }
 
-        if ("encerrada".equalsIgnoreCase(votacao.getStatus())
-            || (votacao.getDataFim() != null && votacao.getDataFim().isBefore(LocalDate.now()))) {
-            return ResponseEntity.badRequest().body("Esta votação já foi encerrada.");
+        LocalDate hoje = LocalDate.now();
+        if (!"ABERTA".equalsIgnoreCase(votacao.getStatus())) {
+            return ResponseEntity.badRequest().body("Esta votacao nao esta aberta para votos.");
+        }
+
+        if (votacao.getDataInicio() != null && votacao.getDataInicio().isAfter(hoje)) {
+            return ResponseEntity.badRequest().body("Esta votacao ainda nao foi iniciada.");
+        }
+
+        if (votacao.getDataFim() != null && votacao.getDataFim().isBefore(hoje)) {
+            return ResponseEntity.badRequest().body("Esta votacao ja foi encerrada.");
         }
 
         if (opcao.getVotacao() == null || !opcao.getVotacao().getId().equals(votacao.getId())) {

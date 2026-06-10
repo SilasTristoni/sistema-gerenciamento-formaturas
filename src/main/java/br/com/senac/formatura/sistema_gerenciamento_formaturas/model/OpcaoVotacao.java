@@ -24,6 +24,7 @@ public class OpcaoVotacao {
     private Votacao votacao;
 
     private String nomeFornecedor;
+    private String descricaoCurta;
 
     @Column(columnDefinition = "TEXT")
     private String detalhesProposta;

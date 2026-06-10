@@ -861,7 +861,10 @@ function setupModalEvents() {
             payload = {
                 nome: data.nome,
                 curso: data.desc,
-                instituicao: 'Senac',
+                instituicao: data.instituicao || 'Instituicao nao informada',
+                anoSemestre: data.anoSemestre,
+                representante: data.representante,
+                status: data.statusTurma,
                 metaArrecadacao: Number(data.valor || 0)
             };
         } else {
@@ -878,20 +881,47 @@ function setupModalEvents() {
                     payload = {
                         nome: data.nome,
                         identificador: data.identificador,
-                        contato: data.desc,
+                        email: data.email,
+                        whatsapp: data.whatsapp,
+                        contato: data.email || data.whatsapp,
                         turmaId: data.turmaId,
+                        status: data.statusAluno,
+                        observacaoInterna: data.desc,
                         perfil: data.perfil,
                         senha: data.senha
                     };
                     break;
                 case 'evento':
                     endpoint = '/evento';
-                    payload = { nome: data.nome, data: data.data, local: data.desc, turmaId: data.turmaId };
+                    payload = {
+                        nome: data.nome,
+                        descricao: data.desc,
+                        data: data.data,
+                        horario: data.horario || null,
+                        local: data.localEvento || data.desc,
+                        turmaId: data.turmaId,
+                        tipo: data.tipoEvento,
+                        responsavel: data.responsavelEvento,
+                        status: data.statusEvento
+                    };
                     break;
                 case 'lancamento': {
                     endpoint = '/lancamento';
-                    const val = parseFloat(data.valor || 0);
-                    payload = { descricao: data.nome, tipo: val >= 0 ? 'receita' : 'despesa', valor: Math.abs(val), data: data.data, referencia: data.desc, turmaId: data.turmaId };
+                    const val = Math.abs(parseFloat(data.valor || 0));
+                    payload = {
+                        descricao: data.nome,
+                        tipo: data.tipoFinanceiro,
+                        valor: val,
+                        data: data.data,
+                        dataVencimento: data.dataVencimento || null,
+                        referencia: data.categoriaFinanceira,
+                        categoria: data.categoriaFinanceira,
+                        formaPagamento: data.formaPagamento,
+                        status: data.statusFinanceiro,
+                        observacao: data.desc,
+                        campanha: data.campanha,
+                        turmaId: data.turmaId
+                    };
                     break;
                 }
                 case 'contribuicao':
@@ -900,6 +930,9 @@ function setupModalEvents() {
                         valor: Number(data.valor || 0),
                         data: data.data,
                         mensagem: data.desc,
+                        campanha: data.campanha,
+                        formaPagamento: data.formaPagamento,
+                        status: data.statusFinanceiro,
                         turmaId: Number(data.turmaId),
                         alunoId: data.alunoId ? Number(data.alunoId) : null,
                         apoiadorNome: data.apoiadorNome,
@@ -908,7 +941,18 @@ function setupModalEvents() {
                     break;
                 case 'votacao':
                     endpoint = '/votacao';
-                    payload = { titulo: data.nome, dataFim: data.data, turmaId: data.turmaId };
+                    payload = {
+                        titulo: data.nome,
+                        descricao: data.desc,
+                        dataInicio: data.dataInicioVotacao || data.data,
+                        dataFim: data.data,
+                        turmaId: data.turmaId,
+                        status: data.statusVotacao,
+                        tipo: data.tipoVotacao,
+                        visibilidadeResultado: data.visibilidadeResultado,
+                        anonima: data.votacaoAnonima,
+                        quorumMinimo: data.quorumMinimo ? Number(data.quorumMinimo) : null
+                    };
                     break;
                 default:
                     showToast('Tipo não implementado', 'error');
@@ -1180,16 +1224,76 @@ window.votar = async (votacaoId, opcaoId) => {
 };
 
 window.adicionarOpcaoUI = async (votacaoId) => {
-    const nome = prompt('Nome da opção (Ex: Banda X):');
-    if (!nome) return;
+    openOptionModal(votacaoId);
+};
+
+function ensureOptionModal() {
+    let modalEl = document.getElementById('optionModal');
+    if (modalEl) return modalEl;
+
+    modalEl = document.createElement('div');
+    modalEl.id = 'optionModal';
+    modalEl.className = 'fixed inset-0 bg-dark-900/80 backdrop-blur-sm hidden items-center justify-center z-[75] p-4';
+    modalEl.innerHTML = `
+        <div class="bg-dark-800 w-full max-w-md rounded-2xl border border-white/10 p-6 shadow-2xl">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <p class="modal-intro__eyebrow">Opção de votação</p>
+                    <h3 class="text-xl font-bold text-white">Adicionar opção</h3>
+                </div>
+                <button type="button" id="optionModalClose" class="text-slate-400 hover:text-white"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="mt-5 space-y-4">
+                <input id="optionModalVotacaoId" type="hidden" />
+                <div><label class="form-label">Nome da opção</label><input id="optionModalNome" type="text" class="form-input" placeholder="Ex.: Fornecedor Alpha" /></div>
+                <div><label class="form-label">Descrição curta</label><textarea id="optionModalDescricao" rows="3" class="form-input" placeholder="Diferenciais ou observações da opção"></textarea></div>
+            </div>
+            <div class="mt-6 flex gap-3">
+                <button type="button" id="optionModalCancel" class="flex-1 btn-outline">Cancelar</button>
+                <button type="button" id="optionModalSave" class="flex-1 btn-gradient">Salvar opção</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modalEl);
+    document.getElementById('optionModalClose')?.addEventListener('click', closeOptionModal);
+    document.getElementById('optionModalCancel')?.addEventListener('click', closeOptionModal);
+    document.getElementById('optionModalSave')?.addEventListener('click', salvarOpcaoModal);
+    return modalEl;
+}
+
+function openOptionModal(votacaoId) {
+    const modalEl = ensureOptionModal();
+    document.getElementById('optionModalVotacaoId').value = votacaoId;
+    document.getElementById('optionModalNome').value = '';
+    document.getElementById('optionModalDescricao').value = '';
+    modalEl.classList.remove('hidden');
+    modalEl.classList.add('flex');
+    window.setTimeout(() => document.getElementById('optionModalNome')?.focus(), 30);
+}
+
+function closeOptionModal() {
+    const modalEl = document.getElementById('optionModal');
+    modalEl?.classList.add('hidden');
+    modalEl?.classList.remove('flex');
+}
+
+async function salvarOpcaoModal() {
+    const votacaoId = document.getElementById('optionModalVotacaoId')?.value;
+    const nome = document.getElementById('optionModalNome')?.value?.trim() || '';
+    const descricaoCurta = document.getElementById('optionModalDescricao')?.value?.trim() || '';
+    if (!nome) {
+        showToast('Informe o nome da opção.', 'error');
+        return;
+    }
     try {
-        await api.salvar(`/votacao/${votacaoId}/opcao`, { nome }, 'POST');
-        showToast('Opção adicionada!', 'success');
+        await api.salvar(`/votacao/${votacaoId}/opcao`, { nome, descricaoCurta, detalhes: descricaoCurta }, 'POST');
+        showToast('Opção adicionada com sucesso!', 'success');
+        closeOptionModal();
         await carregarDados();
     } catch (err) {
-        showToast(err.message || 'Erro ao adicionar opção', 'error');
+        showToast(err.message || 'Erro ao adicionar opção.', 'error');
     }
-};
+}
 
 window.importarAlunosCSV = async (event) => {
     const file = event.target.files[0];
@@ -1200,24 +1304,87 @@ window.importarAlunosCSV = async (event) => {
         return;
     }
 
-    const turmasStr = db.turmas.map(t => `${t.id} - ${t.nome}`).join('\n');
-    const turmaIdStr = prompt(`Digite o ID da turma para importar os alunos:\n\n${turmasStr}`);
-    if (!turmaIdStr) {
-        event.target.value = '';
+    openCsvImportModal(file, event.target);
+};
+
+function ensureCsvImportModal() {
+    let modalEl = document.getElementById('csvImportModal');
+    if (modalEl) return modalEl;
+
+    modalEl = document.createElement('div');
+    modalEl.id = 'csvImportModal';
+    modalEl.className = 'fixed inset-0 bg-dark-900/80 backdrop-blur-sm hidden items-center justify-center z-[75] p-4';
+    modalEl.innerHTML = `
+        <div class="bg-dark-800 w-full max-w-lg rounded-2xl border border-white/10 p-6 shadow-2xl">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <p class="modal-intro__eyebrow">Importação CSV</p>
+                    <h3 class="text-xl font-bold text-white">Importar alunos</h3>
+                    <p class="mt-2 text-sm text-slate-400">Modelo esperado: nome;identificador;email;whatsapp;status;observacao. A senha temporária será gerada automaticamente.</p>
+                </div>
+                <button type="button" id="csvImportClose" class="text-slate-400 hover:text-white"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="mt-5 space-y-4">
+                <p id="csvImportFileName" class="text-sm text-slate-300"></p>
+                <div><label class="form-label">Turma de destino</label><select id="csvImportTurma" class="form-input form-select"></select></div>
+            </div>
+            <div class="mt-6 flex gap-3">
+                <button type="button" id="csvImportCancel" class="flex-1 btn-outline">Cancelar</button>
+                <button type="button" id="csvImportSave" class="flex-1 btn-gradient">Importar</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modalEl);
+    document.getElementById('csvImportClose')?.addEventListener('click', closeCsvImportModal);
+    document.getElementById('csvImportCancel')?.addEventListener('click', closeCsvImportModal);
+    document.getElementById('csvImportSave')?.addEventListener('click', confirmarImportacaoCsv);
+    return modalEl;
+}
+
+let csvImportState = { file: null, input: null };
+
+function openCsvImportModal(file, input) {
+    csvImportState = { file, input };
+    const modalEl = ensureCsvImportModal();
+    const select = document.getElementById('csvImportTurma');
+    if (select) {
+        select.innerHTML = db.turmas.map(turma => `<option value="${turma.id}">${escapeHtml(turma.nome || 'Turma')}</option>`).join('');
+        const lastTurmaId = localStorage.getItem(LAST_TURMA_KEY);
+        if (db.turmas.some(turma => String(turma.id) === lastTurmaId)) select.value = lastTurmaId;
+    }
+    setText('csvImportFileName', `Arquivo selecionado: ${file.name}`);
+    modalEl.classList.remove('hidden');
+    modalEl.classList.add('flex');
+}
+
+function closeCsvImportModal() {
+    const modalEl = document.getElementById('csvImportModal');
+    modalEl?.classList.add('hidden');
+    modalEl?.classList.remove('flex');
+    if (csvImportState.input) csvImportState.input.value = '';
+    csvImportState = { file: null, input: null };
+}
+
+async function confirmarImportacaoCsv() {
+    const turmaId = document.getElementById('csvImportTurma')?.value;
+    const file = csvImportState.file;
+    if (!file || !turmaId) {
+        showToast('Selecione arquivo e turma para importar.', 'error');
         return;
     }
-
     try {
         showToast('Lendo o arquivo...', 'success');
-        const resposta = await api.importarAlunosCSV(file, parseInt(turmaIdStr, 10));
+        localStorage.setItem(LAST_TURMA_KEY, turmaId);
+        const resposta = await api.importarAlunosCSV(file, parseInt(turmaId, 10));
         showToast(resposta || 'Importação concluída!', 'success');
+        closeCsvImportModal();
         await carregarDados();
     } catch (err) {
         showToast(err.message || 'Erro ao comunicar com o servidor', 'error');
     } finally {
-        event.target.value = '';
+        if (csvImportState.input) csvImportState.input.value = '';
     }
-};
+}
 
 let registroParaExcluir = null;
 window.excluirRegistro = (kind, id) => {
@@ -1310,18 +1477,43 @@ window.editarRegistro = (kind, id) => {
     if (kind === 'turma') {
         document.getElementById('modalDescricao') && (document.getElementById('modalDescricao').value = item.curso || '');
         document.getElementById('modalValor') && (document.getElementById('modalValor').value = item.metaArrecadacao ?? '');
+        document.getElementById('modalInstituicao') && (document.getElementById('modalInstituicao').value = item.instituicao || '');
+        document.getElementById('modalAnoSemestre') && (document.getElementById('modalAnoSemestre').value = item.anoSemestre || '');
+        document.getElementById('modalRepresentante') && (document.getElementById('modalRepresentante').value = item.representante || '');
+        document.getElementById('modalStatusTurma') && (document.getElementById('modalStatusTurma').value = (item.status || 'ATIVA').toUpperCase());
     } else if (kind === 'aluno') {
-        document.getElementById('modalDescricao') && (document.getElementById('modalDescricao').value = item.contato || '');
+        document.getElementById('modalDescricao') && (document.getElementById('modalDescricao').value = item.observacaoInterna || '');
         document.getElementById('modalIdentificador') && (document.getElementById('modalIdentificador').value = item.identificador || '');
+        document.getElementById('modalEmailAluno') && (document.getElementById('modalEmailAluno').value = item.email || item.contato || '');
+        document.getElementById('modalWhatsappAluno') && (document.getElementById('modalWhatsappAluno').value = item.whatsapp || '');
+        document.getElementById('modalStatusAluno') && (document.getElementById('modalStatusAluno').value = (item.status || 'ATIVO').toUpperCase());
     } else if (kind === 'evento') {
         document.getElementById('modalData') && (document.getElementById('modalData').value = item.dataEvento || '');
-        document.getElementById('modalDescricao') && (document.getElementById('modalDescricao').value = item.localEvento || '');
+        document.getElementById('modalDescricao') && (document.getElementById('modalDescricao').value = item.descricao || '');
+        document.getElementById('modalHorarioEvento') && (document.getElementById('modalHorarioEvento').value = item.horario || '');
+        document.getElementById('modalLocalEvento') && (document.getElementById('modalLocalEvento').value = item.localEvento || '');
+        document.getElementById('modalTipoEvento') && (document.getElementById('modalTipoEvento').value = (item.tipo || 'REUNIAO_GERAL').toUpperCase());
+        document.getElementById('modalStatusEvento') && (document.getElementById('modalStatusEvento').value = (item.status || 'AGENDADO').toUpperCase());
+        document.getElementById('modalResponsavelEvento') && (document.getElementById('modalResponsavelEvento').value = item.responsavel || '');
     } else if (kind === 'lancamento') {
         const valor = Math.abs(Number(item.valor || 0));
-        document.getElementById('modalValor') && (document.getElementById('modalValor').value = (item.tipo || '').toLowerCase() === 'despesa' ? -valor : valor);
+        document.getElementById('modalValor') && (document.getElementById('modalValor').value = valor);
         document.getElementById('modalData') && (document.getElementById('modalData').value = item.dataLancamento || '');
-        document.getElementById('modalDescricao') && (document.getElementById('modalDescricao').value = item.referencia || '');
+        document.getElementById('modalDescricao') && (document.getElementById('modalDescricao').value = item.observacao || item.referencia || '');
+        document.getElementById('modalTipoFinanceiro') && (document.getElementById('modalTipoFinanceiro').value = (item.tipo || 'RECEITA').toUpperCase());
+        document.getElementById('modalCategoriaFinanceira') && (document.getElementById('modalCategoriaFinanceira').value = item.categoria || item.referencia || 'OUTROS');
+        document.getElementById('modalFormaPagamento') && (document.getElementById('modalFormaPagamento').value = item.formaPagamento || 'PIX');
+        document.getElementById('modalStatusFinanceiro') && (document.getElementById('modalStatusFinanceiro').value = (item.status || 'CONFIRMADO').toUpperCase());
+        document.getElementById('modalDataVencimento') && (document.getElementById('modalDataVencimento').value = item.dataVencimento || '');
+        document.getElementById('modalCampanha') && (document.getElementById('modalCampanha').value = item.campanha || 'META_GERAL');
     } else if (kind === 'votacao') {
         document.getElementById('modalData') && (document.getElementById('modalData').value = item.dataFim || '');
+        document.getElementById('modalDescricao') && (document.getElementById('modalDescricao').value = item.descricao || '');
+        document.getElementById('modalDataInicioVotacao') && (document.getElementById('modalDataInicioVotacao').value = item.dataInicio || '');
+        document.getElementById('modalStatusVotacao') && (document.getElementById('modalStatusVotacao').value = (item.status || 'ABERTA').toUpperCase());
+        document.getElementById('modalTipoVotacao') && (document.getElementById('modalTipoVotacao').value = (item.tipo || 'ESCOLHA_UNICA').toUpperCase());
+        document.getElementById('modalVisibilidadeResultado') && (document.getElementById('modalVisibilidadeResultado').value = (item.visibilidadeResultado || 'APOS_ENCERRAMENTO').toUpperCase());
+        document.getElementById('modalQuorumMinimo') && (document.getElementById('modalQuorumMinimo').value = item.quorumMinimo ?? '');
+        document.getElementById('modalVotacaoAnonima') && (document.getElementById('modalVotacaoAnonima').checked = item.anonima !== false);
     }
 };

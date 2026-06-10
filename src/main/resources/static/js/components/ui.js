@@ -80,9 +80,9 @@ function renderEmptyRow(message, columns) {
 
 function statusBadge(status = '') {
     const normalized = String(status || '').toLowerCase();
-    const className = normalized === 'emdia'
+    const className = ['emdia', 'ativo', 'ativa', 'confirmado', 'concluido', 'concluida'].includes(normalized)
         ? 'bg-emerald-500/20 text-emerald-400'
-        : normalized === 'aberta' || normalized === 'agendado'
+        : ['aberta', 'agendado', 'pendente', 'pausada', 'rascunho'].includes(normalized)
             ? 'bg-sky-500/20 text-sky-300'
             : 'bg-orange-500/20 text-orange-400';
 
@@ -103,6 +103,8 @@ export const ui = {
             <tr>
                 <td class="px-6 py-4 font-medium text-white">${escapeHtml(t.nome)}</td>
                 <td class="px-6 py-4">${escapeHtml(t.curso || '---')}</td>
+                <td class="px-6 py-4">${escapeHtml(t.instituicao || '---')}</td>
+                <td class="px-6 py-4">${escapeHtml(t.anoSemestre || '---')}</td>
                 <td class="px-6 py-4">${escapeHtml(String(t.quantidadeAlunos || 0))}</td>
                 <td class="px-6 py-4">
                     <div class="font-semibold text-white">${escapeHtml(formatCurrency(t.metaArrecadacao || 0))}</div>
@@ -113,12 +115,13 @@ export const ui = {
                     <div class="mt-2">${goalBar(t.percentualMeta ?? (((t.metaArrecadacao || 0) > 0) ? (((t.totalArrecadado || 0) / (t.metaArrecadacao || 1)) * 100) : 0))}</div>
                     <div class="mt-1 text-xs text-slate-500">${escapeHtml(formatGoalProgress(t.metaArrecadacao, t.totalArrecadado))}</div>
                 </td>
+                <td class="px-6 py-4">${statusBadge(t.status || 'ATIVA')}</td>
                 <td class="px-6 py-4 text-right flex justify-end gap-3">
                     <button onclick="editarRegistro('turma', ${t.id})" class="btn-admin text-primary-500 hover:text-primary-400" style="display:none;"><i class="ph ph-pencil-simple text-lg"></i></button>
                     <button onclick="excluirRegistro('turma', ${t.id})" class="btn-admin text-red-500 hover:text-red-400" style="display:none;"><i class="ph ph-trash text-lg"></i></button>
                 </td>
             </tr>
-        `).join('') : renderEmptyRow('Nenhuma turma cadastrada ainda.', 6);
+        `).join('') : renderEmptyRow('Nenhuma turma cadastrada ainda.', 9);
     },
 
     renderAlunos(alunos) {
@@ -128,19 +131,21 @@ export const ui = {
         const ordered = sortByName(alunos);
         tbody.innerHTML = ordered.length ? ordered.map(a => `
             <tr>
-                <td class="px-6 py-4">
-                    <div class="font-medium text-white">${escapeHtml(a.nome)}</div>
-                    <div class="text-xs text-emerald-300 mt-1">@${escapeHtml(a.identificador || 'sem-login')}</div>
-                </td>
+                <td class="px-6 py-4 font-medium text-white">${escapeHtml(a.nome)}</td>
+                <td class="px-6 py-4 text-emerald-300">@${escapeHtml(a.identificador || 'sem-login')}</td>
+                <td class="px-6 py-4">${escapeHtml(a.email || a.contato || '---')}</td>
+                <td class="px-6 py-4">${escapeHtml(a.whatsapp || '---')}</td>
                 <td class="px-6 py-4">${escapeHtml(a.nomeTurma || '---')}</td>
-                <td class="px-6 py-4">${escapeHtml(a.contato || '---')}</td>
-                <td class="px-6 py-4">${statusBadge(a.status)}</td>
+                <td class="px-6 py-4">
+                    ${statusBadge(a.status || 'ATIVO')}
+                    ${a.precisaTrocarSenha ? '<div class="mt-1 text-xs text-amber-300">Senha temporária</div>' : ''}
+                </td>
                 <td class="px-6 py-4 text-right flex justify-end gap-3">
                     <button onclick="editarRegistro('aluno', ${a.id})" class="btn-admin text-primary-500 hover:text-primary-400" style="display:none;"><i class="ph ph-pencil-simple text-lg"></i></button>
                     <button onclick="excluirRegistro('aluno', ${a.id})" class="btn-admin text-red-500 hover:text-red-400" style="display:none;"><i class="ph ph-trash text-lg"></i></button>
                 </td>
             </tr>
-        `).join('') : renderEmptyRow('Nenhum aluno cadastrado ainda.', 5);
+        `).join('') : renderEmptyRow('Nenhum aluno cadastrado ainda.', 7);
     },
 
     renderEventos(eventos) {
@@ -172,14 +177,16 @@ export const ui = {
             <tr>
                 <td class="px-6 py-4 text-white">${escapeHtml(f.descricao)}</td>
                 <td class="px-6 py-4 uppercase text-xs tracking-wider">${escapeHtml(f.tipo || '---')}</td>
+                <td class="px-6 py-4">${escapeHtml(f.categoria || f.referencia || 'OUTROS')}</td>
+                <td class="px-6 py-4">${statusBadge(f.status || 'CONFIRMADO')}</td>
                 <td class="px-6 py-4 font-bold ${(f.tipo || '').toLowerCase() === 'receita' ? 'text-emerald-400' : 'text-red-400'}">${(f.tipo || '').toLowerCase() === 'receita' ? '+' : '-'} ${escapeHtml(formatCurrency(f.valor || 0))}</td>
                 <td class="px-6 py-4">${escapeHtml(formatDate(f.dataLancamento))}</td>
                 <td class="px-6 py-4 text-right flex justify-end gap-3">
                     <button onclick="editarRegistro('lancamento', ${f.id})" class="btn-admin text-primary-500 hover:text-primary-400" style="display:none;"><i class="ph ph-pencil-simple text-lg"></i></button>
-                    <button onclick="excluirRegistro('lancamento', ${f.id})" class="btn-admin text-red-500 hover:text-red-400" style="display:none;"><i class="ph ph-trash text-lg"></i></button>
+                    <button onclick="excluirRegistro('lancamento', ${f.id})" class="btn-admin text-orange-400 hover:text-orange-300" style="display:none;" title="Cancelar lançamento"><i class="ph ph-prohibit text-lg"></i></button>
                 </td>
             </tr>
-        `).join('') : renderEmptyRow('Nenhum lançamento financeiro cadastrado ainda.', 5);
+        `).join('') : renderEmptyRow('Nenhum lançamento financeiro cadastrado ainda.', 7);
     },
 
     renderVotacoes(votacoes) {

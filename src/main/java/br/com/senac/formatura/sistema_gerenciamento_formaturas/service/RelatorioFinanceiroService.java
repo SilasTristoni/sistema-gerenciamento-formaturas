@@ -57,7 +57,7 @@ public class RelatorioFinanceiroService {
         List<Turma> todasTurmas = turmaRepository.findAll();
         Turma turmaSelecionada = resolveTurma(turmaId, todasTurmas);
         List<Turma> turmasEscopo = turmaSelecionada != null ? List.of(turmaSelecionada) : todasTurmas;
-        List<LancamentoFinanceiro> lancamentosEscopo = filterByTurma(lancamentoRepository.findAll(), turmaId);
+        List<LancamentoFinanceiro> lancamentosEscopo = filterConfirmados(filterByTurma(lancamentoRepository.findAll(), turmaId));
         List<LancamentoFinanceiro> lancamentosPeriodo = filterByPeriod(lancamentosEscopo, periodMonths, hoje);
 
         double receitasPeriodo = totalByTipo(lancamentosPeriodo, "receita");
@@ -348,7 +348,7 @@ public class RelatorioFinanceiroService {
     private List<LancamentoFinanceiro> listarLancamentosDoPeriodo(Long turmaId, Integer periodoMeses) {
         LocalDate hoje = LocalDate.now();
         int periodMonths = normalizePeriod(periodoMeses);
-        List<LancamentoFinanceiro> lancamentosEscopo = filterByTurma(lancamentoRepository.findAll(), turmaId);
+        List<LancamentoFinanceiro> lancamentosEscopo = filterConfirmados(filterByTurma(lancamentoRepository.findAll(), turmaId));
         return filterByPeriod(lancamentosEscopo, periodMonths, hoje);
     }
 
@@ -460,6 +460,16 @@ public class RelatorioFinanceiroService {
         return lancamentos.stream()
             .filter(item -> item.getTurma() != null && turmaId.equals(item.getTurma().getId()))
             .toList();
+    }
+
+    private List<LancamentoFinanceiro> filterConfirmados(List<LancamentoFinanceiro> lancamentos) {
+        return lancamentos.stream()
+            .filter(this::isConfirmado)
+            .toList();
+    }
+
+    private boolean isConfirmado(LancamentoFinanceiro lancamento) {
+        return "CONFIRMADO".equalsIgnoreCase(firstNonBlank(lancamento.getStatus(), "CONFIRMADO"));
     }
 
     private List<LancamentoFinanceiro> filterByPeriod(List<LancamentoFinanceiro> lancamentos, int periodMonths, LocalDate hoje) {

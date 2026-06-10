@@ -16,8 +16,14 @@ public record AlunoPainelResponseDTO(
         String nome,
         String identificador,
         String contato,
+        String email,
+        String whatsapp,
+        String status,
+        boolean precisaTrocarSenha,
         String turmaNome,
-        String curso
+        String curso,
+        String instituicao,
+        String anoSemestre
     ) {}
 
     public record ResumoAluno(
@@ -45,6 +51,9 @@ public record AlunoPainelResponseDTO(
         String nome,
         LocalDate data,
         String local,
+        String horario,
+        String tipo,
+        String responsavel,
         String status,
         String presencaStatus,
         long diasRestantes
@@ -53,7 +62,9 @@ public record AlunoPainelResponseDTO(
     public record VotacaoAluno(
         Long id,
         String titulo,
+        String descricao,
         String status,
+        LocalDate dataInicio,
         LocalDate dataFim,
         boolean aberta,
         boolean jaVotou,
@@ -67,6 +78,7 @@ public record AlunoPainelResponseDTO(
     public record OpcaoAluno(
         Long id,
         String nome,
+        String descricao,
         long votos,
         double percentual
     ) {}

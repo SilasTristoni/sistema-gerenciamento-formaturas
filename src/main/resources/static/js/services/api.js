@@ -71,6 +71,14 @@ export const api = {
         return parseResponse(response);
     },
 
+    async loginDemo(tipo) {
+        const response = await fetch(`${AUTH_URL}/demo/${tipo}`, {
+            method: "POST",
+            headers: jsonHeaders()
+        });
+        return parseResponse(response);
+    },
+
     async me() {
         const response = await fetch(`${AUTH_URL}/me`, {
             method: "GET",
@@ -153,6 +161,14 @@ export const api = {
     async deletar(endpoint) {
         const response = await fetch(`${CADASTRO_URL}${endpoint}`, {
             method: "DELETE",
+            headers: authHeaders(false)
+        });
+        return parseResponse(response);
+    },
+
+    async estornarLancamento(id) {
+        const response = await fetch(`${CADASTRO_URL}/lancamento/${id}/estornar`, {
+            method: "PUT",
             headers: authHeaders(false)
         });
         return parseResponse(response);

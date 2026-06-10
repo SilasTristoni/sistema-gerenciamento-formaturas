@@ -13,10 +13,20 @@ import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.LancamentoF
 @Repository
 public interface LancamentoRepository extends JpaRepository<LancamentoFinanceiro, Long> {
 
-    @Query("SELECT COALESCE(SUM(l.valor), 0) FROM LancamentoFinanceiro l WHERE l.tipo = 'receita'")
+    @Query("""
+        SELECT COALESCE(SUM(l.valor), 0)
+        FROM LancamentoFinanceiro l
+        WHERE LOWER(l.tipo) = 'receita'
+          AND (l.status IS NULL OR UPPER(l.status) NOT IN ('PENDENTE', 'CANCELADO', 'ESTORNADO'))
+    """)
     Double totalReceitas();
 
-    @Query("SELECT COALESCE(SUM(l.valor), 0) FROM LancamentoFinanceiro l WHERE l.tipo = 'despesa'")
+    @Query("""
+        SELECT COALESCE(SUM(l.valor), 0)
+        FROM LancamentoFinanceiro l
+        WHERE LOWER(l.tipo) = 'despesa'
+          AND (l.status IS NULL OR UPPER(l.status) NOT IN ('PENDENTE', 'CANCELADO', 'ESTORNADO'))
+    """)
     Double totalDespesas();
 
     @Query("""
@@ -24,6 +34,7 @@ public interface LancamentoRepository extends JpaRepository<LancamentoFinanceiro
         FROM LancamentoFinanceiro l
         WHERE l.turma.id = :turmaId
           AND LOWER(l.tipo) = 'receita'
+          AND (l.status IS NULL OR UPPER(l.status) NOT IN ('PENDENTE', 'CANCELADO', 'ESTORNADO'))
     """)
     Double totalReceitasByTurmaId(@Param("turmaId") Long turmaId);
 
@@ -37,6 +48,7 @@ public interface LancamentoRepository extends JpaRepository<LancamentoFinanceiro
         ), 0)
         FROM LancamentoFinanceiro l
         WHERE l.turma.id = :turmaId
+          AND (l.status IS NULL OR UPPER(l.status) NOT IN ('PENDENTE', 'CANCELADO', 'ESTORNADO'))
     """)
     Double saldoByTurmaId(@Param("turmaId") Long turmaId);
 
@@ -51,6 +63,7 @@ public interface LancamentoRepository extends JpaRepository<LancamentoFinanceiro
         FROM LancamentoFinanceiro l
         WHERE l.contribuicao = true
           AND l.turma.id IN :turmaIds
+          AND (l.status IS NULL OR UPPER(l.status) = 'CONFIRMADO')
         GROUP BY l.turma.id
     """)
     List<Object[]> resumirContribuicoesPorTurma(@Param("turmaIds") Collection<Long> turmaIds);

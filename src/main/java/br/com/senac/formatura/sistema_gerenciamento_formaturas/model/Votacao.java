@@ -17,7 +17,13 @@ public class Votacao {
     private Turma turma;
 
     private String titulo;
-    private String status = "aberta";
+    private String descricao;
+    private LocalDate dataInicio;
+    private String status = "ABERTA";
+    private String tipo = "ESCOLHA_UNICA";
+    private String visibilidadeResultado = "APOS_ENCERRAMENTO";
+    private Boolean anonima = true;
+    private Integer quorumMinimo;
     private LocalDate dataFim;
 
     @OneToMany(mappedBy = "votacao", cascade = CascadeType.ALL)
