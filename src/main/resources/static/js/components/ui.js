@@ -73,6 +73,10 @@ function statusBadge(status = '') {
     return `<span class="px-2.5 py-1 rounded-full text-xs font-semibold ${className}">${escapeHtml(status || '---')}</span>`;
 }
 
+function eventAttendance(evento = {}) {
+    return `${Number(evento.presencas || 0)} presencas / ${Number(evento.talvez || 0)} talvez / ${Number(evento.faltas || 0)} faltas / ${Number(evento.pendentes || 0)} pendentes`;
+}
+
 export const ui = {
     renderTurmas(turmas) {
         const tbody = document.getElementById('turmasBody');
@@ -133,13 +137,14 @@ export const ui = {
                 <td class="px-6 py-4 font-medium text-white">${escapeHtml(e.nome)}</td>
                 <td class="px-6 py-4">${escapeHtml(formatDate(e.dataEvento))}</td>
                 <td class="px-6 py-4">${escapeHtml(e.localEvento || '---')}</td>
+                <td class="px-6 py-4">${escapeHtml(eventAttendance(e))}</td>
                 <td class="px-6 py-4">${statusBadge(e.status || 'agendado')}</td>
                 <td class="px-6 py-4 text-right flex justify-end gap-3">
                     <button onclick="editarRegistro('evento', ${e.id})" class="btn-admin text-primary-500 hover:text-primary-400" style="display:none;"><i class="ph ph-pencil-simple text-lg"></i></button>
                     <button onclick="excluirRegistro('evento', ${e.id})" class="btn-admin text-red-500 hover:text-red-400" style="display:none;"><i class="ph ph-trash text-lg"></i></button>
                 </td>
             </tr>
-        `).join('') : renderEmptyRow('Nenhum evento cadastrado ainda.', 5);
+        `).join('') : renderEmptyRow('Nenhum evento cadastrado ainda.', 6);
     },
 
     renderFinanceiro(financeiro) {

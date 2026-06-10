@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -26,11 +27,13 @@ import br.com.senac.formatura.sistema_gerenciamento_formaturas.dto.DashboardResu
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Aluno;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Evento;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.LancamentoFinanceiro;
+import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.PresencaEvento;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Turma;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Votacao;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.AlunoRepository;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.EventoRepository;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.LancamentoRepository;
+import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.PresencaEventoRepository;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.TurmaRepository;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.VotacaoRepository;
 
@@ -44,6 +47,7 @@ public class DashboardController {
     @Autowired private AlunoRepository alunoRepo;
     @Autowired private TurmaRepository turmaRepo;
     @Autowired private EventoRepository eventoRepo;
+    @Autowired private PresencaEventoRepository presencaEventoRepo;
     @Autowired private VotacaoRepository votacaoRepo;
 
     @GetMapping("/resumo")
@@ -461,17 +465,52 @@ public class DashboardController {
 
     private DashboardResumoDTO.EventSnapshot toEventSnapshot(Evento evento, LocalDate hoje) {
         if (evento == null) {
-            return new DashboardResumoDTO.EventSnapshot(null, "Nenhum agendado", null, "Local a definir", "planejamento", -1);
+            return new DashboardResumoDTO.EventSnapshot(null, "Nenhum agendado", null, "Local a definir", "planejamento", -1, 0, 0, 0, 0);
         }
 
         long diasRestantes = evento.getDataEvento() == null ? -1 : ChronoUnit.DAYS.between(hoje, evento.getDataEvento());
+        long totalAlunos = evento.getTurma() != null && evento.getTurma().getId() != null
+            ? alunoRepo.countByTurmaId(evento.getTurma().getId())
+            : 0L;
+        EventoPresencaResumo presencaResumo = resumoPresencasEvento(evento.getId(), totalAlunos);
         return new DashboardResumoDTO.EventSnapshot(
             evento.getId(),
             evento.getNome(),
             evento.getDataEvento(),
             firstNonBlank(evento.getLocalEvento(), "Local a definir"),
             firstNonBlank(evento.getStatus(), "agendado"),
-            diasRestantes
+            diasRestantes,
+            presencaResumo.presencas(),
+            presencaResumo.talvez(),
+            presencaResumo.faltas(),
+            presencaResumo.pendentes()
+        );
+    }
+
+    private EventoPresencaResumo resumoPresencasEvento(Long eventoId, long totalAlunos) {
+        List<PresencaEvento> respostas = presencaEventoRepo.findAllByEventoId(eventoId);
+        long presencas = respostas.stream()
+            .filter(resposta -> "confirmado".equals(normalizeStatus(resposta.getStatus())))
+            .count();
+        long talvez = respostas.stream()
+            .filter(resposta -> "talvez".equals(normalizeStatus(resposta.getStatus())))
+            .count();
+        long faltas = respostas.stream()
+            .filter(resposta -> "nao vou".equals(normalizeStatus(resposta.getStatus())))
+            .count();
+        long alunosQueResponderam = respostas.stream()
+            .map(PresencaEvento::getAluno)
+            .filter(Objects::nonNull)
+            .map(Aluno::getId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .count();
+
+        return new EventoPresencaResumo(
+            presencas,
+            talvez,
+            faltas,
+            Math.max(totalAlunos - alunosQueResponderam, 0L)
         );
     }
 
@@ -557,7 +596,13 @@ public class DashboardController {
         return "";
     }
 
+    private String normalizeStatus(String status) {
+        return firstNonBlank(status).trim().toLowerCase(LOCALE_PT_BR).replaceAll("\\s+", " ");
+    }
+
     private String formatCurrency(double value) {
         return "R$ %.2f".formatted(value).replace('.', ',');
     }
+
+    private record EventoPresencaResumo(long presencas, long talvez, long faltas, long pendentes) {}
 }

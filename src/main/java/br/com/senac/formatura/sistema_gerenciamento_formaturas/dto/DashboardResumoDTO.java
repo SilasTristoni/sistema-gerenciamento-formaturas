@@ -44,7 +44,11 @@ public record DashboardResumoDTO(
         LocalDate data,
         String local,
         String status,
-        long diasRestantes
+        long diasRestantes,
+        long presencas,
+        long talvez,
+        long faltas,
+        long pendentes
     ) {}
 
     public record AlertItem(

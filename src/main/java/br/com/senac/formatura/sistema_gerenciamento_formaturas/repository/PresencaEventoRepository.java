@@ -10,4 +10,8 @@ import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.PresencaEve
 public interface PresencaEventoRepository extends JpaRepository<PresencaEvento, Long> {
     Optional<PresencaEvento> findByEventoIdAndAlunoId(Long eventoId, Long alunoId);
     List<PresencaEvento> findAllByAlunoId(Long alunoId);
+    List<PresencaEvento> findAllByEventoId(Long eventoId);
+    long countByEventoId(Long eventoId);
+    long countByEventoIdAndStatusIgnoreCase(Long eventoId, String status);
+    void deleteByEventoId(Long eventoId);
 }

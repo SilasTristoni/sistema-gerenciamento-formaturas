@@ -34,6 +34,10 @@ function formatDate(value) {
   return dateFormatter.format(date);
 }
 
+function formatEventAttendance(evento = {}) {
+  return `${Number(evento.presencas || 0)} presencas | ${Number(evento.talvez || 0)} talvez | ${Number(evento.faltas || 0)} faltas | ${Number(evento.pendentes || 0)} pendentes`;
+}
+
 function setText(id, value) {
   const node = document.getElementById(id);
   if (node) node.textContent = value;
@@ -361,6 +365,7 @@ function renderEvents(events = []) {
         <div class="item-main">
           <p class="item-title">${escapeHtml(item.nome || "Evento sem nome")}</p>
           <p class="item-subtitle">${escapeHtml(formatDate(item.data))} | ${escapeHtml(item.local || "Local a definir")}</p>
+          <p class="item-subtitle">${escapeHtml(formatEventAttendance(item))}</p>
         </div>
         <span class="status-badge">${escapeHtml(item.status || "agendado")}</span>
       </article>
@@ -376,6 +381,7 @@ function renderEvents(events = []) {
         <div class="item-main">
           <p class="item-title">${escapeHtml(item.nome || "Evento sem nome")}</p>
           <p class="item-subtitle">${escapeHtml(formatDate(item.data))} | ${escapeHtml(item.local || "Local a definir")} | ${escapeHtml(item.diasRestantes >= 0 ? `${item.diasRestantes} dias restantes` : "Data indefinida")}</p>
+          <p class="item-subtitle">${escapeHtml(formatEventAttendance(item))}</p>
         </div>
         <span class="status-badge">${escapeHtml(item.status || "agendado")}</span>
       </article>

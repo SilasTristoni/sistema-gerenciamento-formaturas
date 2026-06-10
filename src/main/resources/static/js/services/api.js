@@ -83,6 +83,7 @@ export const api = {
         const queryString = buildQueryString(filters).replace(/^\?/, "");
         const response = await fetch(`${API_URL}/dashboard/resumo${queryString ? `?${queryString}` : ''}`, {
             method: "GET",
+            cache: "no-store",
             headers: authHeaders(false)
         });
         return parseResponse(response);
@@ -91,6 +92,7 @@ export const api = {
     async alunoPainel() {
         const response = await fetch(`${API_URL}/aluno/painel`, {
             method: "GET",
+            cache: "no-store",
             headers: authHeaders(false)
         });
         return parseResponse(response);
@@ -133,6 +135,7 @@ export const api = {
     async buscar(endpoint) {
         const response = await fetch(`${CADASTRO_URL}/${endpoint}`, {
             method: "GET",
+            cache: "no-store",
             headers: authHeaders(false)
         });
         return parseResponse(response);

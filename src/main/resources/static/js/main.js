@@ -414,6 +414,7 @@ function renderIntegratedDashboard(dashboard) {
             <div class="simple-item__main">
                 <p class="simple-item__title">${escapeHtml(item.nome || 'Evento sem nome')}</p>
                 <p class="simple-item__subtitle">${escapeHtml(formatDate(item.data))} | ${escapeHtml(item.local || 'Local a definir')}</p>
+                <p class="simple-item__subtitle">${escapeHtml(formatEventAttendance(item))}</p>
             </div>
         </article>
     `, 'Nenhum evento cadastrado.');
@@ -493,6 +494,20 @@ function eventsByDate(eventos = []) {
         acc[evento.dataEvento].push(evento);
         return acc;
     }, {});
+}
+
+function formatEventAttendance(evento = {}) {
+    return `${Number(evento.presencas || 0)} presencas | ${Number(evento.talvez || 0)} talvez | ${Number(evento.faltas || 0)} faltas | ${Number(evento.pendentes || 0)} pendentes`;
+}
+
+function renderAgendaActions(evento = {}) {
+    if (!evento.id) return '';
+    return `
+        <div class="agenda-item__actions btn-admin" style="display:none;">
+            <button type="button" onclick="editarRegistro('evento', ${evento.id})" class="agenda-action-btn" aria-label="Editar evento"><i class="ph ph-pencil-simple"></i></button>
+            <button type="button" onclick="excluirRegistro('evento', ${evento.id})" class="agenda-action-btn agenda-action-btn--danger" aria-label="Excluir evento"><i class="ph ph-trash"></i></button>
+        </div>
+    `;
 }
 
 function populateAgendaTurmas(turmas = []) {
@@ -781,8 +796,12 @@ function renderAgendaSelectedDay(eventos = []) {
                 <div class="agenda-item__main">
                     <p class="agenda-item__title">${escapeHtml(evento.nome || 'Evento sem nome')}</p>
                     <p class="agenda-item__subtitle">${escapeHtml(evento.localEvento || 'Local a definir')}</p>
+                    <p class="agenda-item__subtitle">${escapeHtml(formatEventAttendance(evento))}</p>
                 </div>
-                <span class="agenda-item__badge">${escapeHtml(evento.status || 'agendado')}</span>
+                <div class="agenda-item__side">
+                    <span class="agenda-item__badge">${escapeHtml(evento.status || 'agendado')}</span>
+                    ${renderAgendaActions(evento)}
+                </div>
             </article>
         `).join('')
         : '<div class="simple-empty">Nenhum evento marcado para esse dia.</div>';
@@ -803,8 +822,12 @@ function renderAgendaUpcoming(eventos = []) {
                 <div class="agenda-item__main">
                     <p class="agenda-item__title">${escapeHtml(evento.nome || 'Evento sem nome')}</p>
                     <p class="agenda-item__subtitle">${escapeHtml(formatDate(evento.dataEvento))} | ${escapeHtml(evento.localEvento || 'Local a definir')}</p>
+                    <p class="agenda-item__subtitle">${escapeHtml(formatEventAttendance(evento))}</p>
                 </div>
-                <span class="agenda-item__badge">${escapeHtml(evento.status || 'agendado')}</span>
+                <div class="agenda-item__side">
+                    <span class="agenda-item__badge">${escapeHtml(evento.status || 'agendado')}</span>
+                    ${renderAgendaActions(evento)}
+                </div>
             </article>
         `).join('')
         : '<div class="simple-empty">Nenhum proximo evento cadastrado.</div>';

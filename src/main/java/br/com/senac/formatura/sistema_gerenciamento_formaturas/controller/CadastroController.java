@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -26,6 +27,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.dto.AlunoInputDTO;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.dto.EventoInputDTO;
+import br.com.senac.formatura.sistema_gerenciamento_formaturas.dto.EventoResumoDTO;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.dto.LancamentoInputDTO;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.dto.VotacaoInputDTO;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Aluno;
@@ -33,6 +35,7 @@ import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Evento;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.LancamentoFinanceiro;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.OpcaoVotacao;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Perfil;
+import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.PresencaEvento;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Turma;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Usuario;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.model.Votacao;
@@ -41,11 +44,13 @@ import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.AlunoR
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.EventoRepository;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.LancamentoRepository;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.OpcaoVotacaoRepository;
+import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.PresencaEventoRepository;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.TarefaRepository;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.TurmaRepository;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.UsuarioRepository;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.VotacaoRepository;
 import br.com.senac.formatura.sistema_gerenciamento_formaturas.repository.VotoRepository;
+import jakarta.transaction.Transactional;
 
 @RestController
 @RequestMapping("/api/cadastro")
@@ -57,6 +62,7 @@ public class CadastroController {
     @Autowired private EventoRepository eventoRepo;
     @Autowired private LancamentoRepository lancamentoRepo;
     @Autowired private TarefaRepository tarefaRepo;
+    @Autowired private PresencaEventoRepository presencaEventoRepo;
     @Autowired private VotacaoRepository votacaoRepo;
     @Autowired private OpcaoVotacaoRepository opcaoRepo;
     @Autowired private VotoRepository votoRepo;
@@ -198,11 +204,13 @@ public class CadastroController {
     }
 
     @GetMapping("/eventos")
-    public List<Evento> listarEventos() {
+    public List<EventoResumoDTO> listarEventos() {
         return eventoRepo.findAll(Sort.by(
             Sort.Order.asc("dataEvento"),
             Sort.Order.asc("nome")
-        ));
+        )).stream()
+            .map(this::toEventoResumo)
+            .toList();
     }
 
     @PostMapping("/evento")
@@ -228,11 +236,64 @@ public class CadastroController {
     }
 
     @DeleteMapping("/evento/{id}")
+    @Transactional
     public ResponseEntity<?> deletarEvento(@PathVariable Long id) {
         if(!eventoRepo.existsById(id)) return ResponseEntity.notFound().build();
+        presencaEventoRepo.deleteByEventoId(id);
         eventoRepo.deleteById(id);
         return ResponseEntity.ok("Excluído com sucesso");
     }
+
+    private EventoResumoDTO toEventoResumo(Evento evento) {
+        Turma turma = evento.getTurma();
+        long totalAlunos = turma != null && turma.getId() != null ? alunoRepo.countByTurmaId(turma.getId()) : 0L;
+        EventoPresencaResumo presencaResumo = resumoPresencasEvento(evento.getId(), totalAlunos);
+        return new EventoResumoDTO(
+            evento.getId(),
+            evento.getNome(),
+            evento.getDataEvento(),
+            evento.getLocalEvento(),
+            evento.getStatus(),
+            turma == null ? null : new EventoResumoDTO.TurmaResumo(turma.getId(), turma.getNome()),
+            presencaResumo.presencas(),
+            presencaResumo.talvez(),
+            presencaResumo.faltas(),
+            presencaResumo.pendentes()
+        );
+    }
+
+    private EventoPresencaResumo resumoPresencasEvento(Long eventoId, long totalAlunos) {
+        List<PresencaEvento> respostas = presencaEventoRepo.findAllByEventoId(eventoId);
+        long presencas = respostas.stream()
+            .filter(resposta -> "confirmado".equals(normalizeStatus(resposta.getStatus())))
+            .count();
+        long talvez = respostas.stream()
+            .filter(resposta -> "talvez".equals(normalizeStatus(resposta.getStatus())))
+            .count();
+        long faltas = respostas.stream()
+            .filter(resposta -> "nao vou".equals(normalizeStatus(resposta.getStatus())))
+            .count();
+        long alunosQueResponderam = respostas.stream()
+            .map(PresencaEvento::getAluno)
+            .filter(Objects::nonNull)
+            .map(Aluno::getId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .count();
+
+        return new EventoPresencaResumo(
+            presencas,
+            talvez,
+            faltas,
+            Math.max(totalAlunos - alunosQueResponderam, 0L)
+        );
+    }
+
+    private String normalizeStatus(String status) {
+        return normalizeText(status).toLowerCase().replaceAll("\\s+", " ");
+    }
+
+    private record EventoPresencaResumo(long presencas, long talvez, long faltas, long pendentes) {}
 
     @GetMapping("/financeiro")
     public List<LancamentoFinanceiro> listarFinanceiro() {
