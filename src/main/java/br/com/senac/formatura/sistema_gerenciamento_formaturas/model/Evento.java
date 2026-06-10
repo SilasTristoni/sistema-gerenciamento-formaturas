@@ -1,8 +1,11 @@
 package br.com.senac.formatura.sistema_gerenciamento_formaturas.model;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Transient;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -22,7 +25,15 @@ public class Evento {
     private Turma turma;
 
     private String nome;
+    @Column(columnDefinition = "TEXT")
+    private String descricao;
     private LocalDate dataEvento;
+    private LocalTime horario;
     private String localEvento;
-    private String status = "agendado";
+    private String tipo = "REUNIAO_GERAL";
+    private String responsavel;
+    private String status = "AGENDADO";
+
+    @Transient
+    private Long confirmacoesPresenca = 0L;
 }

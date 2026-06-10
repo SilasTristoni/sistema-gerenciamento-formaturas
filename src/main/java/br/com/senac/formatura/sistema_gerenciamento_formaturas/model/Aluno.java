@@ -23,14 +23,27 @@ public class Aluno {
     @Column(unique = true)
     private String identificador;
 
+    private String email;
+    private String whatsapp;
+
     @ManyToOne
     @JoinColumn(name = "turma_id", nullable = false)
     private Turma turma;
 
     private String contato;
-    private String status = "ativo";
+    private String status = "ATIVO";
+    private String observacaoInterna;
+    private Boolean precisaTrocarSenha = false;
 
     public String getNomeTurma() {
         return turma != null ? turma.getNome() : "";
+    }
+
+    public String getEmailExibicao() {
+        return email != null && !email.isBlank() ? email : contato;
+    }
+
+    public String getWhatsappExibicao() {
+        return whatsapp != null && !whatsapp.isBlank() ? whatsapp : contato;
     }
 }

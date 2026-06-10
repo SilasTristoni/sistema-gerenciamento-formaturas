@@ -24,6 +24,8 @@ public class Turma {
     private String nome;
     private String curso;
     private String instituicao;
+    private String anoSemestre;
+    private String representante;
 
     @OneToMany(mappedBy = "turma", cascade = CascadeType.ALL)
     @JsonIgnore
@@ -39,7 +41,7 @@ public class Turma {
 
     private Double totalArrecadado = 0.0;
     private Double metaArrecadacao = 0.0;
-    private String status = "emdia";
+    private String status = "ATIVA";
 
     public Integer getQuantidadeAlunos() {
         return alunos != null ? alunos.size() : 0;

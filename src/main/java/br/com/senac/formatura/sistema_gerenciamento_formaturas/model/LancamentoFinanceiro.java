@@ -2,6 +2,7 @@ package br.com.senac.formatura.sistema_gerenciamento_formaturas.model;
 
 import java.time.LocalDate;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -27,9 +28,18 @@ public class LancamentoFinanceiro {
 
     private String descricao;
     private String tipo;
+    private String categoria = "OUTROS";
+    private String formaPagamento = "PIX";
+    private String status = "CONFIRMADO";
     private Boolean contribuicao = false;
     private String apoiadorNome;
     private Double valor;
     private LocalDate dataLancamento;
+    private LocalDate dataVencimento;
     private String referencia;
+    @Column(columnDefinition = "TEXT")
+    private String observacao;
+    private String responsavelLancamento;
+    private String campanha = "META_GERAL";
+    private Boolean anonima = false;
 }
