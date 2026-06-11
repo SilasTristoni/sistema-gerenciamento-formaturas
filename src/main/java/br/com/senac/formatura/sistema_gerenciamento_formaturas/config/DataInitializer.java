@@ -58,7 +58,6 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         Turma turmaAds = ensureTurmaAds();
-        ensureCommissionUser("demo.comissao", "demo.comissao@gestaoform.local", "demo123");
 
         Aluno ana = ensureAluno(turmaAds, "Ana Souza", "ana.souza", "ana.souza@example.com", "(47) 99911-2200", "ATIVO");
         Aluno bruno = ensureAluno(turmaAds, "Bruno Lima", "bruno.lima", "bruno.lima@example.com", "(47) 99922-3300", "ATIVO");
@@ -77,7 +76,7 @@ public class DataInitializer implements CommandLineRunner {
         ensureLancamento(turmaAds, null, "Sinal contrato fotografia", "DESPESA", "FOTO_VIDEO", "PIX", "CONFIRMADO", 800.0, false, "OUTROS");
 
         ensureVotacoes(turmaAds);
-        LOGGER.info("Dados de demonstracao verificados para a turma ADS 2026.");
+        LOGGER.info("Dados iniciais verificados para a turma ADS 2026.");
     }
 
     private Usuario ensureCommissionUser(String login, String email, String password) {
@@ -97,11 +96,11 @@ public class DataInitializer implements CommandLineRunner {
         return turmaRepository.findAll().stream()
             .filter(turma -> "ADS 2026".equalsIgnoreCase(turma.getNome()))
             .findFirst()
-            .map(this::atualizarTurmaDemo)
-            .orElseGet(() -> atualizarTurmaDemo(new Turma()));
+            .map(this::atualizarTurmaInicial)
+            .orElseGet(() -> atualizarTurmaInicial(new Turma()));
     }
 
-    private Turma atualizarTurmaDemo(Turma turma) {
+    private Turma atualizarTurmaInicial(Turma turma) {
         turma.setNome("ADS 2026");
         turma.setCurso("Analise e Desenvolvimento de Sistemas");
         turma.setInstituicao("Senac Joinville");
@@ -148,7 +147,7 @@ public class DataInitializer implements CommandLineRunner {
         Evento evento = new Evento();
         evento.setTurma(turma);
         evento.setNome(nome);
-        evento.setDescricao("Compromisso demo para acompanhamento da comissao e dos formandos.");
+        evento.setDescricao("Compromisso para acompanhamento da comissao e dos formandos.");
         evento.setTipo(tipo);
         evento.setDataEvento(data);
         evento.setHorario(horario);
@@ -189,7 +188,7 @@ public class DataInitializer implements CommandLineRunner {
         lancamento.setCampanha(campanha);
         lancamento.setApoiadorNome(aluno != null ? aluno.getNome() : "Apoiador da turma");
         lancamento.setReferencia(categoria);
-        lancamento.setObservacao("Registro inicial de demonstracao.");
+        lancamento.setObservacao("Registro inicial do sistema.");
         lancamentoRepository.save(lancamento);
         turma.setTotalArrecadado(lancamentoRepository.saldoByTurmaId(turma.getId()));
         turmaRepository.save(turma);
@@ -213,7 +212,7 @@ public class DataInitializer implements CommandLineRunner {
                 Votacao votacao = new Votacao();
                 votacao.setTurma(turma);
                 votacao.setTitulo(titulo);
-                votacao.setDescricao("Votacao demo para apoiar decisoes da turma.");
+                votacao.setDescricao("Votacao para apoiar decisoes da turma.");
                 votacao.setStatus(status);
                 votacao.setTipo("ESCOLHA_UNICA");
                 votacao.setDataInicio(inicio);

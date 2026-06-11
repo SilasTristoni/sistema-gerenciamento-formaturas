@@ -13,7 +13,7 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>war</packaging>
 	<name>sistema-gerenciamento-formaturas</name>
-	<description>Demo project for Spring Boot</description>
+	<description>Sistema de gerenciamento de formaturas</description>
 	<url/>
 	<licenses>
 		<license/>

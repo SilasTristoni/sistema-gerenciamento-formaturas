@@ -605,7 +605,7 @@ async function loadDashboard() {
 }
 
 document.getElementById("logoutBtn")?.addEventListener("click", () => {
-  auth.clearSession();
+  auth.logout();
   redirectToLogin();
 });
 
@@ -617,4 +617,5 @@ syncFilterInputs();
 bindNavigation();
 bindDashboardFilters();
 bindReportActions();
+auth.onLogout(redirectToLogin);
 loadDashboard().catch(console.error);

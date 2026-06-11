@@ -3,16 +3,18 @@ const SESSION_KEYS = {
     token: `${STORAGE_PREFIX}.token`,
     perfil: `${STORAGE_PREFIX}.perfil`,
     nome: `${STORAGE_PREFIX}.nome`,
-    login: `${STORAGE_PREFIX}.login`
+    login: `${STORAGE_PREFIX}.login`,
+    issuedAt: `${STORAGE_PREFIX}.issuedAt`
 };
-const PREFERENCE_KEYS = {
-    remember: `${STORAGE_PREFIX}.remember`,
-    lastLogin: `${STORAGE_PREFIX}.lastLogin`,
-    lastPerfil: `${STORAGE_PREFIX}.lastPerfil`,
-    lastNome: `${STORAGE_PREFIX}.lastNome`
-};
+const LOGOUT_EVENT_KEY = `${STORAGE_PREFIX}.logoutAt`;
 
 const LEGACY_KEYS = ['token', 'perfil', 'nomeUsuario'];
+const REMOVED_PREFERENCE_KEYS = [
+    `${STORAGE_PREFIX}.remember`,
+    `${STORAGE_PREFIX}.lastLogin`,
+    `${STORAGE_PREFIX}.lastPerfil`,
+    `${STORAGE_PREFIX}.lastNome`
+];
 
 function safeStorage(type) {
     try {
@@ -32,14 +34,29 @@ function writeValue(storage, key, value) {
     storage.setItem(key, value);
 }
 
+function readTimestamp(storage, key) {
+    const value = storage?.getItem(key);
+    const timestamp = Number(value);
+    return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
 function readValue(key) {
     const session = safeStorage('sessionStorage');
     const local = safeStorage('localStorage');
     return session?.getItem(key) || local?.getItem(key) || null;
 }
 
-function readLocalValue(key) {
-    return safeStorage('localStorage')?.getItem(key) || null;
+function isSessionInvalidated() {
+    const token = readValue(SESSION_KEYS.token);
+    if (!token) return false;
+
+    const session = safeStorage('sessionStorage');
+    const local = safeStorage('localStorage');
+    const logoutAt = readTimestamp(local, LOGOUT_EVENT_KEY);
+    if (!logoutAt) return false;
+
+    const issuedAt = readTimestamp(session, SESSION_KEYS.issuedAt) || readTimestamp(local, SESSION_KEYS.issuedAt);
+    return !issuedAt || logoutAt >= issuedAt;
 }
 
 function clearSessionKeys() {
@@ -47,35 +64,41 @@ function clearSessionKeys() {
     removeKeys(safeStorage('localStorage'), Object.values(SESSION_KEYS));
     removeKeys(safeStorage('sessionStorage'), LEGACY_KEYS);
     removeKeys(safeStorage('localStorage'), LEGACY_KEYS);
+    removeKeys(safeStorage('localStorage'), REMOVED_PREFERENCE_KEYS);
 }
 
-function savePreferences({ login, perfil, nome, persistent }) {
+function broadcastLogout() {
     const local = safeStorage('localStorage');
     if (!local) return;
-
-    local.setItem(PREFERENCE_KEYS.remember, persistent ? 'true' : 'false');
-    if (login) local.setItem(PREFERENCE_KEYS.lastLogin, login);
-    if (perfil) local.setItem(PREFERENCE_KEYS.lastPerfil, perfil);
-    if (nome) local.setItem(PREFERENCE_KEYS.lastNome, nome);
+    local.setItem(LOGOUT_EVENT_KEY, String(Date.now()));
 }
 
 export const auth = {
+    logoutEventKey: LOGOUT_EVENT_KEY,
+
     getToken() {
+        if (isSessionInvalidated()) {
+            clearSessionKeys();
+            return null;
+        }
         return readValue(SESSION_KEYS.token);
     },
 
-    saveSession({ token, perfil, nome, login, persistent = false }) {
+    saveSession({ token, perfil, nome, login }) {
         clearSessionKeys();
 
-        const target = persistent ? safeStorage('localStorage') : safeStorage('sessionStorage');
+        const target = safeStorage('sessionStorage');
         writeValue(target, SESSION_KEYS.token, token);
         writeValue(target, SESSION_KEYS.perfil, perfil);
         writeValue(target, SESSION_KEYS.nome, nome);
         writeValue(target, SESSION_KEYS.login, login);
-        savePreferences({ login, perfil, nome, persistent });
+        writeValue(target, SESSION_KEYS.issuedAt, String(Date.now()));
     },
 
     getSession() {
+        if (isSessionInvalidated()) {
+            clearSessionKeys();
+        }
         return {
             token: readValue(SESSION_KEYS.token),
             perfil: readValue(SESSION_KEYS.perfil),
@@ -84,23 +107,20 @@ export const auth = {
         };
     },
 
-    shouldRememberSession() {
-        return readLocalValue(PREFERENCE_KEYS.remember) === 'true';
-    },
-
-    getLastLogin() {
-        return readLocalValue(PREFERENCE_KEYS.lastLogin);
-    },
-
-    getLastProfile() {
-        return readLocalValue(PREFERENCE_KEYS.lastPerfil);
-    },
-
-    getLastName() {
-        return readLocalValue(PREFERENCE_KEYS.lastNome);
-    },
-
-    clearSession() {
+    clearSession({ broadcast = false } = {}) {
         clearSessionKeys();
+        if (broadcast) broadcastLogout();
+    },
+
+    logout() {
+        this.clearSession({ broadcast: true });
+    },
+
+    onLogout(callback) {
+        window.addEventListener('storage', (event) => {
+            if (event.key !== LOGOUT_EVENT_KEY || !event.newValue) return;
+            clearSessionKeys();
+            callback?.();
+        });
     }
 };

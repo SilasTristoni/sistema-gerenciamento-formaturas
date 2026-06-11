@@ -34,6 +34,7 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    auth.onLogout(redirectToLogin);
     setupNavigation();
     setupDashboardFilterControls();
     setupModalEvents();
@@ -86,7 +87,7 @@ async function verificarSessao() {
 }
 
 window.logout = () => {
-    auth.clearSession();
+    auth.logout();
     redirectToLogin();
 };
 
@@ -1030,6 +1031,25 @@ function validateFormData(data) {
 }
 
 function setupNavigation() {
+    const sidebar = document.getElementById('adminSidebar');
+    const backdrop = document.getElementById('adminSidebarBackdrop');
+    const menuToggle = document.getElementById('menuToggle');
+
+    const setMenuOpen = (isOpen) => {
+        sidebar?.classList.toggle('is-open', isOpen);
+        backdrop?.classList.toggle('is-visible', isOpen);
+        document.body.classList.toggle('admin-menu-open', isOpen);
+        menuToggle?.setAttribute('aria-expanded', String(isOpen));
+    };
+
+    menuToggle?.addEventListener('click', () => {
+        setMenuOpen(!sidebar?.classList.contains('is-open'));
+    });
+    backdrop?.addEventListener('click', () => setMenuOpen(false));
+    window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') setMenuOpen(false);
+    });
+
     window.navigate = (screenId) => {
         document.querySelectorAll('.screen').forEach(el => {
             el.classList.add('hidden');
@@ -1042,6 +1062,7 @@ function setupNavigation() {
         target?.classList.remove('hidden');
         target?.classList.add('active');
         btn?.classList.add('active');
+        setMenuOpen(false);
     };
 
     window.navigate('dashboard');

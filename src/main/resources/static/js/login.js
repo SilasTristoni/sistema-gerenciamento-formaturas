@@ -6,17 +6,9 @@ const loginForm = document.getElementById('loginForm');
 const loginInput = document.getElementById('loginEmail');
 const passwordInput = document.getElementById('loginSenha');
 const loginButton = document.getElementById('btnLogin');
-const rememberInput = document.getElementById('rememberAccess');
 const passwordToggle = document.getElementById('togglePasswordBtn');
 const capsWarning = document.getElementById('capsLockWarning');
-const quickAccessCard = document.getElementById('quickAccessCard');
-const quickAccessLabel = document.getElementById('quickAccessLabel');
-const quickAccessMeta = document.getElementById('quickAccessMeta');
-const quickAccessButton = document.getElementById('quickAccessButton');
 const loginHelper = document.getElementById('studentLoginHelper');
-const sessionHint = document.getElementById('sessionHint');
-const demoCommissionButton = document.getElementById('demoCommissionBtn');
-const demoStudentButton = document.getElementById('demoStudentBtn');
 
 const defaultButtonMarkup = loginButton?.innerHTML || '';
 
@@ -28,8 +20,6 @@ function setLoading(isLoading) {
     if (!loginButton) return;
 
     loginButton.disabled = isLoading;
-    if (demoCommissionButton) demoCommissionButton.disabled = isLoading;
-    if (demoStudentButton) demoStudentButton.disabled = isLoading;
     loginButton.innerHTML = isLoading
         ? '<i class="ph ph-spinner-gap animate-spin"></i> Autenticando...'
         : defaultButtonMarkup;
@@ -54,35 +44,6 @@ function setCapsWarning(event) {
     capsWarning.hidden = !event.getModifierState('CapsLock');
 }
 
-function hydrateRememberedAccess() {
-    const lastLogin = auth.getLastLogin();
-    const lastPerfil = auth.getLastProfile();
-    const lastName = auth.getLastName();
-    const rememberAccess = auth.shouldRememberSession();
-
-    if (rememberInput) {
-        rememberInput.checked = rememberAccess;
-    }
-
-    if (sessionHint) {
-        sessionHint.textContent = rememberAccess
-            ? 'Seu ultimo acesso ficou salvo neste dispositivo.'
-            : 'Se marcar "Lembrar neste aparelho", o acesso permanece salvo neste navegador.';
-    }
-
-    if (!lastLogin || !quickAccessCard) return;
-
-    quickAccessCard.hidden = false;
-    if (quickAccessLabel) {
-        quickAccessLabel.textContent = lastName || lastLogin;
-    }
-    if (quickAccessMeta) {
-        quickAccessMeta.textContent = lastPerfil === 'ROLE_ALUNO'
-            ? 'Ultimo acesso como formando'
-            : 'Ultimo acesso como comissao';
-    }
-}
-
 async function redirectIfSessionIsValid() {
     const token = auth.getToken();
     if (!token) return;
@@ -93,8 +54,7 @@ async function redirectIfSessionIsValid() {
             token,
             perfil: me.perfil,
             nome: me.nome,
-            login: me.login || me.email || auth.getLastLogin(),
-            persistent: auth.shouldRememberSession()
+            login: me.login || me.email
         });
         redirectByProfile(me.perfil);
     } catch (error) {
@@ -109,22 +69,6 @@ passwordToggle?.addEventListener('click', () => {
     passwordToggle.innerHTML = showingPassword
         ? '<i class="ph ph-eye"></i>'
         : '<i class="ph ph-eye-slash"></i>';
-});
-
-quickAccessButton?.addEventListener('click', () => {
-    const lastLogin = auth.getLastLogin();
-    if (!lastLogin || !loginInput) return;
-
-    loginInput.value = lastLogin;
-    updateLoginHelper();
-    passwordInput?.focus();
-});
-
-rememberInput?.addEventListener('change', () => {
-    if (!sessionHint) return;
-    sessionHint.textContent = rememberInput.checked
-        ? 'O token sera salvo neste navegador para acesso mais rapido.'
-        : 'A sessao sera encerrada ao fechar a aba ou ao fazer logout.';
 });
 
 loginInput?.addEventListener('input', updateLoginHelper);
@@ -149,11 +93,9 @@ loginForm?.addEventListener('submit', async (event) => {
 
     try {
         const dados = await api.login(login, senha);
-        const persistent = Boolean(rememberInput?.checked);
         auth.saveSession({
             ...dados,
-            login: dados.login || login,
-            persistent
+            login: dados.login || login
         });
         showToast('Login efetuado com sucesso!');
         window.setTimeout(() => {
@@ -165,33 +107,5 @@ loginForm?.addEventListener('submit', async (event) => {
     }
 });
 
-async function handleDemoLogin(tipo) {
-    setLoading(true);
-    try {
-        const dados = await api.loginDemo(tipo);
-        const persistent = Boolean(rememberInput?.checked);
-        auth.saveSession({
-            ...dados,
-            persistent
-        });
-        showToast('Acesso demo iniciado com sucesso!');
-        window.setTimeout(() => {
-            redirectByProfile(dados.perfil);
-        }, 350);
-    } catch (error) {
-        showToast(error.message || 'Nao foi possivel iniciar o acesso demo.', 'error');
-        setLoading(false);
-    }
-}
-
-demoCommissionButton?.addEventListener('click', () => {
-    handleDemoLogin('comissao').catch(console.error);
-});
-
-demoStudentButton?.addEventListener('click', () => {
-    handleDemoLogin('aluno').catch(console.error);
-});
-
 updateLoginHelper();
-hydrateRememberedAccess();
 redirectIfSessionIsValid().catch(console.error);

@@ -136,7 +136,7 @@ public class ContribuicaoController {
         lancamento.setContribuicao(true);
         lancamento.setCategoria("CONTRIBUICAO");
         lancamento.setFormaPagamento(resolveOption(input.formaPagamento(), "PIX", List.of("PIX", "DINHEIRO", "BOLETO", "CARTAO", "TRANSFERENCIA", "OUTROS")));
-        lancamento.setStatus(resolveOption(input.status(), usuario.getPerfil() == Perfil.ROLE_COMISSAO ? "CONFIRMADO" : "PENDENTE", List.of("PENDENTE", "CONFIRMADO", "CANCELADO")));
+        lancamento.setStatus(resolveOption(input.status(), "CONFIRMADO", List.of("PENDENTE", "CONFIRMADO", "CANCELADO")));
         lancamento.setCampanha(resolveOption(input.campanha(), "META_GERAL", List.of("META_GERAL", "RIFA", "PATROCINIO", "EVENTO", "OUTROS")));
         lancamento.setAnonima(Boolean.TRUE.equals(input.anonima()));
         lancamento.setValor(valor);

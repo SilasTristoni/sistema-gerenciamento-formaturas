@@ -624,7 +624,7 @@ document.getElementById('refreshBtn')?.addEventListener('click', () => {
 
 document.getElementById('logoutBtn')?.addEventListener('click', () => {
     closeStudentMenu();
-    auth.clearSession();
+    auth.logout();
     redirectToLogin();
 });
 
@@ -639,6 +639,7 @@ document.getElementById('studentContributionForm')?.addEventListener('submit', (
     handleContributionSubmit(event).catch(console.error);
 });
 
+auth.onLogout(redirectToLogin);
 restoreStoredSection();
 setActiveStudentSection(activeStudentSection, { shouldScroll: false });
 loadStudentArea().catch(console.error);

@@ -82,7 +82,7 @@
       </div>
 
       <div class="text-xs text-slate-500">
-        Ambiente de demonstração com acesso separado para comissão e formando.
+        Plataforma para gestão da comissão e acompanhamento dos formandos.
       </div>
     </section>
 
@@ -93,9 +93,9 @@
             <i class="ph ph-device-mobile"></i>
             Acesso do aluno
           </span>
-          <h1 class="mt-4 text-2xl font-extrabold tracking-tight text-white">Entre pelo celular e continue de onde parou.</h1>
+          <h1 class="mt-4 text-2xl font-extrabold tracking-tight text-white">Entre pelo celular com uma experiência simples e segura.</h1>
           <p class="mt-3 text-sm leading-6 text-slate-400">
-            O login oferece lembrança do último acesso, alternância de senha visível e abre a área do formando com seções separadas para resumo, agenda, cadastro e votações.
+            Acesse a área do formando com seções separadas para resumo, agenda, cadastro e votações.
           </p>
           <div class="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-300">
             <div class="rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3">Resumo</div>
@@ -114,18 +114,6 @@
             <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-teal-400 text-white shadow-glow">
               <i class="ph ph-graduation-cap text-2xl"></i>
             </div>
-          </div>
-
-          <div id="quickAccessCard" class="login-quick-access mb-6" hidden>
-            <div class="login-quick-access__copy">
-              <span class="brand-tag">Último acesso</span>
-              <strong id="quickAccessLabel">Conta recente</strong>
-              <p id="quickAccessMeta" class="login-quick-access__meta">Preencha apenas a senha para continuar.</p>
-            </div>
-            <button id="quickAccessButton" type="button" class="login-inline-action">
-              <i class="ph ph-arrow-right"></i>
-              Usar
-            </button>
           </div>
 
           <div class="mb-6 rounded-2xl border border-emerald-400/15 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200">
@@ -168,16 +156,6 @@
               <p id="capsLockWarning" class="login-caps-warning" hidden>Caps Lock está ativado.</p>
             </div>
 
-            <div class="login-form-options">
-              <label class="login-check">
-                <input id="rememberAccess" type="checkbox">
-                <span>Lembrar neste aparelho</span>
-              </label>
-              <span id="sessionHint" class="login-form-note login-form-note--compact">
-                Se marcar "Lembrar neste aparelho", o acesso permanece salvo neste navegador.
-              </span>
-            </div>
-
             <button type="submit" id="btnLogin" class="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary-600 via-primary-500 to-teal-400 px-4 py-3.5 text-base font-bold text-white shadow-glow transition-all hover:-translate-y-0.5 hover:brightness-110">
               <i class="ph ph-sign-in"></i>
               Entrar no painel
@@ -186,8 +164,8 @@
 
           <div class="login-security-strip">
             <div class="login-security-pill">
-              <i class="ph ph-lightning"></i>
-              <span>Acesso rápido</span>
+              <i class="ph ph-lock-key"></i>
+              <span>Acesso seguro</span>
             </div>
             <div class="login-security-pill">
               <i class="ph ph-shield-check"></i>
@@ -199,16 +177,6 @@
             </div>
           </div>
 
-          <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <button id="demoCommissionBtn" type="button" class="login-demo-btn">
-              <i class="ph ph-briefcase"></i>
-              Entrar como ComissÃ£o Demo
-            </button>
-            <button id="demoStudentBtn" type="button" class="login-demo-btn">
-              <i class="ph ph-student"></i>
-              Entrar como Aluno Demo
-            </button>
-          </div>
         </div>
       </div>
     </section>

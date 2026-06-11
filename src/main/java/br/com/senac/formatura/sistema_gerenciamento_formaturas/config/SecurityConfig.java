@@ -40,7 +40,6 @@ public class SecurityConfig {
             .authorizeHttpRequests(req -> {
                 req.requestMatchers("/", "/*.html", "/manifest.json", "/css/**", "/js/**", "/assets/**").permitAll();
                 req.requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll();
-                req.requestMatchers(HttpMethod.POST, "/api/auth/demo/**").permitAll();
                 req.requestMatchers("/error").permitAll();
                 req.requestMatchers(HttpMethod.GET, "/api/dashboard/**").hasAuthority("ROLE_COMISSAO");
                 req.requestMatchers(HttpMethod.GET, "/api/relatorios/**").hasAuthority("ROLE_COMISSAO");

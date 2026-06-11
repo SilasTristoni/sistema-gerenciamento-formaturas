@@ -11,8 +11,10 @@ function authHeaders(isJson = true) {
     const token = auth.getToken();
     const headers = {};
 
+    if (!token) throw new Error("Sessão expirada");
+
     if (isJson) headers["Content-Type"] = "application/json";
-    if (token) headers["Authorization"] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
 
     return headers;
 }
@@ -22,7 +24,10 @@ function jsonHeaders() {
 }
 
 async function parseResponse(response) {
-    if (response.status === 401) throw new Error("Sessão expirada");
+    if (response.status === 401) {
+        auth.clearSession({ broadcast: true });
+        throw new Error("Sessão expirada");
+    }
     if (response.status === 403) throw new Error("Acesso negado");
 
     if (!response.ok) {
@@ -35,7 +40,10 @@ async function parseResponse(response) {
 }
 
 async function parseFileResponse(response) {
-    if (response.status === 401) throw new Error("Sessao expirada");
+    if (response.status === 401) {
+        auth.clearSession({ broadcast: true });
+        throw new Error("Sessao expirada");
+    }
     if (response.status === 403) throw new Error("Acesso negado");
 
     if (!response.ok) {
@@ -67,14 +75,6 @@ export const api = {
             method: "POST",
             headers: jsonHeaders(),
             body: JSON.stringify({ login, senha })
-        });
-        return parseResponse(response);
-    },
-
-    async loginDemo(tipo) {
-        const response = await fetch(`${AUTH_URL}/demo/${tipo}`, {
-            method: "POST",
-            headers: jsonHeaders()
         });
         return parseResponse(response);
     },
