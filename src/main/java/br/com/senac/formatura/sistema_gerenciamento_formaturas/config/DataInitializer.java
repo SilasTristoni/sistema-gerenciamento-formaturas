@@ -2,7 +2,6 @@ package br.com.senac.formatura.sistema_gerenciamento_formaturas.config;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -225,8 +224,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void ensureOpcao(Votacao votacao, String nome, String descricao) {
-        List<OpcaoVotacao> opcoes = votacao.getOpcoes();
-        if (opcoes != null && opcoes.stream().anyMatch(opcao -> nome.equalsIgnoreCase(opcao.getNomeFornecedor()))) {
+        if (opcaoVotacaoRepository.existsByVotacaoIdAndNomeFornecedorIgnoreCase(votacao.getId(), nome)) {
             return;
         }
         OpcaoVotacao opcao = new OpcaoVotacao();
