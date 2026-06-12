@@ -59,3 +59,5 @@ Esta documentacao foi elaborada com base no codigo atual do projeto, incluindo:
 4. Consulte `04-diagrama-de-classes.md`, `05-modelo-de-dados.md` e `08-diagrama-de-casos-de-uso.md`.
 5. Use `06-api-e-fluxos.md` para integracoes e testes.
 6. Use `07-roadmap.md` para planejamento da proxima iteracao.
+
+Adicionado host por meio de docker
