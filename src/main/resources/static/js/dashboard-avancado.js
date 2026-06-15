@@ -5,8 +5,10 @@ let monthlyChart = null;
 let categoryChart = null;
 let filtersBound = false;
 let reportActionsBound = false;
+let isDashboardLoading = false;
 
 const DASHBOARD_FILTER_KEY = "gestaoform.dashboard.filters";
+const THEME_KEY = "gestaoform.theme";
 const DEFAULT_FILTERS = {
   turmaId: "",
   periodMonths: "6"
@@ -36,6 +38,55 @@ function formatDate(value) {
 
 function formatEventAttendance(evento = {}) {
   return `${Number(evento.presencas || 0)} presencas | ${Number(evento.talvez || 0)} talvez | ${Number(evento.faltas || 0)} faltas | ${Number(evento.pendentes || 0)} pendentes`;
+}
+
+function renderEventAttendanceChips(evento = {}) {
+  return `
+    <div class="attendance-chips">
+      <span class="attendance-chip attendance-chip--present">${Number(evento.presencas || 0)} presencas</span>
+      <span class="attendance-chip attendance-chip--maybe">${Number(evento.talvez || 0)} talvez</span>
+      <span class="attendance-chip attendance-chip--absent">${Number(evento.faltas || 0)} faltas</span>
+      <span class="attendance-chip attendance-chip--pending">${Number(evento.pendentes || 0)} pendentes</span>
+    </div>
+  `;
+}
+
+function applyTheme(theme) {
+  const normalizedTheme = theme === "light" ? "light" : "dark";
+  document.documentElement.classList.toggle("light", normalizedTheme === "light");
+  document.documentElement.classList.toggle("dark", normalizedTheme !== "light");
+  const toggle = document.getElementById("themeToggleBtn");
+  if (toggle) {
+    toggle.innerHTML = normalizedTheme === "light"
+      ? '<i class="ph ph-moon"></i> Modo escuro'
+      : '<i class="ph ph-sun"></i> Modo claro';
+  }
+}
+
+function toggleTheme() {
+  const nextTheme = document.documentElement.classList.contains("light") ? "dark" : "light";
+  localStorage.setItem(THEME_KEY, nextTheme);
+  applyTheme(nextTheme);
+  renderCharts(window.lastDashboardData?.monthlyFinancial || [], window.lastDashboardData?.expenseCategories || []);
+}
+
+function chartThemeColors() {
+  const light = document.documentElement.classList.contains("light");
+  return {
+    text: light ? "#334155" : "#e2e8f0",
+    muted: light ? "#64748b" : "#9fb1c7",
+    grid: light ? "rgba(100, 116, 139, 0.18)" : "rgba(159, 177, 199, 0.12)"
+  };
+}
+
+function setRefreshLoading(loading) {
+  const button = document.getElementById("refreshBtn");
+  if (!button) return;
+  button.disabled = loading;
+  button.classList.toggle("is-loading", loading);
+  button.innerHTML = loading
+    ? '<i class="ph ph-arrows-clockwise refresh-spin"></i> Atualizando'
+    : '<i class="ph ph-arrows-clockwise"></i> Atualizar painel';
 }
 
 function setText(id, value) {
@@ -155,6 +206,8 @@ function renderCharts(monthlyFinancial = [], expenseCategories = []) {
   if (!monthlyCanvas || !categoryCanvas || typeof Chart === "undefined") return;
 
   destroyCharts();
+  const colors = chartThemeColors();
+  const isMobile = window.matchMedia("(max-width: 640px)").matches;
 
   monthlyChart = new Chart(monthlyCanvas, {
     type: "bar",
@@ -188,26 +241,30 @@ function renderCharts(monthlyFinancial = [], expenseCategories = []) {
     },
     options: {
       maintainAspectRatio: false,
+      responsive: true,
+      layout: { padding: isMobile ? { left: 0, right: 0, top: 4, bottom: 0 } : 8 },
       plugins: {
         legend: {
           labels: {
-            color: "#e2e8f0",
+            color: colors.text,
             usePointStyle: true,
-            boxWidth: 10
+            boxWidth: 10,
+            padding: isMobile ? 10 : 16
           }
         }
       },
       scales: {
         x: {
-          ticks: { color: "#9fb1c7" },
+          ticks: { color: colors.muted, maxRotation: 0, autoSkip: true, maxTicksLimit: isMobile ? 4 : 8 },
           grid: { display: false }
         },
         y: {
           ticks: {
-            color: "#9fb1c7",
-            callback: value => formatCurrency(value)
+            color: colors.muted,
+            maxTicksLimit: isMobile ? 4 : 6,
+            callback: value => isMobile ? Number(value).toLocaleString("pt-BR", { notation: "compact" }) : formatCurrency(value)
           },
-          grid: { color: "rgba(159, 177, 199, 0.12)" }
+          grid: { color: colors.grid }
         }
       }
     }
@@ -237,7 +294,7 @@ function renderCharts(monthlyFinancial = [], expenseCategories = []) {
         legend: {
           position: "bottom",
           labels: {
-            color: "#e2e8f0",
+            color: colors.text,
             usePointStyle: true,
             boxWidth: 10,
             padding: 18
@@ -365,7 +422,7 @@ function renderEvents(events = []) {
         <div class="item-main">
           <p class="item-title">${escapeHtml(item.nome || "Evento sem nome")}</p>
           <p class="item-subtitle">${escapeHtml(formatDate(item.data))} | ${escapeHtml(item.local || "Local a definir")}</p>
-          <p class="item-subtitle">${escapeHtml(formatEventAttendance(item))}</p>
+          ${renderEventAttendanceChips(item)}
         </div>
         <span class="status-badge">${escapeHtml(item.status || "agendado")}</span>
       </article>
@@ -381,7 +438,7 @@ function renderEvents(events = []) {
         <div class="item-main">
           <p class="item-title">${escapeHtml(item.nome || "Evento sem nome")}</p>
           <p class="item-subtitle">${escapeHtml(formatDate(item.data))} | ${escapeHtml(item.local || "Local a definir")} | ${escapeHtml(item.diasRestantes >= 0 ? `${item.diasRestantes} dias restantes` : "Data indefinida")}</p>
-          <p class="item-subtitle">${escapeHtml(formatEventAttendance(item))}</p>
+          ${renderEventAttendanceChips(item)}
         </div>
         <span class="status-badge">${escapeHtml(item.status || "agendado")}</span>
       </article>
@@ -573,10 +630,17 @@ function bindReportActions() {
 }
 
 async function loadDashboard() {
+  if (isDashboardLoading) return;
+  isDashboardLoading = true;
+  setRefreshLoading(true);
   showState({ loading: true, error: "" });
 
   const session = await validateSession();
-  if (!session) return;
+  if (!session) {
+    isDashboardLoading = false;
+    setRefreshLoading(false);
+    return;
+  }
 
   try {
     syncFilterInputs();
@@ -589,6 +653,7 @@ async function loadDashboard() {
       api.dashboardResumo(filters),
       api.relatorioFinanceiro(filters)
     ]);
+    window.lastDashboardData = dashboard;
 
     renderOverview(dashboard);
     renderAlerts(dashboard.alerts);
@@ -601,6 +666,9 @@ async function loadDashboard() {
     showState({ loading: false, error: "" });
   } catch (error) {
     showState({ loading: false, error: error.message || "Não foi possível carregar os dados." });
+  } finally {
+    isDashboardLoading = false;
+    setRefreshLoading(false);
   }
 }
 
@@ -613,6 +681,9 @@ document.getElementById("refreshBtn")?.addEventListener("click", () => {
   loadDashboard().catch(console.error);
 });
 
+document.getElementById("themeToggleBtn")?.addEventListener("click", toggleTheme);
+
+applyTheme(localStorage.getItem(THEME_KEY) || "dark");
 syncFilterInputs();
 bindNavigation();
 bindDashboardFilters();

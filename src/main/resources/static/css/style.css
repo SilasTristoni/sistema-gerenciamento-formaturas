@@ -25,12 +25,44 @@
 
 html {
     color-scheme: dark;
+    overflow-x: hidden;
 }
 
 body {
     background: radial-gradient(circle at top left, rgba(16,185,129,.08), transparent 28%),
                 radial-gradient(circle at bottom right, rgba(59,130,246,.08), transparent 25%),
                 var(--bg-main);
+    overflow-x: hidden;
+    touch-action: pan-y;
+}
+
+html.light {
+    color-scheme: light;
+    --bg-main: #f3f7fb;
+    --bg-panel: rgba(255, 255, 255, 0.88);
+    --bg-panel-strong: #ffffff;
+    --bg-soft: rgba(15, 23, 42, 0.04);
+    --border-soft: rgba(15, 23, 42, 0.10);
+    --border-strong: rgba(51, 65, 85, 0.18);
+    --text-main: #0f172a;
+    --text-soft: #475569;
+    --text-muted: #64748b;
+    --shadow-soft: 0 20px 50px rgba(15, 23, 42, 0.12);
+    --shadow-glow: 0 16px 34px rgba(16,185,129,0.12);
+}
+
+html.light body {
+    background:
+        radial-gradient(circle at top left, rgba(16,185,129,.13), transparent 26%),
+        radial-gradient(circle at bottom right, rgba(59,130,246,.12), transparent 24%),
+        var(--bg-main);
+    color: var(--text-main);
+}
+
+html.light body > .fixed.inset-0 {
+    background:
+        radial-gradient(circle at top left, rgba(16,185,129,.13), transparent 26%),
+        radial-gradient(circle at bottom right, rgba(59,130,246,.12), transparent 24%) !important;
 }
 
 .admin-layout {
@@ -1502,6 +1534,19 @@ table tbody tr:hover {
         min-height: 100dvh;
     }
 
+    .admin-layout {
+        height: auto !important;
+    }
+
+    .admin-main {
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    .admin-main > div.flex-1 {
+        overflow: visible !important;
+    }
+
     .admin-sidebar {
         position: fixed;
         top: 0;
@@ -1660,6 +1705,205 @@ table tbody tr:hover {
 body.student-menu-open {
     overflow: hidden;
 }
+
+.refresh-spin {
+    animation: rotateSpinner 0.8s linear infinite;
+}
+
+#refreshBtn:disabled,
+.brand-photo-action:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.admin-sidebar-close {
+    margin-left: auto;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-main);
+    border: 1px solid var(--border-soft);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.brand-photo-controls {
+    margin-top: 0.85rem;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 0.45rem;
+    align-items: center;
+}
+
+.brand-photo-button,
+.brand-photo-action {
+    min-height: 2.35rem;
+    border-radius: 0.85rem;
+    border: 1px solid var(--border-soft);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+    font-size: 0.78rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.55rem 0.65rem;
+    cursor: pointer;
+}
+
+.brand-photo-button input {
+    display: none;
+}
+
+.brand-photo-action {
+    color: #d1fae5;
+    background: rgba(16, 185, 129, 0.18);
+    border-color: rgba(16, 185, 129, 0.26);
+}
+
+.brand-photo-action--ghost {
+    color: var(--text-soft);
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.brand-sidebar__photo.has-custom-photo {
+    background-image:
+        linear-gradient(180deg, rgba(2, 6, 23, 0.04), rgba(2, 6, 23, 0.20)),
+        var(--class-photo-url);
+    background-size: contain;
+    background-color: rgba(15, 23, 42, 0.58);
+}
+
+.class-photo-frame {
+    margin: 0;
+    width: min(260px, 100%);
+    aspect-ratio: 16 / 10;
+    border-radius: 1.25rem;
+    border: 1px solid var(--border-soft);
+    background: rgba(255, 255, 255, 0.04);
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+}
+
+.class-photo-image {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+    background: rgba(2, 6, 23, 0.34);
+}
+
+.attendance-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.55rem;
+}
+
+.attendance-chip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.32rem 0.55rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.attendance-chip--present { background: rgba(52, 211, 153, 0.18); color: #86efac; }
+.attendance-chip--maybe { background: rgba(251, 191, 36, 0.18); color: #fde68a; }
+.attendance-chip--absent { background: rgba(248, 113, 113, 0.18); color: #fecaca; }
+.attendance-chip--pending { background: rgba(96, 165, 250, 0.16); color: #bfdbfe; }
+
+.money-positive {
+    color: #34d399;
+    font-weight: 800;
+}
+
+.money-negative {
+    color: #f87171;
+    font-weight: 800;
+}
+
+html.light .bg-dark-950,
+html.light .bg-dark-900,
+html.light .bg-dark-800,
+html.light .bg-dark-700,
+html.light .bg-slate-950\/70,
+html.light .bg-slate-950\/45,
+html.light .bg-dark-900\/50,
+html.light .bg-dark-900\/45,
+html.light .bg-dark-800\/55,
+html.light .bg-dark-800\/60,
+html.light .bg-dark-800\/80,
+html.light .bg-dark-800\/95 {
+    background-color: rgba(255, 255, 255, 0.88) !important;
+}
+
+html.light .text-white,
+html.light .text-slate-200,
+html.light .text-slate-300 {
+    color: #0f172a !important;
+}
+
+html.light .text-slate-400,
+html.light .text-slate-500 {
+    color: #475569 !important;
+}
+
+html.light .border-white\/5,
+html.light .border-white\/6,
+html.light .border-white\/8,
+html.light .border-white\/10,
+html.light .border-dark-700,
+html.light .border-dark-600 {
+    border-color: rgba(15, 23, 42, 0.10) !important;
+}
+
+html.light .simple-hero,
+html.light .simple-card,
+html.light .simple-panel,
+html.light .card-panel,
+html.light .agenda-panel,
+html.light .modal-panel,
+html.light .modal-intro,
+html.light .modal-section,
+html.light .simple-item,
+html.light .simple-alert,
+html.light .simple-summary__row,
+html.light .agenda-item,
+html.light .brand-sidebar__card,
+html.light .brand-wide-logo-card,
+html.light .simple-update {
+    background-color: rgba(255, 255, 255, 0.88);
+    border-color: var(--border-soft);
+}
+
+html.light .form-input {
+    background: rgba(255, 255, 255, 0.92);
+    color: #0f172a;
+    border-color: rgba(15, 23, 42, 0.14);
+}
+
+html.light table tbody tr:hover {
+    background: rgba(15, 23, 42, 0.035);
+}
+
+html.light ::-webkit-scrollbar-track { background: #e2e8f0; }
+html.light ::-webkit-scrollbar-thumb { background: #94a3b8; }
+html.light .custom-scroll { scrollbar-color: #94a3b8 #e2e8f0; }
+html.light .money-positive,
+html.light .text-emerald-400 { color: #047857 !important; }
+html.light .money-negative,
+html.light .text-red-400,
+html.light .text-red-500 { color: #dc2626 !important; }
+html.light .attendance-chip--present { color: #047857; }
+html.light .attendance-chip--maybe { color: #92400e; }
+html.light .attendance-chip--absent { color: #b91c1c; }
+html.light .attendance-chip--pending { color: #1d4ed8; }
 
 .student-topbar {
     display: none;
@@ -2728,5 +2972,117 @@ body.student-menu-open {
 
     .student-nav-drawer {
         width: min(100vw, 340px);
+    }
+}
+
+@media (max-width: 767px) {
+    body:not(.admin-menu-open) {
+        overflow-y: auto;
+    }
+
+    .admin-sidebar {
+        height: 100dvh;
+        min-height: 100dvh;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+    }
+
+    .admin-sidebar-backdrop {
+        touch-action: none;
+    }
+
+    .admin-main header {
+        touch-action: pan-y;
+        position: sticky;
+        top: 0;
+        z-index: 35;
+    }
+
+    .admin-main header > div:last-child {
+        flex-wrap: nowrap;
+    }
+
+    .admin-main header .btn-outline,
+    .admin-main header .btn {
+        min-width: 2.8rem;
+        padding-left: 0.82rem;
+        padding-right: 0.82rem;
+        white-space: nowrap;
+    }
+
+    #screen-dashboard .simple-cards {
+        display: flex;
+        grid-template-columns: none;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scroll-padding: 1rem;
+        padding-bottom: 0.4rem;
+        margin-left: -0.15rem;
+        margin-right: -0.15rem;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #screen-dashboard .simple-cards .simple-card {
+        flex: 0 0 min(82vw, 320px);
+        scroll-snap-align: start;
+    }
+
+    .simple-chart {
+        min-height: 240px;
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .simple-chart canvas {
+        max-width: 100% !important;
+    }
+
+    .class-photo-frame {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+    }
+
+    .brand-photo-controls {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .brand-photo-button {
+        grid-column: span 2;
+    }
+
+    #modalBackdrop {
+        align-items: stretch;
+        justify-content: center;
+        padding: max(0.5rem, env(safe-area-inset-top)) 0.5rem max(0.5rem, env(safe-area-inset-bottom));
+        overflow: hidden;
+    }
+
+    #modalPanel {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-height: calc(100dvh - 1rem);
+        align-self: center;
+        overflow: hidden;
+    }
+
+    #modalPanel > .p-6 {
+        flex: 1 1 auto;
+        min-height: 0;
+        max-height: none;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
+    }
+
+    #modalPanel > .px-6.py-4 {
+        flex-shrink: 0;
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+    }
+
+    .simple-item,
+    .simple-summary__row {
+        min-width: 0;
     }
 }

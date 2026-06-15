@@ -8,10 +8,13 @@ import { showToast } from './components/toast.js';
 let db = { turmas: [], alunos: [], eventos: [], financeiro: [], votacoes: [], dashboard: null, contribuicoes: null, relatorio: null };
 let usuarioLogado = null;
 let monthlyChart = null;
+let isLoadingData = false;
 const LAST_TURMA_KEY = 'gestaoform.lastTurmaId';
 const DASHBOARD_FILTER_KEY = 'gestaoform.dashboard.filters';
 const CONTRIBUTION_FILTER_KEY = 'gestaoform.contribuicoes.filters';
 const REPORT_FILTER_KEY = 'gestaoform.relatorios.filters';
+const THEME_KEY = 'gestaoform.theme';
+const CLASS_PHOTO_KEY = 'gestaoform.classPhoto';
 const DEFAULT_DASHBOARD_FILTERS = {
     turmaId: '',
     periodMonths: '6'
@@ -33,7 +36,111 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
     currency: 'BRL'
 });
 
+function applyTheme(theme) {
+    const normalizedTheme = theme === 'light' ? 'light' : 'dark';
+    document.documentElement.classList.toggle('light', normalizedTheme === 'light');
+    document.documentElement.classList.toggle('dark', normalizedTheme !== 'light');
+    document.body?.classList.toggle('theme-light', normalizedTheme === 'light');
+
+    const toggle = document.getElementById('themeToggleBtn');
+    if (toggle) {
+        toggle.setAttribute('aria-label', normalizedTheme === 'light' ? 'Ativar modo escuro' : 'Ativar modo claro');
+        toggle.innerHTML = normalizedTheme === 'light'
+            ? '<i class="ph ph-moon"></i><span class="hidden sm:inline">Escuro</span>'
+            : '<i class="ph ph-sun"></i><span class="hidden sm:inline">Claro</span>';
+    }
+}
+
+function initTheme() {
+    const savedTheme = localStorage.getItem(THEME_KEY) || 'dark';
+    applyTheme(savedTheme);
+}
+
+function toggleTheme() {
+    const nextTheme = document.documentElement.classList.contains('light') ? 'dark' : 'light';
+    localStorage.setItem(THEME_KEY, nextTheme);
+    applyTheme(nextTheme);
+    renderDashboardCharts(db.dashboard?.monthlyFinancial || [], []);
+}
+
+function setRefreshLoading(loading) {
+    const button = document.getElementById('refreshBtn');
+    if (!button) return;
+    button.disabled = loading;
+    button.classList.toggle('is-loading', loading);
+    button.setAttribute('aria-busy', String(loading));
+    button.innerHTML = loading
+        ? '<i class="ph ph-arrows-clockwise refresh-spin"></i><span class="hidden sm:inline">Atualizando</span>'
+        : '<i class="ph ph-arrows-clockwise"></i><span class="hidden sm:inline">Atualizar</span>';
+}
+
+function applyClassPhoto(src) {
+    document.querySelectorAll('[data-class-photo-target]').forEach(element => {
+        if (element.tagName === 'IMG') {
+            element.src = src || './assets/images/formatura-dashboard-identidade.png';
+        } else if (src) {
+            element.style.setProperty('--class-photo-url', `url("${src}")`);
+            element.classList.add('has-custom-photo');
+        } else {
+            element.style.removeProperty('--class-photo-url');
+            element.classList.remove('has-custom-photo');
+        }
+    });
+}
+
+function setupClassPhoto() {
+    applyClassPhoto(localStorage.getItem(CLASS_PHOTO_KEY));
+
+    const input = document.getElementById('classPhotoInput');
+    const preview = document.getElementById('classPhotoPreview');
+    const saveButton = document.getElementById('classPhotoSaveBtn');
+    const clearButton = document.getElementById('classPhotoClearBtn');
+    let pendingPhoto = '';
+
+    input?.addEventListener('change', () => {
+        const file = input.files?.[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            showToast('Selecione um arquivo de imagem.', 'error');
+            input.value = '';
+            return;
+        }
+        if (file.size > 2.5 * 1024 * 1024) {
+            showToast('Use uma imagem de ate 2,5 MB.', 'error');
+            input.value = '';
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+            pendingPhoto = String(reader.result || '');
+            if (preview) preview.src = pendingPhoto;
+            saveButton?.removeAttribute('disabled');
+        };
+        reader.readAsDataURL(file);
+    });
+
+    saveButton?.addEventListener('click', () => {
+        if (!pendingPhoto) return;
+        localStorage.setItem(CLASS_PHOTO_KEY, pendingPhoto);
+        applyClassPhoto(pendingPhoto);
+        saveButton.setAttribute('disabled', 'true');
+        showToast('Imagem da turma atualizada.', 'success');
+    });
+
+    clearButton?.addEventListener('click', () => {
+        pendingPhoto = '';
+        localStorage.removeItem(CLASS_PHOTO_KEY);
+        applyClassPhoto('');
+        if (preview) preview.src = './assets/images/formatura-dashboard-identidade.png';
+        saveButton?.setAttribute('disabled', 'true');
+    });
+}
+
+window.toggleTheme = toggleTheme;
+
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    setupClassPhoto();
     auth.onLogout(redirectToLogin);
     setupNavigation();
     setupDashboardFilterControls();
@@ -78,6 +185,7 @@ async function verificarSessao() {
         if (document.getElementById('userLoginDisplay')) document.getElementById('userLoginDisplay').innerText = '@' + login.replace('@gestaoform.local', '');
 
         await carregarDados();
+        if (!auth.getToken()) return;
         document.body.classList.remove('auth-pending');
     } catch (error) {
         console.error(error);
@@ -92,6 +200,9 @@ window.logout = () => {
 };
 
 export async function carregarDados() {
+    if (isLoadingData) return;
+    isLoadingData = true;
+    setRefreshLoading(true);
     try {
         syncMainDashboardFilterInputs();
         syncContributionFilterInputs();
@@ -139,6 +250,9 @@ export async function carregarDados() {
             return;
         }
         showToast(error.message || 'Erro ao conectar com servidor', 'error');
+    } finally {
+        isLoadingData = false;
+        setRefreshLoading(false);
     }
 }
 window.carregarDados = carregarDados;
@@ -308,11 +422,22 @@ function destroyDashboardCharts() {
     monthlyChart = null;
 }
 
+function chartThemeColors() {
+    const light = document.documentElement.classList.contains('light');
+    return {
+        text: light ? '#334155' : '#e2e8f0',
+        muted: light ? '#64748b' : '#9fb1c7',
+        grid: light ? 'rgba(100, 116, 139, 0.18)' : 'rgba(159, 177, 199, 0.12)'
+    };
+}
+
 function renderDashboardCharts(monthlyFinancial = [], expenseCategories = []) {
     const monthlyCanvas = document.getElementById('monthlyChart');
     if (!monthlyCanvas || typeof Chart === 'undefined') return;
 
     destroyDashboardCharts();
+    const colors = chartThemeColors();
+    const isMobile = window.matchMedia('(max-width: 640px)').matches;
 
     monthlyChart = new Chart(monthlyCanvas, {
         type: 'bar',
@@ -346,16 +471,19 @@ function renderDashboardCharts(monthlyFinancial = [], expenseCategories = []) {
         },
         options: {
             maintainAspectRatio: false,
+            responsive: true,
+            layout: { padding: isMobile ? { left: 0, right: 0, top: 4, bottom: 0 } : 8 },
             plugins: {
                 legend: {
-                    labels: { color: '#e2e8f0', usePointStyle: true, boxWidth: 10 }
+                    position: isMobile ? 'bottom' : 'top',
+                    labels: { color: colors.text, usePointStyle: true, boxWidth: 10, padding: isMobile ? 10 : 16 }
                 }
             },
             scales: {
-                x: { ticks: { color: '#9fb1c7' }, grid: { display: false } },
+                x: { ticks: { color: colors.muted, maxRotation: 0, autoSkip: true, maxTicksLimit: isMobile ? 4 : 8 }, grid: { display: false } },
                 y: {
-                    ticks: { color: '#9fb1c7', callback: value => formatCurrency(value) },
-                    grid: { color: 'rgba(159, 177, 199, 0.12)' }
+                    ticks: { color: colors.muted, maxTicksLimit: isMobile ? 4 : 6, callback: value => isMobile ? Number(value).toLocaleString('pt-BR', { notation: 'compact' }) : formatCurrency(value) },
+                    grid: { color: colors.grid }
                 }
             }
         }
@@ -415,7 +543,7 @@ function renderIntegratedDashboard(dashboard) {
             <div class="simple-item__main">
                 <p class="simple-item__title">${escapeHtml(item.nome || 'Evento sem nome')}</p>
                 <p class="simple-item__subtitle">${escapeHtml(formatDate(item.data))} | ${escapeHtml(item.local || 'Local a definir')}</p>
-                <p class="simple-item__subtitle">${escapeHtml(formatEventAttendance(item))}</p>
+                ${renderEventAttendanceChips(item)}
             </div>
         </article>
     `, 'Nenhum evento cadastrado.');
@@ -499,6 +627,17 @@ function eventsByDate(eventos = []) {
 
 function formatEventAttendance(evento = {}) {
     return `${Number(evento.presencas || 0)} presencas | ${Number(evento.talvez || 0)} talvez | ${Number(evento.faltas || 0)} faltas | ${Number(evento.pendentes || 0)} pendentes`;
+}
+
+function renderEventAttendanceChips(evento = {}) {
+    return `
+        <div class="attendance-chips" aria-label="Resumo de presencas">
+            <span class="attendance-chip attendance-chip--present">${Number(evento.presencas || 0)} presencas</span>
+            <span class="attendance-chip attendance-chip--maybe">${Number(evento.talvez || 0)} talvez</span>
+            <span class="attendance-chip attendance-chip--absent">${Number(evento.faltas || 0)} faltas</span>
+            <span class="attendance-chip attendance-chip--pending">${Number(evento.pendentes || 0)} pendentes</span>
+        </div>
+    `;
 }
 
 function renderAgendaActions(evento = {}) {
@@ -797,7 +936,7 @@ function renderAgendaSelectedDay(eventos = []) {
                 <div class="agenda-item__main">
                     <p class="agenda-item__title">${escapeHtml(evento.nome || 'Evento sem nome')}</p>
                     <p class="agenda-item__subtitle">${escapeHtml(evento.localEvento || 'Local a definir')}</p>
-                    <p class="agenda-item__subtitle">${escapeHtml(formatEventAttendance(evento))}</p>
+                    ${renderEventAttendanceChips(evento)}
                 </div>
                 <div class="agenda-item__side">
                     <span class="agenda-item__badge">${escapeHtml(evento.status || 'agendado')}</span>
@@ -823,7 +962,7 @@ function renderAgendaUpcoming(eventos = []) {
                 <div class="agenda-item__main">
                     <p class="agenda-item__title">${escapeHtml(evento.nome || 'Evento sem nome')}</p>
                     <p class="agenda-item__subtitle">${escapeHtml(formatDate(evento.dataEvento))} | ${escapeHtml(evento.localEvento || 'Local a definir')}</p>
-                    <p class="agenda-item__subtitle">${escapeHtml(formatEventAttendance(evento))}</p>
+                    ${renderEventAttendanceChips(evento)}
                 </div>
                 <div class="agenda-item__side">
                     <span class="agenda-item__badge">${escapeHtml(evento.status || 'agendado')}</span>
@@ -1034,6 +1173,7 @@ function setupNavigation() {
     const sidebar = document.getElementById('adminSidebar');
     const backdrop = document.getElementById('adminSidebarBackdrop');
     const menuToggle = document.getElementById('menuToggle');
+    const menuClose = document.getElementById('adminSidebarClose');
 
     const setMenuOpen = (isOpen) => {
         sidebar?.classList.toggle('is-open', isOpen);
@@ -1046,6 +1186,7 @@ function setupNavigation() {
         setMenuOpen(!sidebar?.classList.contains('is-open'));
     });
     backdrop?.addEventListener('click', () => setMenuOpen(false));
+    menuClose?.addEventListener('click', () => setMenuOpen(false));
     window.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') setMenuOpen(false);
     });
@@ -1408,16 +1549,43 @@ async function confirmarImportacaoCsv() {
 }
 
 let registroParaExcluir = null;
-window.excluirRegistro = (kind, id) => {
-    registroParaExcluir = { kind, id };
+window.excluirRegistro = (kind, id, action) => {
+    const normalizedAction = kind === 'lancamento'
+        ? (action === 'delete' ? 'delete' : 'cancel')
+        : 'delete';
+    registroParaExcluir = { kind, id, action: normalizedAction };
     const modalConfirm = document.getElementById('confirmModal');
     if (modalConfirm) {
+        const isCancel = normalizedAction === 'cancel';
+        const title = modalConfirm.querySelector('[data-confirm-title]');
+        const message = modalConfirm.querySelector('[data-confirm-message]');
+        const button = modalConfirm.querySelector('[data-confirm-action]');
+        const icon = modalConfirm.querySelector('[data-confirm-icon]');
+        if (title) title.textContent = isCancel ? 'Cancelar lancamento?' : 'Excluir registro?';
+        if (message) {
+            message.textContent = isCancel
+                ? 'O lancamento sera mantido no historico com status CANCELADO.'
+                : 'Esta acao remove o registro definitivamente e nao pode ser desfeita.';
+        }
+        if (button) {
+            button.textContent = isCancel ? 'Sim, cancelar' : 'Sim, excluir';
+            button.classList.toggle('bg-orange-500', isCancel);
+            button.classList.toggle('hover:bg-orange-600', isCancel);
+            button.classList.toggle('bg-red-500', !isCancel);
+            button.classList.toggle('hover:bg-red-600', !isCancel);
+        }
+        if (icon) {
+            icon.classList.toggle('text-orange-400', isCancel);
+            icon.classList.toggle('text-red-500', !isCancel);
+        }
         modalConfirm.classList.remove('hidden');
         modalConfirm.classList.add('flex');
         modalConfirm.querySelector('.bg-dark-800')?.classList.replace('scale-95', 'scale-100');
         modalConfirm.querySelector('.bg-dark-800')?.classList.replace('opacity-0', 'opacity-100');
     }
 };
+
+window.cancelarLancamento = (id) => window.excluirRegistro('lancamento', id, 'cancel');
 
 window.fecharConfirmacao = () => {
     registroParaExcluir = null;
@@ -1434,10 +1602,14 @@ window.fecharConfirmacao = () => {
 
 window.confirmarExclusaoAcao = async () => {
     if (!registroParaExcluir) return;
-    const { kind, id } = registroParaExcluir;
+    const { kind, id, action } = registroParaExcluir;
     try {
-        await api.deletar(`/${kind}/${id}`);
-        showToast('Registro excluído com sucesso!', 'success');
+        if (kind === 'lancamento' && action === 'cancel') {
+            await api.cancelarLancamento(id);
+        } else {
+            await api.deletar(`/${kind}/${id}`);
+        }
+        showToast(action === 'cancel' ? 'Lancamento cancelado com sucesso!' : 'Registro excluido com sucesso!', 'success');
         window.fecharConfirmacao();
         await carregarDados();
     } catch (err) {

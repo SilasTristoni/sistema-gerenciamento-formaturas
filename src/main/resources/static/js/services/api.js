@@ -166,6 +166,14 @@ export const api = {
         return parseResponse(response);
     },
 
+    async cancelarLancamento(id) {
+        const response = await fetch(`${CADASTRO_URL}/lancamento/${id}/cancelar`, {
+            method: "PUT",
+            headers: authHeaders(false)
+        });
+        return parseResponse(response);
+    },
+
     async estornarLancamento(id) {
         const response = await fetch(`${CADASTRO_URL}/lancamento/${id}/estornar`, {
             method: "PUT",

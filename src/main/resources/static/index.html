@@ -31,6 +31,12 @@
       }
     };
   </script>
+  <script>
+    try {
+      document.documentElement.classList.toggle("light", localStorage.getItem("gestaoform.theme") === "light");
+      document.documentElement.classList.toggle("dark", localStorage.getItem("gestaoform.theme") !== "light");
+    } catch (error) {}
+  </script>
 
   <link rel="stylesheet" href="./css/style.css" />
   <link rel="manifest" href="./manifest.json" />
@@ -52,13 +58,23 @@
             <div class="text-white font-semibold text-lg leading-tight">Formaly</div>
             <div class="text-xs text-slate-500">Painel inteligente da comissão</div>
           </div>
+          <button id="adminSidebarClose" type="button" class="admin-sidebar-close md:hidden" aria-label="Fechar menu"><i class="ph ph-x"></i></button>
         </div>
         <div class="brand-sidebar__card">
-          <div class="brand-sidebar__photo" aria-hidden="true"></div>
+          <div class="brand-sidebar__photo" data-class-photo-target aria-hidden="true"></div>
           <div class="brand-sidebar__copy">
             <span class="brand-tag">Identidade visual</span>
             <strong>Campanha da formatura</strong>
             <p>Uma leitura visual única para agenda, caixa e crescimento da turma.</p>
+            <div class="brand-photo-controls">
+              <label class="brand-photo-button">
+                <i class="ph ph-image-square"></i>
+                <span>Alterar foto</span>
+                <input id="classPhotoInput" type="file" accept="image/*">
+              </label>
+              <button id="classPhotoSaveBtn" type="button" class="brand-photo-action" disabled>Salvar</button>
+              <button id="classPhotoClearBtn" type="button" class="brand-photo-action brand-photo-action--ghost">Padrao</button>
+            </div>
           </div>
         </div>
       </div>
@@ -105,7 +121,8 @@
           </div>
         </div>
         <div class="flex items-center gap-3">
-          <button onclick="carregarDados()" class="btn-outline"><i class="ph ph-arrows-clockwise"></i><span class="hidden sm:inline">Atualizar</span></button>
+          <button id="refreshBtn" onclick="carregarDados()" class="btn-outline"><i class="ph ph-arrows-clockwise"></i><span class="hidden sm:inline">Atualizar</span></button>
+          <button id="themeToggleBtn" onclick="toggleTheme()" class="btn-outline" type="button" aria-label="Alternar tema"><i class="ph ph-sun"></i><span class="hidden sm:inline">Claro</span></button>
           <button onclick="openModal('new','lancamento')" class="btn btn-primary btn-admin shadow-lg"><i class="ph ph-plus-bold"></i> <span class="hidden sm:inline">Novo registro</span></button>
         </div>
       </header>
@@ -119,6 +136,9 @@
               <p class="simple-copy">Uma visão rápida para acompanhar dinheiro, próximos passos e o que precisa de atenção.</p>
             </div>
             <div class="simple-hero__media">
+              <figure class="class-photo-frame">
+                <img id="classPhotoPreview" data-class-photo-target src="./assets/images/formatura-dashboard-identidade.png" alt="Imagem da turma" class="class-photo-image">
+              </figure>
               <div class="simple-update">
                 <span class="simple-update__label">Atualizado</span>
                 <strong id="lastUpdate" class="simple-update__value">Agora</strong>
@@ -686,12 +706,12 @@
 
   <div id="confirmModal" class="fixed inset-0 bg-dark-900/80 backdrop-blur-sm hidden items-center justify-center z-[70] p-4 modal-backdrop">
     <div class="bg-dark-800 w-full max-w-sm rounded-2xl shadow-2xl border border-dark-700 p-6 text-center transform scale-95 transition-all duration-300">
-      <i class="ph-fill ph-warning-circle text-5xl text-red-500 mb-4 inline-block"></i>
-      <h3 class="text-xl font-bold text-white mb-2">Excluir Registro?</h3>
-      <p class="text-sm text-slate-400 mb-6">Esta ação não pode ser desfeita. Os dados serão apagados permanentemente.</p>
+      <i data-confirm-icon class="ph-fill ph-warning-circle text-5xl text-red-500 mb-4 inline-block"></i>
+      <h3 data-confirm-title class="text-xl font-bold text-white mb-2">Excluir Registro?</h3>
+      <p data-confirm-message class="text-sm text-slate-400 mb-6">Esta ação não pode ser desfeita. Os dados serão apagados permanentemente.</p>
       <div class="flex gap-3">
         <button onclick="fecharConfirmacao()" class="flex-1 px-4 py-2 rounded-xl border border-dark-600 text-slate-300 font-medium hover:bg-dark-700 transition-all">Cancelar</button>
-        <button onclick="confirmarExclusaoAcao()" class="flex-1 px-4 py-2 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all">Sim, Excluir</button>
+        <button data-confirm-action onclick="confirmarExclusaoAcao()" class="flex-1 px-4 py-2 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all">Sim, Excluir</button>
       </div>
     </div>
   </div>

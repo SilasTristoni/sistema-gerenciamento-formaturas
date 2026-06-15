@@ -10,6 +10,12 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script>
+    try {
+      document.documentElement.classList.toggle("light", localStorage.getItem("gestaoform.theme") === "light");
+      document.documentElement.classList.toggle("dark", localStorage.getItem("gestaoform.theme") !== "light");
+    } catch (error) {}
+  </script>
   <link rel="stylesheet" href="./css/dashboard-avancado.css" />
 </head>
 <body>
@@ -34,6 +40,7 @@
       <section class="sidebar-block">
         <p class="block-label">Atalhos</p>
         <button class="shortcut-btn" id="refreshBtn"><i class="ph ph-arrows-clockwise"></i> Atualizar painel</button>
+        <button class="shortcut-btn" id="themeToggleBtn"><i class="ph ph-sun"></i> Modo claro</button>
         <button class="shortcut-btn" id="scrollAlertsBtn"><i class="ph ph-siren"></i> Ver alertas</button>
         <a class="shortcut-btn" href="./index.html"><i class="ph ph-browser"></i> Abrir módulo completo</a>
       </section>

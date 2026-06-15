@@ -421,6 +421,16 @@ public class CadastroController {
         LancamentoFinanceiro lancamento = lancamentoRepo.findById(id).orElse(null);
         if(lancamento == null) return ResponseEntity.notFound().build();
         Long turmaId = lancamento.getTurma() != null ? lancamento.getTurma().getId() : null;
+        lancamentoRepo.delete(lancamento);
+        syncTurmaTotalArrecadado(turmaId);
+        return ResponseEntity.ok("Lancamento excluido com sucesso.");
+    }
+
+    @PutMapping("/lancamento/{id}/cancelar")
+    public ResponseEntity<?> cancelarLancamento(@PathVariable Long id) {
+        LancamentoFinanceiro lancamento = lancamentoRepo.findById(id).orElse(null);
+        if(lancamento == null) return ResponseEntity.notFound().build();
+        Long turmaId = lancamento.getTurma() != null ? lancamento.getTurma().getId() : null;
         lancamento.setStatus("CANCELADO");
         lancamentoRepo.save(lancamento);
         syncTurmaTotalArrecadado(turmaId);

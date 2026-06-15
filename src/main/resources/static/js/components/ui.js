@@ -84,13 +84,21 @@ function statusBadge(status = '') {
         ? 'bg-emerald-500/20 text-emerald-400'
         : ['aberta', 'agendado', 'pendente', 'pausada', 'rascunho'].includes(normalized)
             ? 'bg-sky-500/20 text-sky-300'
-            : 'bg-orange-500/20 text-orange-400';
+            : ['cancelado', 'estornado', 'desistente'].includes(normalized)
+                ? 'bg-slate-500/20 text-slate-300'
+                : 'bg-orange-500/20 text-orange-400';
 
     return `<span class="px-2.5 py-1 rounded-full text-xs font-semibold ${className}">${escapeHtml(status || '---')}</span>`;
 }
 
 function eventAttendance(evento = {}) {
     return `${Number(evento.presencas || 0)} presencas / ${Number(evento.talvez || 0)} talvez / ${Number(evento.faltas || 0)} faltas / ${Number(evento.pendentes || 0)} pendentes`;
+}
+
+function financeAmountClass(item = {}) {
+    const status = String(item.status || '').toLowerCase();
+    if (['cancelado', 'estornado'].includes(status)) return 'text-slate-400';
+    return String(item.tipo || '').toLowerCase() === 'receita' ? 'text-emerald-400' : 'text-red-400';
 }
 
 export const ui = {
@@ -173,20 +181,25 @@ export const ui = {
         if (!tbody) return;
 
         const ordered = sortByDateDesc(financeiro, 'dataLancamento');
-        tbody.innerHTML = ordered.length ? ordered.map(f => `
+        tbody.innerHTML = ordered.length ? ordered.map(f => {
+            const isCanceled = ['cancelado', 'estornado'].includes(String(f.status || '').toLowerCase());
+            const signal = isCanceled ? '' : String(f.tipo || '').toLowerCase() === 'receita' ? '+' : '-';
+            return `
             <tr>
                 <td class="px-6 py-4 text-white">${escapeHtml(f.descricao)}</td>
                 <td class="px-6 py-4 uppercase text-xs tracking-wider">${escapeHtml(f.tipo || '---')}</td>
                 <td class="px-6 py-4">${escapeHtml(f.categoria || f.referencia || 'OUTROS')}</td>
                 <td class="px-6 py-4">${statusBadge(f.status || 'CONFIRMADO')}</td>
-                <td class="px-6 py-4 font-bold ${(f.tipo || '').toLowerCase() === 'receita' ? 'text-emerald-400' : 'text-red-400'}">${(f.tipo || '').toLowerCase() === 'receita' ? '+' : '-'} ${escapeHtml(formatCurrency(f.valor || 0))}</td>
+                <td class="px-6 py-4 font-bold ${financeAmountClass(f)}">${signal} ${escapeHtml(formatCurrency(f.valor || 0))}</td>
                 <td class="px-6 py-4">${escapeHtml(formatDate(f.dataLancamento))}</td>
                 <td class="px-6 py-4 text-right flex justify-end gap-3">
                     <button onclick="editarRegistro('lancamento', ${f.id})" class="btn-admin text-primary-500 hover:text-primary-400" style="display:none;"><i class="ph ph-pencil-simple text-lg"></i></button>
-                    <button onclick="excluirRegistro('lancamento', ${f.id})" class="btn-admin text-orange-400 hover:text-orange-300" style="display:none;" title="Cancelar lançamento"><i class="ph ph-prohibit text-lg"></i></button>
+                    <button onclick="excluirRegistro('lancamento', ${f.id}, 'delete')" class="btn-admin text-red-500 hover:text-red-400" style="display:none;" title="Excluir lancamento"><i class="ph ph-trash text-lg"></i></button>
+                    ${isCanceled ? '' : `<button onclick="excluirRegistro('lancamento', ${f.id})" class="btn-admin text-orange-400 hover:text-orange-300" style="display:none;" title="Cancelar lancamento"><i class="ph ph-prohibit text-lg"></i></button>`}
                 </td>
             </tr>
-        `).join('') : renderEmptyRow('Nenhum lançamento financeiro cadastrado ainda.', 7);
+        `;
+        }).join('') : renderEmptyRow('Nenhum lancamento financeiro cadastrado ainda.', 7);
     },
 
     renderVotacoes(votacoes) {
