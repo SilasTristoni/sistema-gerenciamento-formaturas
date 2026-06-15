@@ -48,8 +48,8 @@
   <div class="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,.12),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,.10),transparent_22%)]"></div>
 
   <div class="admin-layout flex h-screen">
-    <aside id="adminSidebar" class="admin-sidebar w-80 flex-col bg-dark-800/80 backdrop-blur-xl border-r border-white/5" aria-label="Menu administrativo">
-      <div class="px-6 pt-6 pb-5 border-b border-white/6">
+    <aside id="adminSidebar" class="admin-sidebar w-72 flex-col bg-dark-800/80 backdrop-blur-xl border-r border-white/5" aria-label="Menu administrativo">
+      <div class="px-5 pt-5 pb-4 border-b border-white/6">
         <div class="brand-sidebar">
           <div class="brand-mark brand-mark--icon" aria-hidden="true">
             <i class="ph ph-graduation-cap"></i>
@@ -60,26 +60,9 @@
           </div>
           <button id="adminSidebarClose" type="button" class="admin-sidebar-close md:hidden" aria-label="Fechar menu"><i class="ph ph-x"></i></button>
         </div>
-        <div class="brand-sidebar__card">
-          <div class="brand-sidebar__photo" data-class-photo-target aria-hidden="true"></div>
-          <div class="brand-sidebar__copy">
-            <span class="brand-tag">Identidade visual</span>
-            <strong>Campanha da formatura</strong>
-            <p>Uma leitura visual única para agenda, caixa e crescimento da turma.</p>
-            <div class="brand-photo-controls">
-              <label class="brand-photo-button">
-                <i class="ph ph-image-square"></i>
-                <span>Alterar foto</span>
-                <input id="classPhotoInput" type="file" accept="image/*">
-              </label>
-              <button id="classPhotoSaveBtn" type="button" class="brand-photo-action" disabled>Salvar</button>
-              <button id="classPhotoClearBtn" type="button" class="brand-photo-action brand-photo-action--ghost">Padrao</button>
-            </div>
-          </div>
-        </div>
       </div>
 
-      <nav class="flex-1 overflow-y-auto py-5 px-3 space-y-1.5">
+      <nav class="admin-nav overflow-y-auto py-4 px-3 space-y-1">
         <button onclick="navigate('dashboard')" id="nav-dashboard" class="nav-item active"><i class="ph ph-squares-four text-xl"></i> Dashboard</button>
         <button onclick="navigate('alunos')" id="nav-alunos" class="nav-item"><i class="ph ph-student text-xl"></i> Alunos</button>
         <button onclick="navigate('turmas')" id="nav-turmas" class="nav-item"><i class="ph ph-graduation-cap text-xl"></i> Turmas</button>
@@ -89,23 +72,26 @@
         <button onclick="navigate('relatorios')" id="nav-relatorios" class="nav-item"><i class="ph ph-file-arrow-down text-xl"></i> Relatórios</button>
         <button onclick="navigate('votacao')" id="nav-votacao" class="nav-item"><i class="ph ph-chart-bar text-xl"></i> Enquetes</button>
       </nav>
-
-      <div class="m-3 mt-auto space-y-3">
-        <div class="rounded-[22px] border border-white/8 bg-white/[0.04] p-4">
+      <div class="brand-sidebar__card">
+        <div class="brand-sidebar__photo" data-class-photo-target aria-hidden="true"></div>
+        <div class="brand-sidebar__copy">
+          <span class="brand-tag">Identidade visual</span>
+          <strong>Campanha da turma</strong>
+        </div>
+      </div>
+      <div class="m-3 mt-auto">
+        <div class="rounded-[18px] border border-white/8 bg-white/[0.04] p-3">
           <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-2xl bg-slate-700 flex items-center justify-center text-white font-bold text-lg" id="userAvatar">U</div>
+            <div class="w-10 h-10 rounded-xl bg-slate-700 flex items-center justify-center text-white font-bold text-base" id="userAvatar">U</div>
             <div class="min-w-0">
               <div class="text-sm text-white font-semibold truncate" id="userNameDisplay">Carregando...</div>
               <div class="text-xs text-slate-500" id="userRoleDisplay">...</div>
               <div class="text-xs text-emerald-300 truncate mt-1" id="userLoginDisplay">@...</div>
             </div>
           </div>
-          <button onclick="logout()" class="mt-4 w-full text-left flex items-center justify-center gap-2 px-3 py-3 rounded-2xl text-red-400 border border-red-500/15 bg-red-500/5 hover:bg-red-500/10 transition-colors text-sm font-semibold">
+          <button onclick="logout()" class="mt-3 w-full text-left flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-red-400 border border-red-500/15 bg-red-500/5 hover:bg-red-500/10 transition-colors text-sm font-semibold">
             <i class="ph ph-sign-out text-lg"></i> Sair do Sistema
           </button>
-        </div>
-        <div class="brand-wide-logo-card brand-wide-logo-card--footer">
-          <img src="./assets/brand/formaly-banner.png" alt="Banner da Formaly" class="brand-wide-logo brand-wide-logo--footer">
         </div>
       </div>
     </aside>
@@ -139,6 +125,15 @@
               <figure class="class-photo-frame">
                 <img id="classPhotoPreview" data-class-photo-target src="./assets/images/formatura-dashboard-identidade.png" alt="Imagem da turma" class="class-photo-image">
               </figure>
+              <div class="brand-photo-controls brand-photo-controls--hero">
+                <label class="brand-photo-button">
+                  <i class="ph ph-image-square"></i>
+                  <span>Alterar foto</span>
+                  <input id="classPhotoInput" type="file" accept="image/*">
+                </label>
+                <button id="classPhotoSaveBtn" type="button" class="brand-photo-action" disabled>Salvar</button>
+                <button id="classPhotoClearBtn" type="button" class="brand-photo-action brand-photo-action--ghost">Padrao</button>
+              </div>
               <div class="simple-update">
                 <span class="simple-update__label">Atualizado</span>
                 <strong id="lastUpdate" class="simple-update__value">Agora</strong>
@@ -290,8 +285,6 @@
               <div id="alertsList" class="simple-stack mt-4"></div>
             </article>
           </div>
-
-          <div class="dashboard-visual-banner" aria-hidden="true"></div>
         </section>
 
         <section id="screen-alunos" class="screen hidden">

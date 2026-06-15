@@ -45,7 +45,7 @@ html.light body {
     linear-gradient(180deg, #f8fafc 0%, #eef4f8 100%);
 }
 
-.app-shell { min-height: 100vh; display: grid; grid-template-columns: 290px 1fr; }
+.app-shell { min-height: 100vh; display: grid; grid-template-columns: 270px 1fr; }
 
 .sidebar,
 .feature-card,
@@ -63,7 +63,7 @@ html.light body {
   top: 0;
   align-self: start;
   min-height: 100vh;
-  padding: 1.5rem;
+  padding: 1.15rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -122,7 +122,7 @@ html.light body {
 
 .nav-group,
 .stack-list,
-.summary-stack { display: grid; gap: 0.75rem; }
+.summary-stack { display: grid; gap: 0.65rem; }
 
 .report-actions,
 .report-kpi-grid { display: grid; gap: 0.75rem; }
@@ -144,7 +144,7 @@ html.light body {
   background: rgba(255, 255, 255, 0.03);
   color: var(--text-main);
   text-decoration: none;
-  padding: 0.95rem 1rem;
+  padding: 0.78rem 0.9rem;
   cursor: pointer;
   transition: 0.2s ease;
   display: flex;
@@ -479,10 +479,16 @@ html.light .days-box {
   border-color: var(--border-soft);
 }
 
+html.light .sidebar {
+  background: rgba(255, 255, 255, 0.92);
+}
+
 html.light .text-white,
 html.light .section-title,
 html.light .hero-title,
 html.light .metric-value,
+html.light .health-score,
+html.light .brand-title,
 html.light .event-name,
 html.light .item-title,
 html.light .alert-title {
@@ -502,6 +508,46 @@ html.light select {
   border-color: rgba(15, 23, 42, 0.14) !important;
 }
 
+html.light .nav-item,
+html.light .shortcut-btn {
+  color: #334155;
+  background: rgba(15, 23, 42, 0.025);
+}
+
+html.light .nav-item.active,
+html.light .nav-item:hover,
+html.light .shortcut-btn:hover {
+  color: #065f46;
+  background: rgba(16, 185, 129, 0.10);
+  border-color: rgba(5, 150, 105, 0.24);
+}
+
+html.light .logout-btn {
+  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(220, 38, 38, 0.18);
+}
+
+html.light .accent-balance { background: linear-gradient(135deg, rgba(13, 148, 136, 0.13), rgba(255, 255, 255, 0.92)); }
+html.light .accent-income { background: linear-gradient(135deg, rgba(5, 150, 105, 0.13), rgba(255, 255, 255, 0.92)); }
+html.light .accent-expense { background: linear-gradient(135deg, rgba(220, 38, 38, 0.11), rgba(255, 255, 255, 0.92)); }
+html.light .accent-risk { background: linear-gradient(135deg, rgba(217, 119, 6, 0.13), rgba(255, 255, 255, 0.92)); }
+html.light .hero { background: linear-gradient(135deg, rgba(13, 148, 136, 0.12), rgba(217, 119, 6, 0.08)), rgba(255, 255, 255, 0.9); }
+html.light .report-kpi-card,
+html.light .ops-card {
+  background: rgba(255, 255, 255, 0.76);
+}
+
+html.light .pill,
+html.light .status-badge,
+html.light .insight-pill--info {
+  color: #0f766e;
+  background: rgba(13, 148, 136, 0.12);
+  border-color: rgba(13, 148, 136, 0.22);
+}
+
+html.light .insight-pill--success { color: #047857; }
+html.light .insight-pill--warning { color: #92400e; }
 html.light .money-positive { color: #047857; }
 html.light .money-negative { color: #dc2626; }
 html.light .attendance-chip--present { color: #047857; }
